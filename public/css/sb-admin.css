@@ -1,0 +1,337 @@
+/*
+Author: Start Bootstrap - http://startbootstrap.com
+'BlueBird Analytics' HTML Template by Start Bootstrap
+
+All Start Bootstrap themes are licensed under Apache 2.0.
+For more info and more free Bootstrap 3 HTML themes, visit http://startbootstrap.com!
+*/
+
+/* ATTN: This is mobile first CSS - to update 786px and up screen width use the media query near the bottom of the document! */
+
+/* Global Styles */
+
+body {
+  margin-top: 50px;
+  background: #fff;
+  font-family: 'Open Sans',sans-serif;
+}
+h1, h2 {
+  /*CDB380*/
+  /*color: #AA9972;*/
+  color: #8B774A;
+  font-family: 'Ubuntu',sans-serif;
+  font-weight: 500;
+  line-height: 1.1;
+}
+h1 .fa-spin {
+  margin-left:20px;
+  color:#ccc;
+  text-shadow:none;
+  /*text-shadow: -1px 0 #ccc, 0 1px #ccc, 1px 0 #ccc, 0 -1px #ccc;*/
+}
+.navbar-inverse .navbar-brand {
+  color: #FFFFFF;
+  font-weight: lighter;
+  padding: 15px 0 0 15px;
+  text-transform: uppercase;
+}
+#wrapper {
+  padding-left: 0;
+}
+
+#page-wrapper {
+  width: 100%;
+  padding: 5px 15px;
+}
+.jumbotron {
+  border:1px solid #e1e1e1;
+  background: #f8f8f8;
+  padding-bottom: 15px;
+  padding-top: 40px;
+  margin-top: -30px;
+  border-radius:  4px;
+}
+.jumbotron h1 {
+  font-size: 40px;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin: 0 0 15px;
+  color: #3C565E;
+  text-shadow: 2px 1px 0 #e1e1e1,4px 2px 0 rgba(0, 0, 0, 0.15);
+}
+.breadcrumb {
+  background-color: #fff;
+  border: 1px solid #ccc;
+
+}
+.table {
+    background: #F3EEE7;
+}
+.table-bordered {
+    border: 1px solid #333;
+}
+/* Nav Messages */
+
+.messages-dropdown .dropdown-menu .message-preview .avatar,
+.messages-dropdown .dropdown-menu .message-preview .name,
+.messages-dropdown .dropdown-menu .message-preview .message,
+.messages-dropdown .dropdown-menu .message-preview .time {
+  display: block;
+}
+
+.messages-dropdown .dropdown-menu .message-preview .avatar {
+  float: left;
+  margin-right: 15px;
+}
+
+.messages-dropdown .dropdown-menu .message-preview .name {
+  font-weight: bold;
+}
+
+.messages-dropdown .dropdown-menu .message-preview .message {
+  font-size: 12px;
+}
+
+.messages-dropdown .dropdown-menu .message-preview .time {
+  font-size: 12px;
+}
+
+
+/* Nav Announcements */
+
+.announcement-heading {
+  font-size: 40px;
+  margin: 0;
+  font-family: 'Ubuntu',sans-serif;
+  font-weight: lighter;
+
+}
+
+.announcement-text {
+  margin: 0;
+}
+.scrollto {
+  margin-top: -80px;
+  padding-top: 80px;
+  z-index: -1;
+  position: relative;
+}
+
+/* Panels */
+.summary,.chart, .table-list {
+  display: none;
+}
+.panel-primary > .panel-heading {
+  background: #dadada;
+  color: #333;
+  border-color: #ccc;
+}
+
+.panel-primary {
+    border-color: #959E99;
+}
+
+.panel-info > .panel-heading {
+  background-color: #f8f8f8;
+  border-color: #B3BDC1;
+  color: #444;
+}
+.panel-info {
+    border-color: #B3BDC1;
+}
+
+.panel-danger > .panel-heading {
+  background-color: #F1D8DD;
+  border-color: #C1B4B3;
+}
+.panel-danger {
+  border-color: #C1B4B3;
+}
+/* Table Headers */
+
+
+
+table.tablesorter thead {
+  cursor: pointer;
+}
+
+table.tablesorter thead tr th:hover {
+  background-color: #f5f5f5;
+}
+.daterangepicker{
+  top:45px !important;
+  position: fixed !important;
+}
+
+/* Flot Chart Containers */
+#overview-chart-area{
+  height: 100%;
+  width: 100%;
+  display: block;
+  float: left;
+}
+.flot-chart {
+  display: block;
+  height: 400px;
+}
+
+.flot-chart-content {
+  width: 100%;
+  height: 100%;
+}
+.side-nav li.active a{
+ background-color: #fff !important;
+ color: #000 !important;
+}
+.side-nav li.dropdown.open a{
+ background-color: #e1e1e1 !important;
+ color: #000 !important;
+}
+li.dropdown ul.dropdown-menu li.active a{
+  background-color: #fff !important;
+}
+div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
+  width: 22px;
+  text-align: center;
+}
+.navbar-inner,.navbar-inverse {
+  background-color: #3C565E;
+  background-repeat: no-repeat;
+  filter: none;
+}
+.footer-credits{
+    color: #AFAFAF;
+    padding-bottom: 10px;
+}
+/* Edit Below to Customize Widths > 768px */
+@media (min-width:768px) {
+
+  /* Wrappers */
+
+  #wrapper {
+	padding-left: 150px;
+  }
+
+  #page-wrapper {
+	padding: 15px 25px;
+  }
+
+  /* Side Nav */
+
+  .side-nav {
+	margin-left: -150px;
+	left: 150px;
+	width: 150px;
+	position: fixed;
+	top: 51px;
+	height: 100%;
+	border-radius: 0;
+	border: none;
+	background-color: #D5DED9;
+	overflow-y: auto;
+
+  }
+  .navbar-inverse .navbar-nav.side-nav li a{
+      color:#707070;
+  }
+
+  /* Bootstrap Default Overrides - Customized Dropdowns for the Side Nav */
+
+  .side-nav>li.dropdown>ul.dropdown-menu {
+	position: relative;
+	min-width: 150px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	/*background-color: transparent;*/
+	/*box-shadow: none;*/
+	/*-webkit-box-shadow: none;*/
+  }
+
+  .side-nav>li.dropdown>ul.dropdown-menu>li>a {
+	color: #999999;
+	padding: 15px 15px 15px 25px;
+  }
+/*
+  .side-nav>li.dropdown>ul.dropdown-menu>li>a:hover,
+  .side-nav>li.dropdown>ul.dropdown-menu>li>a.active {
+  	color: #3C565E;
+  	background-color: #D5DED9;
+  }*/
+  li.date-choice{
+    margin: 8px 10px 0 10px ;
+    padding: 0px 10px ;
+    color: #333;
+    background-color: #D5DED9;
+    border-radius:  4px;
+
+  }
+  li.date-choice a{
+    color: #000;
+    margin: 0px;
+    padding: 7px 2px 27px;
+
+  }
+  .instance-choice{
+    padding: 8px 0 0 0 ;
+    margin-bottom: 0;
+  }
+  .instance-choice .bootstrap-select.btn-group{
+    margin-bottom: 0;
+
+  }
+  .instance-choice .btn{
+    background-color: #D5DED9;
+  }
+
+  .side-nav>li>a {
+	 width: 150px;
+  }
+
+  .navbar-inverse .navbar-nav>li>a:hover,
+  .navbar-inverse .navbar-nav>li>a:focus {
+  	background-color: #EEF4EB;
+    color: #000;
+  }
+
+
+  /* Nav Messages */
+
+  .messages-dropdown .dropdown-menu {
+	min-width: 300px;
+  }
+
+  .messages-dropdown .dropdown-menu li a {
+	white-space: normal;
+  }
+
+}
+/*
+@keyframes throbbler {
+  0% {    transform: rotate(0deg);  }
+  12.5% {    transform: rotate(0deg);  }
+  12.5% {    transform: rotate(45deg);  }
+  25% {    transform: rotate(45deg);  }
+  25% {    transform: rotate(90deg);  }
+  37.5% {    transform: rotate(90deg);  }
+  37.5% {    transform: rotate(135deg);  }
+  50% {    transform: rotate(135deg);  }
+  50% {    transform: rotate(180deg);  }
+  62.5% {    transform: rotate(180deg);  }
+  62.5% {    transform: rotate(225deg);  }
+  75% {    transform: rotate(225deg);  }
+  75% {    transform: rotate(270deg);  }
+  87.5% {    transform: rotate(270deg);  }
+  87.5% {    transform: rotate(315deg);  }
+  100% {    transform: rotate(315deg);  }
+}
+
+.icon-spin:before {
+    content: "\f055";
+    animation-duration: 1s;
+    animation-name: throbbler;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+*/

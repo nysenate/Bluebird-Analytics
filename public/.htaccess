@@ -1,0 +1,12 @@
+# http://serverfault.com/questions/526153/
+Options +FollowSymLinks -MultiViews
+
+# Turn mod_rewrite on
+RewriteEngine On
+RewriteBase /
+
+# Some subpaths should not be redirected
+RewriteRule ^(css|js|fonts|ajax) - [L,NC]
+
+# Use request path as a GET argument to the index script
+RewriteRule ^(.+) /index.php?request=$1 [QSA,NC,END]

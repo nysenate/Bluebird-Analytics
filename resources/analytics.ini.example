@@ -1,0 +1,36 @@
+; Bluebird Analytics (Server and Viewer) sample config file
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SERVER configuration
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[debug]
+; level = ERROR | WARN | NOTICE
+;   The WARN level will include errors; NOTICE will include errors and warns.
+;   Leave blank to turn logging off.
+; log_file = /path/to/desired/log/file
+;   If this file can't be created, an error is logged to the Apache log.
+;   Leave it blank if you don't want to log to a separate file.
+;
+debug_level=WARN
+log_file=/var/log/bbanalytics/anayltics.log
+
+[database]
+; These parameters configure the mysql connection string:
+;   user:pass@host:port/name
+type = mysql
+user = root
+pass =
+host = localhost
+port = 3306
+name = bbanalytics
+
+
+[input]
+base_path = /var/log/apache2/access.log
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; VIEWER configuration
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
