@@ -7,18 +7,27 @@ require_once('../lib/utils.php');
 
 global $config;
 $config = load_config();
-
+$request = 'dashboard';
+$sub = 'overview';
 
 date_default_timezone_set('America/New_York');
 
 // Default view is the dashboard overview
-$url = explode('/', $_GET['request']);
-$request = ($url[0] == 'index.php') ? 'dashboard' : $url[0] ;
-$sub = isset($url[1]) ? $url[1] : 'overview';
+if (!isset($_GET['req'])) {
+  die("Please check your .htaccess file to confirm that rewrite rules are working.");
+}
+
+$req = explode('/', $_GET['req'], 2);
+if (!empty($req[0])) {
+  $request = $req[0];
+}
+if (!empty($req[1])) {
+  $sub = $req[1];
+}
 
 $product = array(
-  'name' => 'BlueBird Analytics',
-  'version' => '0.01',
+  'name' => 'Bluebird Analytics',
+  'version' => '1.0',
   'release' => 'alpha'
 );
 
@@ -47,15 +56,16 @@ $navigation['users']['overview'] = array('link'=>'/users', 'content'=>'users.php
 
 $navigation['actions']['overview'] = array('link'=>'/actions', 'content'=>'actions.php','view'=>'actions','name'=>'BB Actions','icon'=>'fa-edit','about'=>'Bluebird User Actions');
 
-
-$layout_content = '';
-if (array_key_exists($request, $navigation)) {
-  $navigation[$request]['overview']['class'] = 'active open';
-  if (array_key_exists($sub, $navigation[$request])) {
-    $navigation[$request][$sub]['class'] = 'active';
-    $layout_content = $navigation[$request][$sub]['content'];
-  }
+if (!isset($navigation[$request])) {
+  die("Navigation failure: Request key [$request] invalid");
 }
+else if (!isset($navigation[$request][$sub])) {
+  die("Navigation failure: Sub-request key [$sub] invalid");
+}
+
+$navigation[$request]['overview']['class'] = 'active open';
+$navigation[$request][$sub]['class'] = 'active';
+$layout_content = $navigation[$request][$sub]['content'];
 
 $scripts = array(
   'css' => array(
