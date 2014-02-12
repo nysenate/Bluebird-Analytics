@@ -1,8 +1,7 @@
 <?php
 
 function url_for($path) {
-  global $config;
-  return $config['website']['context'].$path;
+  return $_SERVER['CONTEXT_PREFIX'].$path;
 }
 
 ?>

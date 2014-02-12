@@ -4,10 +4,6 @@
 ; SERVER configuration
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-[website]
-; Use an empty context value when deploying to root.
-context = /analytics
-
 [debug]
 ; debug_level = ERROR | WARN | NOTICE
 ;   The WARN level will include errors; NOTICE will include errors and warns.
