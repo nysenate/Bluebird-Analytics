@@ -3,15 +3,18 @@
  * started with a MIT template offered graciously by startbootstrap.com/sb-admin
  * This is our header stuff that gets included in every page
  */
+require_once('../lib/utils.php');
+
+global $config;
+$config = load_config();
+
 
 date_default_timezone_set('America/New_York');
 
-// Default view is the dashboard
-
+// Default view is the dashboard overview
 $url = explode('/', $_GET['request']);
-// var_dump($url);
-$request  = ($url[0] == 'index.php') ? 'dashboard' : $url[0] ;
-$sub = (isset($url[1])) ? $url[1] : 'overview' ;
+$request = ($url[0] == 'index.php') ? 'dashboard' : $url[0] ;
+$sub = isset($url[1]) ? $url[1] : 'overview';
 
 $product = array(
   'name' => 'BlueBird Analytics',
@@ -44,9 +47,15 @@ $navigation['users']['overview'] = array('link'=>'/users', 'content'=>'users.php
 
 $navigation['actions']['overview'] = array('link'=>'/actions', 'content'=>'actions.php','view'=>'actions','name'=>'BB Actions','icon'=>'fa-edit','about'=>'Bluebird User Actions');
 
-$navigation[$request]['overview']['class'] = 'active open';
-$navigation[$request][$sub]['class'] = 'active';
 
+$layout_content = '';
+if (array_key_exists($request, $navigation)) {
+  $navigation[$request]['overview']['class'] = 'active open';
+  if (array_key_exists($sub, $navigation[$request])) {
+    $navigation[$request][$sub]['class'] = 'active';
+    $layout_content = $navigation[$request][$sub]['content'];
+  }
+}
 
 $scripts = array(
   'css' => array(
@@ -77,5 +86,6 @@ $scripts = array(
 
 $instances = array('skelos', 'breslin', 'fuschillo', 'marchione');
 
-include('layout.php')
+require_once('../lib/template_helpers.php');
+include('layout.php');
 ?>

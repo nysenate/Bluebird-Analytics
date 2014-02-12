@@ -11,7 +11,7 @@
     <!-- dynamically load in style sheets -->
     <?php
     foreach ($scripts['css'] as $key => $value) {
-      echo '<link href="'.$value['src'].'" rel="stylesheet" >'."\n\t";
+      echo '<link href="'.url_for($value['src']).'" rel="stylesheet" >'."\n\t";
     }
     ?>
   </head>
@@ -40,14 +40,14 @@
               // var_dump($value['class']);
               $class = (isset($value['overview']['class'])) ? $value['overview']['class'] : '' ;
               if (count($navigation[$key]) === 1) {
-                echo '<li class="'.$class.'"> <a href="'.$value['overview']['link'].'"> <i class="fa '.$value['overview']['icon'].'"></i> '.$value['overview']['name'].' </a>';
+                echo '<li class="'.$class.'"> <a href="'.url_for($value['overview']['link']).'"> <i class="fa '.$value['overview']['icon'].'"></i> '.$value['overview']['name'].' </a>';
               }else{
                 echo ' <li class="dropdown '.$class.'"> <a data-toggle="dropdown" class="dropdown-toggle" href="'.$value['overview']['link'].'"> <i class="fa '.$value['overview']['icon'].'"></i> '.$value['overview']['name'].'<b class="caret"></b> </a> <ul class="dropdown-menu">';
                 foreach ($navigation[$key] as $child => $dropdown) {
                   if ($child !== 'overview') {
                     $class = (isset($dropdown['class'])) ? $dropdown['class'] : '' ;
 
-                    echo '<li class="'.$class.'"> <a  href="'.$dropdown['link'].'"> <i class="fa '.$dropdown['icon'].'"></i> '.$dropdown['name'].' </a> </li>';
+                    echo '<li class="'.$class.'"> <a  href="'.url_for($dropdown['link']).'"> <i class="fa '.$dropdown['icon'].'"></i> '.$dropdown['name'].' </a> </li>';
                   }
                 }
                 echo '</ul>';
@@ -93,7 +93,15 @@
           </div>
         </div><!-- /.row -->
 
-        <?php include($navigation[$request][$sub]['content']); ?>
+        <?php
+          if (!empty($layout_content)) {
+            include($navigation[$request][$sub]['content']);
+          }
+          else {
+            include('404.html');
+          }
+
+        ?>
 
         <div class="row">
           <hr/>
@@ -107,7 +115,7 @@
     <!-- dynamically load in JavaScript -->
     <?php
       foreach ($scripts['js'] as $key => $value) {
-        echo '<script src="'.$value['src'].'"></script>'."\n\t";
+        echo '<script src="'.url_for($value['src']).'"></script>'."\n\t";
       }
     ?>
   </body>
