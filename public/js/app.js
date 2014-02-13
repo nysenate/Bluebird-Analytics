@@ -169,7 +169,7 @@
     ///////////////////////////////////////////////
     // BBDateRangePicker Plugin
     ////////////////////////////////
-    var data_df = 'YYYY-MM-DD HH:mm:ss';
+    var data_df = 'YYYY-MM-DD HH:mm';
     var display_df = 'MMMM Do YYYY, h:mm a';
     $.fn.bbdaterangepicker = function(user_options) {
       var options = $.extend({}, user_options);
