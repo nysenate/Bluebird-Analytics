@@ -278,9 +278,8 @@
     // use a count to see if we have processed view types
     $.fn.Render = function() {
       // don't duplicate previous requests
-      if ($('.jumbotron h1 .fa').length == 0) {
-	$('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
-      };
+      $('.jumbotron h1 .fa').remove();
+      $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
       $.each(config[view], function( index, settings ) {
         var type = index
         jqxhr[index] = $.ajax({
