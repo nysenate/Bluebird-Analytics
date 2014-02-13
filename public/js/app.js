@@ -277,8 +277,11 @@
     // on callback place data in correct container
     // use a count to see if we have processed view types
     $.fn.Render = function() {
-      // stop previous requests
-      $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
+      // don't duplicate previous requests
+      console.log($('.jumbotron h1 fa').length);
+      if ($('.jumbotron h1 .fa').length == 0) {
+	$('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
+      };
       $.each(config[view], function( index, settings ) {
         var type = index
         jqxhr[index] = $.ajax({
