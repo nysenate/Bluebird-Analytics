@@ -43,7 +43,7 @@ $navigation['dashboard']['overview'] = array('link'=>'/dashboard', 'content'=>'d
 
 // $navigation['performance']['overview'] = array('link'=>'/#', 'content'=>'#','view'=>'#','name'=>'Performance','icon'=>'fa-tachometer','about'=>'App & DB Reporting');
 
-$navigation['performance']['overview'] = array('link'=>'/performance/dashboard', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Performance','icon'=>'fa-inbox','about'=>'Statistics Overview');
+$navigation['performance']['overview'] = array('link'=>'/performance', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Performance','icon'=>'fa-inbox','about'=>'Statistics Overview');
 // $navigation['performance']['dashboard2'] = array('link'=>'/performance/dashboard2', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
 // $navigation['performance']['dashboard3'] = array('link'=>'/performance/dashboard3', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
 // $navigation['performance']['dashboar3d'] = array('link'=>'/performance/dashboar3d', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
