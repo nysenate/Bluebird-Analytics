@@ -147,6 +147,9 @@ h1 .fa-spin {
 .panel-danger {
   border-color: #C1B4B3;
 }
+.danger{
+  color: #D24858;
+}
 /* Table Headers */
 
 
