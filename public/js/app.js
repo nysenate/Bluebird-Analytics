@@ -92,12 +92,15 @@
     function get_granularity(start_moment, end_moment) {
       var difference = end_moment.unix() - start_moment.unix();
       var granularity;
-      var minute = 600;
-      var hour = 60*600;
-      var day = 24*60*600;
+      var minute = 60;
+      var hour = 60*60;
+      var day = 24*60*60;
       switch (true) {
         case (difference < 12*hour):
           granularity = 'minute';
+          break;
+        case (difference < 7*day):
+          granularity = '15minute';
           break;
         case (difference < 14*day):
           granularity = 'hour';

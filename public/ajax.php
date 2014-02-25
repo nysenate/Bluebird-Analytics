@@ -52,7 +52,10 @@ switch ($type) {
 exit(0);
 
 
-function do_list($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon) {
+function do_list($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon)
+{
+  $table_suffix = get_table_suffix();
+
   foreach(array('list_size', 'list_offset') as $key) {
     if (!isset($_GET[$key])) {
       send_response(400, "A '$key' parameter is required for all chart queries.");
@@ -141,7 +144,11 @@ function do_list($view, $install_class, $instance_name, $start_datetime, $end_da
   echo "do_list for $view [$start_datetime TO $end_datetime]";
 }
 
-function do_summary($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon) {
+
+function do_summary($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon)
+{
+  $table_suffix = get_table_suffix();
+
   // All queries share a similar basic scoping
   $WHERE = "
         WHERE instance_type = '$install_class'
@@ -186,24 +193,9 @@ function do_summary($view, $install_class, $instance_name, $start_datetime, $end
   echo "do_summary for $view [$start_datetime TO $end_datetime]";
 }
 
-function do_chart($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon) {
-  foreach(array('granularity') as $key) {
-    if (!isset($_GET[$key])) {
-      send_response(400, "A '$key' parameter is required for all chart queries.");
-    }
-    $$key = clean_string($_GET[$key]);
-  }
-
-  // Granularity works by chopping off the date to the specified granularity
-  // This means that 11:23 - 13:23 will cover 11-12, 12-13, and 13-14 hour blocks.
-  // But 11:00 - 13:00 will only cover 11-12, 12-13.
-  switch ($granularity) {
-    case 'minute': $date_format = "%Y-%m-%d %H:%i:00"; break;
-    case 'hour': $date_format = "%Y-%m-%d %H:00:00"; break;
-    case 'day': $date_format = "%Y-%m-%d 00:00:00"; break;
-    case 'month': $date_format = "%Y-%m-01 00:00:00"; break;
-    default: send_response(400, "Granularity '$granularity' must be one of 'minute', 'hour', 'day', 'month'.");
-  }
+function do_chart($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon)
+{
+  $table_suffix = get_table_suffix();
 
   // All queries share a similar basic scoping
   $WHERE = "
@@ -255,12 +247,34 @@ function do_chart($view, $install_class, $instance_name, $start_datetime, $end_d
 }
 
 
-function clean_string($input) {
+function clean_string($input)
+{
   return preg_replace('/[^-a-zA-Z0-9: _,]/', '', $input);
 }
 
 
-function send_response($code, $message, $data=NULL) {
+function get_table_suffix()
+{
+  if (!isset($_GET['granularity'])) {
+    send_response(400, "A 'granularity' parameter is required for all list queries.");
+  }
+
+  $granularity = clean_string($_GET['granularity']);
+  switch ($granularity) {
+    case 'minute': $table_suffix = "1m"; break;
+    case '15minute': $table_suffix = "15m"; break;
+    case 'hour': $table_suffix = "1h"; break;
+    case 'day': $table_suffix = "1d"; break;
+    case 'month': $table_suffix = "1d"; break;
+    default: send_response(400, "Granularity '$granularity' must be one of 'minute', '15minute', 'hour', 'day', 'month'.");
+  }
+
+  return $table_suffix;
+}
+
+
+function send_response($code, $message, $data=NULL)
+{
   header("Content-Type: application/json; charset=UTF-8");
   http_response_code($code);
   echo json_encode(array(
