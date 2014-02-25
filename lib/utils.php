@@ -9,6 +9,28 @@ const INFO  = 3;
 const DEBUG = 4;
 
 
+/**
+ *  Inserts a batch of rows of arbitrary size.
+ */
+function insert_batch($dbcon, $table, $rows)
+{
+  if (!empty($rows)) {
+    $columns = implode(', ', array_keys($rows[0]));
+    $place_holder = '('.implode(', ', array_fill(0, count($rows[0]), "?")).')';
+    $place_holders = implode(', ', array_fill(0, count($rows), $place_holder));
+    $stmt = $dbcon->prepare("INSERT INTO $table ($columns) VALUES $place_holders");
+
+    // Extract value only arrays from each row and merge them into one big array for execution
+    $values = array();
+    foreach($rows as $row) {
+      $values[] = array_values($row);
+    }
+    $final_values = call_user_func_array('array_merge', $values);
+    $stmt->execute($final_values);
+  }
+}
+
+
 function load_config()
 {
   $config_file = realpath(dirname(__FILE__).'/../analytics.ini');
