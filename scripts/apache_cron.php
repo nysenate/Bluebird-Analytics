@@ -102,7 +102,7 @@ function process_apache_log($source_path, $offset, $dbcon)
       else {
         unset($new_entry['is_page']);
         $final_ctime = strtotime($new_entry['time']);
-        $values[] = array_values($new_entry);
+        $values[] = $new_entry;
       }
     }
     else {
@@ -114,7 +114,7 @@ function process_apache_log($source_path, $offset, $dbcon)
     // TOOD: Why would that be? MySQL Configuration issue?
     $is_eof = feof($handle);
     if (($c++ % 100) == 0 || $is_eof) {
-      insert_request_batch($values, $dbcon);
+      insert_batch($dbcon, 'request', $values);
       $values = array();
       $start = microtime(true);
       if ($is_eof) {
@@ -133,26 +133,11 @@ function process_apache_log($source_path, $offset, $dbcon)
   return array($final_offset, $final_ctime);
 }
 
-
-/**
- *  Inserts a batch of request parameters of arbitrary size.
- */
-function insert_request_batch($values, $dbcon)
-{
-  if (!empty($values)) {
-    $place_holder = '('.implode(', ', array_fill(0, count($values[0]), "?")).')';
-    $place_holders = implode(', ', array_fill(0, count($values), $place_holder));
-    $final_values = call_user_func_array('array_merge', $values);
-    $stmt = $dbcon->prepare("INSERT INTO request VALUES $place_holders");
-    $stmt->execute($final_values);
-  }
-}
-
-
 /**
  * Transforms a single line in the log file into an array of request parameters.
  */
-function process_entry($entry_parts, $dbcon) {
+function process_entry($entry_parts, $dbcon)
+{
   // Format the datetime by removing the [ ] and replacing the first :
   $datetime = DateTime::createFromFormat("d/M/Y:H:i:s O", substr($entry_parts[0],1)." ".substr($entry_parts[1], 0, 5));
 
