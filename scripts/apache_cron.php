@@ -20,6 +20,9 @@ if ($dbcon === false) {
 ///////////////////////////////
 // Script specific setup
 ///////////////////////////////
+global $INSTANCE_CACHE;
+$INSTANCE_CACHE = array();
+
 $INSTANCE_TYPE = array(
   'crm'     => 'prod',
   'crmtest' => 'test',
@@ -148,7 +151,7 @@ function process_entry($entry_parts, $dbcon)
     return null;
   }
   $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
-
+  $instance = get_or_create_instance($dbcon, $servername, $instance_type, $instance_name);
   $remote_ip = $entry_parts[3];
   $response_time = $entry_parts[4];
   $response_code = $entry_parts[5];
@@ -168,8 +171,7 @@ function process_entry($entry_parts, $dbcon)
 
   return array(
     "id" => NULL,
-    "instance_name" => $instance_name,
-    "instance_type" => $instance_type,
+    "instance_id" => $instance['id'],
     "remote_ip" => $remote_ip,
     "response_code" => $response_code,
     "response_time" => $response_time,
@@ -182,6 +184,7 @@ function process_entry($entry_parts, $dbcon)
     "is_page" => $is_page
   );
 }
+
 
 /**
  *  Finds the log files matching the config.input.base_path with
@@ -209,6 +212,39 @@ function get_source_files($config)
     return $anum - $bnum;
   });
   return array_reverse($files);
+}
+
+
+/**
+ *  Uses the given parameters to fetch an existing instance. If one cannot be found,
+ *  it creates a new one and returns that instead.
+ */
+function get_or_create_instance($dbcon, $servername, $install_class, $name)
+{
+  // Check our cache first
+  global $INSTANCE_CACHE;
+  if (array_key_exists($servername, $INSTANCE_CACHE)) {
+    return $INSTANCE_CACHE[$servername];
+  }
+
+  // Then check the database
+  $result = $dbcon->query("SELECT * FROM instance WHERE servername = '$servername';");
+  $row = $result->fetch(PDO::FETCH_ASSOC);
+  if ($row) {
+    return $row;
+  }
+
+  // Save a new instance if necessary
+  $dbcon->exec("INSERT INTO instance (install_class, servername, name) VALUES ('$install_class', '$servername', '$name');");
+  $instance = array(
+    'id' => $dbcon->lastInsertId(),
+    'servername' => $servername,
+    'install_class' => $install_class,
+    'name' => $name
+  );
+
+  $INSTANCE_CACHE[$servername] = $instance;
+  return $instance;
 }
 
 ?>

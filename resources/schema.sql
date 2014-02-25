@@ -4,16 +4,17 @@ DROP TABLE IF EXISTS instance;
 DROP TABLE IF EXISTS apache_cron_runs;
 
 
-CREATE TABLE apache_cron_runs (
-  final_offset int unsigned NOT NULL,
-  final_ctime datetime NOT NULL
+CREATE TABLE instance (
+    id int unsigned AUTO_INCREMENT PRIMARY KEY,
+    name varchar(255),
+    servername varchar(255) UNIQUE,
+    install_class ENUM('prod','test','dev')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
-create table request (
+CREATE TABLE request (
   id int unsigned AUTO_INCREMENT PRIMARY KEY,
-  instance_name varchar(255),
-  instance_type ENUM('prod','test','dev'),
+  instance_id int unsigned,
 
   remote_ip varchar(20),
   response_code int unsigned,
@@ -27,10 +28,15 @@ create table request (
 
   INDEX(time),
   INDEX(remote_ip),
-  INDEX(instance_name),
-  INDEX(instance_type)
+  FOREIGN KEY (instance_id) REFERENCES instance(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+CREATE TABLE apache_cron_runs (
+  final_offset int unsigned NOT NULL,
+  final_ctime datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
 -- Insert default values to make life easier...
-INSERT INTO apache_cron_runs VALUES (0, FROM_UNIXTIME(0));
+INSERT INTO apache_cron_runs VALUES (0, '2013-01-01 00:00:00');
