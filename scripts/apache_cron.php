@@ -52,14 +52,13 @@ foreach($source_paths as $source_path) {
     list($final_offset, $final_ctime) = process_apache_log($source_path, $start_offset, $dbcon);
     echo "Inserting Requests took: ".(microtime(true)-$start)."s\n";
     $start_offset = 0;
+
+    // Save the run state so we can easily resume. But only if we actually processed a log!
+    if ($final_ctime != null) {
+      $dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
+    }
   }
 }
-
-// Save the final run state for next time and exit
-$dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
-exit(0);
-
-
 
 
 /**
