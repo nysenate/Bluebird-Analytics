@@ -4,7 +4,7 @@
   // pages have three kinds of AJAX rendered views (summary, list, graph)
   // we map the JSON keys to the HTML objects class to populate the data
   var config = {
-    dashboard: {
+    overview: {
       summary : {
         page_views : "page_views",
         unique_pages : "_distinct_pages",

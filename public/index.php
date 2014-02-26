@@ -7,7 +7,7 @@ require_once('../lib/utils.php');
 
 global $config;
 $config = load_config();
-$request = 'dashboard';
+$request = 'overview';
 $sub = 'overview';
 
 date_default_timezone_set('America/New_York');
@@ -27,7 +27,7 @@ if (!empty($req[1])) {
 
 $product = array(
   'name' => 'Bluebird Analytics',
-  'version' => '1.0',
+  'version' => '1.0.1',
   'release' => 'alpha'
 );
 
@@ -38,22 +38,16 @@ $release_notes = '
     Feel free to poke around but remember this is still an '. $product['release'].' release.
   </div>';
 
+$navigation['overview']['overview'] = array('link'=>'/overview', 'content'=>'overview.php', 'view'=>'overview','name'=>'Overview','icon'=>'fa-lightbulb-o','about'=>'Bluebird Overview');
 
-$navigation['dashboard']['overview'] = array('link'=>'/dashboard', 'content'=>'dashboard.php', 'view'=>'dashboard','name'=>'Dashboard','icon'=>'fa-inbox','about'=>'Statistics Overview');
-
-// $navigation['performance']['overview'] = array('link'=>'/#', 'content'=>'#','view'=>'#','name'=>'Performance','icon'=>'fa-tachometer','about'=>'App & DB Reporting');
-
-$navigation['performance']['overview'] = array('link'=>'/performance', 'content'=>'performance.php', 'view'=>'performance','name'=>'Performance','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboard2'] = array('link'=>'/performance/dashboard2', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboard3'] = array('link'=>'/performance/dashboard3', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboar3d'] = array('link'=>'/performance/dashboar3d', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboard4'] = array('link'=>'/performance/dashboard4', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
+$navigation['performance']['overview'] = array('link'=>'#', 'content'=>'performance.php', 'view'=>'performance','name'=>'Performance','icon'=>'fa-caret-square-o-down','about'=>'Statistics Overview');
+$navigation['performance']['statistics'] = array('link'=>'/performance/statistics', 'content'=>'performance.php', 'view'=>'statistics','name'=>'Statistics','icon'=>'fa-tachometer','about'=>'Statistics Overview');
+$navigation['performance']['pagespeed'] = array('link'=>'/performance/speed', 'content'=>'pagespeed.php', 'view'=>'pagespeed','name'=>'Page Speed','icon'=>'fa-flash','about'=>'How are the pages performing');
 
 $navigation['content']['overview'] =  array('link'=>'/content', 'content'=>'content.php','view'=>'content','name'=>'Site Content','icon'=>'fa-list','about'=>'Content Consumption');
 
-// $navigation['users']['overview'] = array('link'=>'/users', 'content'=>'users.php','view'=>'users','name'=>'Users','icon'=>'fa-users','about'=>'User Overview');
+$navigation['users']['overview'] = array('link'=>'/users', 'content'=>'users.php','view'=>'users','name'=>'Users','icon'=>'fa-users','about'=>'User Overview');
 
-// $navigation['actions']['overview'] = array('link'=>'/actions', 'content'=>'actions.php','view'=>'actions','name'=>'BB Actions','icon'=>'fa-edit','about'=>'Bluebird User Actions');
 
 if (!isset($navigation[$request])) {
   die("Navigation failure: Request key [$request] invalid");

@@ -71,7 +71,7 @@ function do_list($view, $install_class, $instance_name, $start_datetime, $end_da
           ".($instance_name != 'ALL' ? "AND instance.name = '$instance_name'" : "");
 
   switch ($view) {
-    case 'dashboard':
+    case 'overview':
       // top 10 active instances, users
       $result = $dbcon->query("
         SELECT
@@ -158,7 +158,7 @@ function do_summary($view, $install_class, $instance_name, $start_datetime, $end
           ".($instance_name != 'ALL' ? "AND instance.name = '$instance_name'" : "");
 
   switch ($view) {
-    case 'dashboard':
+    case 'overview':
       $result = $dbcon->query("
         SELECT
           IFNULL(sum(page_views), 0) as page_views,
@@ -218,7 +218,7 @@ function do_summary($view, $install_class, $instance_name, $start_datetime, $end
       // average render time
       break;
     default:
-      send_response(400, "View '$view' must be one of 'dashboard', 'performance', 'content'.");
+      send_response(400, "View '$view' must be one of 'overview', 'performance', 'content'.");
       break;
   }
   echo "do_summary for $view [$start_datetime TO $end_datetime]";
@@ -236,7 +236,7 @@ function do_chart($view, $install_class, $instance_name, $start_datetime, $end_d
           ".($instance_name != 'ALL' ? "AND instance.name = '$instance_name'" : "");
 
   switch ($view) {
-    case 'dashboard':
+    case 'overview':
       $result = $dbcon->query("
         SELECT
           time as chart_time, sum(page_views) as page_views
