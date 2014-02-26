@@ -6,7 +6,16 @@
       </div>
       <div class="panel-body">
         <div class="table-responsive">
-          <table id="most_viewed" class="table table-bordered table-hover table-striped tablesorter">
+          <table id="most_viewed" class="datatable">
+            <thead>
+              <tr>
+                <th data-searchable="1">Path</th>
+                <th>Total Views</th>
+                <th>Avg Response Time</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
           </table>
         </div>
         <div class="text-right">

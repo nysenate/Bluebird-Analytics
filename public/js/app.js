@@ -61,12 +61,12 @@
       //   ykeys: ['page_views'],
       //   labels: ['Page Views'],
       // },
-      list : {
-          most_viewed: {
-            element: '#most_viewed',
-            headers: ['Path', 'Total Views', 'Average Response Time']
-          }
-      }
+      // list : {
+      //     most_viewed: {
+      //       element: '#most_viewed',
+      //       headers: ['Path', 'Total Views', 'Average Response Time']
+      //     }
+      // }
     },
     audience: {
       // summary : {
@@ -280,6 +280,10 @@
     // on callback place data in correct container
     // use a count to see if we have processed view types
     $.fn.Render = function() {
+      $(".datatable").each(function() {
+        $(this).dataTable().fnDraw();
+      });
+
       // don't duplicate previous requests
       $('.jumbotron h1 .fa').remove();
       $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
@@ -369,10 +373,7 @@
               });
             }
 
-
-
-
-          }else if (type === "list") {
+          } else if (type === "list") {
             $.each(settings, function( table, table_data ) {
               var response_data = response['data'][table];
               var table = $(table_data['element']);
@@ -401,11 +402,11 @@
           }
         })
         .fail(function() {
-	  console.log('error -- view: '+view+" | type: "+type);
-	  $('.jumbotron h1 .fa-cog').remove();
-	  if ($('.jumbotron h1 .fa').length == 0) {
-	    $('.jumbotron h1').append('<i class="fa fa-warning danger"></i>');
-	  };
+          console.log('error -- view: '+view+" | type: "+type);
+          $('.jumbotron h1 .fa-cog').remove();
+          if ($('.jumbotron h1 .fa').length == 0) {
+            $('.jumbotron h1').append('<i class="fa fa-warning danger"></i>');
+          };
         })
         .always(function() {
           count++;
@@ -427,9 +428,38 @@
       }
     }
 
+    $('.datatable').each(function() {
+      var oTable = $(this);
+      var aoColumns = [];
+      oTable.find('th').each(function() {
+        var th = $(this);
+        aoColumns.push({
+          bSearchable: Boolean(th.data('searchable'))
+        });
+      });
+      console.log(aoColumns);
 
+      oTable.dataTable({
+        bProcessing: true,
+        bServerSide: true,
+        sAjaxSource: "/ajax.php",
+        fnServerParams: function ( aoData ) {
+          aoData.push(
+            { name: "view", value: "content"},
+            { name: "type", value: "datatable"},
+            { name: "start_datetime", value: DateRange.start_moment.format(data_df)},
+            { name: "end_datetime", value: DateRange.end_moment.format(data_df)},
+            { name: "granularity", value: DateRange.granularity},
+            { name: "install_class", value: "prod"},
+            { name: "instance_name", value: Instance.instance_name}
+          );
+        },
+        "aoColumns": aoColumns,
+      });
+    });
 
     $('#page-wrapper').Render();
 
+    $('.table-list').slideDown();
   });
 }(jQuery)

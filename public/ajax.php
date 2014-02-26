@@ -44,6 +44,9 @@ switch ($type) {
   case 'chart': // chart views are graphed.
     do_chart($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon);
     break;
+  case 'datatable': // data table views are called by datatables
+    do_datatable($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon);
+    break;
   default: // Send back an error code.
     send_response(400, "Type '$type' must be one of 'list', 'summary', or 'chart'.");
     break;
@@ -276,6 +279,110 @@ function do_chart($view, $install_class, $instance_name, $start_datetime, $end_d
       // pageviews
   }
   echo "do_chart for $view [$start_datetime TO $end_datetime]";
+}
+
+
+function do_datatable($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon)
+{
+  switch ($view) {
+    case 'content':
+      $viewCount = "path";
+      $viewSelect = "
+          path,
+          count(*) as total_views,
+          CAST(IFNULL(avg(response_time)/1000000, 0) AS DECIMAL(12,2)) as avg_response_time";
+      $viewFrom = "
+        FROM request, instance
+        WHERE instance.id = instance_id
+          AND instance.install_class = '$install_class'
+          AND time BETWEEN '$start_datetime' AND '$end_datetime'
+          ".($instance_name != 'ALL' ? "AND instance.name = '$instance_name'" : "");
+      $viewGroupBy = "GROUP BY request.path";
+      $viewColumns = array('path', 'total_views', 'avg_response_time');
+      break;
+    default:
+      send_response(400, "View '$view' must be one of 'content'.");
+      break;
+    }
+
+
+  $viewColumnCount = count($viewColumns);
+
+  // Multiple column ordering rules
+  $dataOrderingRules = array();
+  if (isset($_GET['iSortCol_0'])) {
+    $dataSortingCols = intval($_GET['iSortingCols']);
+    for ($i=0; $i<$dataSortingCols; $i++) {
+      $dataSortingCol = intval($_GET["iSortCol_$i"]);
+      if ($_GET["bSortable_$dataSortingCol"] == 'true' ) {
+        $dataOrderingRules[] = $viewColumns[$dataSortingCol].($_GET['sSortDir_'.$i]==='asc' ? ' ASC' : ' DESC');
+      }
+    }
+  }
+
+  // General table filtering
+  $dataFilteringRules = array();
+  if (isset($_GET['sSearch']) && $_GET['sSearch'] != "") {
+      for ($i=0; $i<$viewColumnCount; $i++) {
+          if (isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == 'true') {
+              $dataFilteringRules[] = "`".$viewColumns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch'].'%');
+          }
+      }
+      if (!empty($dataFilteringRules)) {
+          $dataFilteringRules = array('('.implode(" OR ", $dataFilteringRules).')');
+      }
+  }
+
+  // Individual column filtering
+  for ( $i=0 ; $i<$viewColumnCount ; $i++ ) {
+      if ( isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == 'true' && $_GET['sSearch_'.$i] != '' ) {
+          $dataFilteringRules[] = "`".$viewColumns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch_'.$i].'%');
+      }
+  }
+
+  $dataWhere = "";
+  if (!empty($dataFilteringRules)) {
+      $dataWhere = " AND ".implode(" AND ", $dataFilteringRules);
+  }
+
+  $dataOrderBy = "";
+  if (!empty($dataOrderingRules)) {
+      $dataOrderBy = " ORDER BY ".implode(", ", $dataOrderingRules);
+  }
+
+  $dataLimit = "";
+  if ( isset( $_GET['iDisplayStart'] ) && $_GET['iDisplayLength'] != '-1' ) {
+    $dataLimit = " LIMIT ".intval( $_GET['iDisplayStart'] ).", ".intval( $_GET['iDisplayLength'] );
+  }
+
+  // Gather the response data
+  $data = array();
+  $query = "SELECT SQL_CALC_FOUND_ROWS $viewSelect $viewFrom $dataWhere $viewGroupBy $dataOrderBy $dataLimit";
+  $result = $dbcon->query($query) or send_response(500, $dbcon->error);
+  while ( $result_row = $result->fetch(PDO::FETCH_ASSOC) ) {
+      $data_row = array();
+      foreach ($viewColumns as $viewColumn) {
+        $data_row[] = $result_row[$viewColumn];
+      }
+      $data[] = $data_row;
+  }
+
+  // Data set length after filtering
+  $result = $dbcon->query("SELECT FOUND_ROWS()") or send_response(500, $dbcon->error);
+  list($iFilteredTotal) = $result->fetch();
+
+  // Total data set length
+  $query = "SELECT count(distinct $viewCount) $viewFrom";
+  $result = $dbcon->query("SELECT count(distinct $viewCount) $viewFrom") or send_response(500, $dbcon->error);
+  list($iTotal) = $result->fetch();
+
+  $output = array(
+      "sEcho"                => intval($_GET['sEcho']),
+      "iTotalRecords"        => $iTotal,
+      "iTotalDisplayRecords" => $iFilteredTotal,
+      "aaData"               => $data,
+  );
+  echo json_encode( $output );
 }
 
 
