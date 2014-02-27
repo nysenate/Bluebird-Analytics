@@ -16,7 +16,7 @@
     ?>
   </head>
 
-  <body data-view="<?php echo $navigation[$request][$sub]['view'] ?>" class="<?php echo $navigation[$request][$sub]['name'] ?>">
+  <body data-context-path="<?php echo $_SERVER['CONTEXT_PREFIX'] ?>" data-view="<?php echo $navigation[$request][$sub]['view'] ?>" class="<?php echo $navigation[$request][$sub]['name'] ?>">
     <div id="wrapper">
       <!-- Sidebar -->
       <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">

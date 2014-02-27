@@ -290,7 +290,7 @@
       $.each(config[view], function( index, settings ) {
         var type = index
         jqxhr[index] = $.ajax({
-          url: "ajax.php",
+          url: $("body").data("context-path")+"/ajax.php",
           timeout: 100000,
           data: {
             view: view,
@@ -442,7 +442,7 @@
       oTable.dataTable({
         bProcessing: true,
         bServerSide: true,
-        sAjaxSource: "/ajax.php",
+        sAjaxSource: $("body").data("context-path")+"/ajax.php",
         fnServerParams: function ( aoData ) {
           aoData.push(
             { name: "view", value: "content"},
