@@ -5,7 +5,7 @@ Options +FollowSymLinks -MultiViews
 RewriteEngine On
 
 # Some subpaths should not be redirected
-RewriteRule ^(css|js|fonts|ajax) - [L,NC]
+RewriteRule ^(static|ajax) - [L,NC]
 
 # Use request path as a GET argument to the index script
 RewriteRule ^(index\.php|(.+))$ %{CONTEXT_PREFIX}/index.php?req=$2 [END,NC]
