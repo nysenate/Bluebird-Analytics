@@ -75,7 +75,7 @@ $scripts = array(
     array('src'=>'/static/vendor/morris-0.4.3/morris.min.css'),
     array('src'=>'/static/vendor/jquery.datatables-1.9.4/css/jquery.dataTables.css'),
     array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.2/daterangepicker.css'),
-    array('src'=>'/static/vendor/bootstrap-select-1.4.2/bootbootstrap-select.min.css'),
+    array('src'=>'/static/vendor/bootstrap-select-1.4.2/bootstrap-select.min.css'),
     array('src'=>'/static/css/sb-admin.css'),
   ),
   'js' => array(
