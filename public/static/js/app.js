@@ -281,7 +281,7 @@
     // use a count to see if we have processed view types
     $.fn.Render = function() {
       $(".datatable").each(function() {
-        $(this).dataTable().fnDraw();
+        // $(this).dataTable().fnDraw();
       });
 
       // don't duplicate previous requests
@@ -428,15 +428,106 @@
       }
     }
 
-    $('.datatable').each(function() {
-      var oTable = $(this);
+    var dimensions = ['path', 'remote_ip'];
+    var observations = ['total_views', 'avg_response_time'];
+
+    // $('.datatable').each(function() {
+    //   var oTable = $(this);
+    //   var aoColumns = [];
+    //   var asSearch = [];
+    //   oTable.find('th').each(function() {
+    //     var th = $(this);
+    //     aoColumns.push({
+    //       bSearchable: Boolean(th.data('searchable')),
+    //       // asSorting: th.data('sort-order') == null ? [] : th.data('sort-order').split(','),
+    //     });
+    //   });
+    //   aoColumns[1]['asSorting'] = ["desc"];
+    //   console.log(aoColumns);
+
+    //   oTable.dataTable({
+    //     bProcessing: true,
+    //     bServerSide: true,
+    //     sAjaxSource: $("body").data("context-path")+"/ajax.php",
+    //     fnServerParams: function ( aoData ) {
+    //       aoData.push(
+    //         { name: "view", value: "content"},
+    //         { name: "type", value: "datatable"},
+    //         { name: "start_datetime", value: DateRange.start_moment.format(data_df)},
+    //         { name: "end_datetime", value: DateRange.end_moment.format(data_df)},
+    //         { name: "granularity", value: DateRange.granularity},
+    //         { name: "install_class", value: "prod"},
+    //         { name: "instance_name", value: Instance.instance_name},
+    //         { name: "dimensions", value: dimensions.join(',')},
+    //         { name: "observations", value: observations.join(',')}
+    //       );
+    //     },
+    //     "aoColumns": aoColumns,
+    //   }).fnSetFilteringDelay(1000);
+    // });
+
+    $('#page-wrapper').Render();
+
+
+    var dimensions = [];
+    var observations = [];
+    $('#select-observation').multiSelect({
+      keepOrder: true,
+      selectableHeader: "<div class='custom-header'>Available Observations</div>",
+      selectionHeader: "<div class='custom-header'>Selected Observations</div>",
+      afterSelect: function(values) {
+        observations.push(values[0]);
+      },
+      afterDeselect: function(values) {
+        var index = observations.indexOf(values[0]);
+        if (index != -1) {
+          observations.splice(index, 1);
+        }
+      }
+    });
+    $('#select-dimension').multiSelect({
+      keepOrder: true,
+      selectableHeader: "<div class='custom-header'>Available Dimensions</div>",
+      selectionHeader: "<div class='custom-header'>Selected Dimensions</div>",
+      afterSelect: function(values) {
+        dimensions.push(values[0]);
+      },
+      afterDeselect: function(values) {
+        var index = dimensions.indexOf(values[0]);
+        if (index != -1) {
+          dimensions.splice(index, 1);
+        }
+      }
+    });
+    $('.table-list').slideDown();
+
+    $('#build-table').click(function() {
+      var container = $('#datatable-container');
+      console.log(dimensions);
+      console.log(observations);
+
+      var headers = [];
+      $.each(dimensions, function() {
+        headers.push("<th data-searchable='1'>"+$('#select-dimension option[value='+this+']').html()+"</th>");
+      });
+
+      $.each(observations, function() {
+        headers.push("<th>"+$('#select-observation option[value='+this+']').html()+"</th>");
+      });
+      console.log(headers);
+      container.html("<table><thead><tr>"+headers.join(" ")+"</tr></thead><tbody></tbody></table>");
+
+      var oTable = container.find('table');
       var aoColumns = [];
+      var asSearch = [];
       oTable.find('th').each(function() {
         var th = $(this);
         aoColumns.push({
-          bSearchable: Boolean(th.data('searchable'))
+          bSearchable: Boolean(th.data('searchable')),
+          // asSorting: th.data('sort-order') == null ? [] : th.data('sort-order').split(','),
         });
       });
+      aoColumns[1]['asSorting'] = ["desc"];
       console.log(aoColumns);
 
       oTable.dataTable({
@@ -451,15 +542,13 @@
             { name: "end_datetime", value: DateRange.end_moment.format(data_df)},
             { name: "granularity", value: DateRange.granularity},
             { name: "install_class", value: "prod"},
-            { name: "instance_name", value: Instance.instance_name}
+            { name: "instance_name", value: Instance.instance_name},
+            { name: "dimensions", value: dimensions.join(',')},
+            { name: "observations", value: observations.join(',')}
           );
         },
         "aoColumns": aoColumns,
-      });
+      }).fnSetFilteringDelay(1000);
     });
-
-    $('#page-wrapper').Render();
-
-    $('.table-list').slideDown();
   });
 }(jQuery)

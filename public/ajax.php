@@ -284,29 +284,52 @@ function do_chart($view, $install_class, $instance_name, $start_datetime, $end_d
 
 function do_datatable($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon)
 {
-  switch ($view) {
-    case 'content':
-      $viewCount = "path";
-      $viewSelect = "
-          path,
-          count(*) as total_views,
-          CAST(IFNULL(avg(response_time)/1000000, 0) AS DECIMAL(12,2)) as avg_response_time";
-      $viewFrom = "
-        FROM request, instance
-        WHERE instance.id = instance_id
-          AND instance.install_class = '$install_class'
-          AND time BETWEEN '$start_datetime' AND '$end_datetime'
-          ".($instance_name != 'ALL' ? "AND instance.name = '$instance_name'" : "");
-      $viewGroupBy = "GROUP BY request.path";
-      $viewColumns = array('path', 'total_views', 'avg_response_time');
-      break;
-    default:
-      send_response(400, "View '$view' must be one of 'content'.");
-      break;
+  $OBSERVATION_LOOKUP = array(
+    'total_views' => 'count(*) as total_views',
+    'avg_response_time' => 'CAST(IFNULL(avg(response_time)/1000000, 0) AS DECIMAL(12,2)) as avg_response_time',
+  );
+  $valid_observations = array_keys($OBSERVATION_LOOKUP);
+  $valid_dimensions = array('path', 'instance', 'remote_ip');
+
+  foreach(array('dimensions', 'observations') as $key) {
+    if (!isset($_GET[$key])) {
+      send_response(400, "A '$key' parameter is required for all datatable queries.");
     }
+    $$key = clean_string($_GET[$key]);
+  }
 
+  $dimensions = explode(',', $dimensions);
+  $observations = explode(',', $observations);
+  $columns = array_merge($dimensions, $observations);
 
-  $viewColumnCount = count($viewColumns);
+  // Validate the dimensions
+  foreach($dimensions as $dimension) {
+    if (!in_array($dimension, $valid_dimensions)) {
+      send_response(400, "Dimension '$dimension' must be one of ".implode(',', $valid_dimensions));
+    }
+  }
+
+  // Validate the observations
+  foreach($observations as $observation) {
+    if (!in_array($observation, $valid_observations)) {
+      send_response(400, "Observation '$observation' must be one of ".implode(',', $valid_observations));
+    }
+  }
+
+  // Construct the standard query parts based on the requested dimensions/observations
+  $selectColumns = $dimensions;
+  foreach($observations as $observation) {
+    $selectColumns[] = $OBSERVATION_LOOKUP[$observation];
+  }
+  $select = implode(', ', $selectColumns);
+  $from = "request, instance";
+  $where = "instance.id = instance_id
+        AND instance.install_class = '$install_class'
+        AND time BETWEEN '$start_datetime' AND '$end_datetime'
+        ".($instance_name != 'ALL' ? "AND instance.name = '$instance_name'" : "");
+  $groupby = implode(', ', $dimensions);
+  $countColumn = array_pop($dimensions);
+  $countby = implode(', ', $dimensions);
 
   // Multiple column ordering rules
   $dataOrderingRules = array();
@@ -315,7 +338,7 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
     for ($i=0; $i<$dataSortingCols; $i++) {
       $dataSortingCol = intval($_GET["iSortCol_$i"]);
       if ($_GET["bSortable_$dataSortingCol"] == 'true' ) {
-        $dataOrderingRules[] = $viewColumns[$dataSortingCol].($_GET['sSortDir_'.$i]==='asc' ? ' ASC' : ' DESC');
+        $dataOrderingRules[] = $columns[$dataSortingCol].($_GET['sSortDir_'.$i]==='asc' ? ' ASC' : ' DESC');
       }
     }
   }
@@ -323,9 +346,9 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
   // General table filtering
   $dataFilteringRules = array();
   if (isset($_GET['sSearch']) && $_GET['sSearch'] != "") {
-      for ($i=0; $i<$viewColumnCount; $i++) {
+      for ($i=0; $i<count($columns); $i++) {
           if (isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == 'true') {
-              $dataFilteringRules[] = "`".$viewColumns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch'].'%');
+              $dataFilteringRules[] = "`".$columns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch'].'%');
           }
       }
       if (!empty($dataFilteringRules)) {
@@ -334,9 +357,9 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
   }
 
   // Individual column filtering
-  for ( $i=0 ; $i<$viewColumnCount ; $i++ ) {
+  for ( $i=0 ; $i<count($columns) ; $i++ ) {
       if ( isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == 'true' && $_GET['sSearch_'.$i] != '' ) {
-          $dataFilteringRules[] = "`".$viewColumns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch_'.$i].'%');
+          $dataFilteringRules[] = "`".$columns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch_'.$i].'%');
       }
   }
 
@@ -357,11 +380,11 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
 
   // Gather the response data
   $data = array();
-  $query = "SELECT SQL_CALC_FOUND_ROWS $viewSelect $viewFrom $dataWhere $viewGroupBy $dataOrderBy $dataLimit";
+  $query = "SELECT SQL_CALC_FOUND_ROWS $select FROM $from WHERE $where $dataWhere GROUP BY $groupby $dataOrderBy $dataLimit";
   $result = $dbcon->query($query) or send_response(500, $dbcon->error);
   while ( $result_row = $result->fetch(PDO::FETCH_ASSOC) ) {
       $data_row = array();
-      foreach ($viewColumns as $viewColumn) {
+      foreach ($columns as $viewColumn) {
         $data_row[] = $result_row[$viewColumn];
       }
       $data[] = $data_row;
@@ -372,8 +395,8 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
   list($iFilteredTotal) = $result->fetch();
 
   // Total data set length
-  $query = "SELECT count(distinct $viewCount) $viewFrom";
-  $result = $dbcon->query("SELECT count(distinct $viewCount) $viewFrom") or send_response(500, $dbcon->error);
+  $query = "SELECT count(distinct $countColumn) FROM $from WHERE $where ".(strlen($countby) != 0 ? "GROUP BY $countby" : "");
+  $result = $dbcon->query($query) or send_response(500, $dbcon->error);
   list($iTotal) = $result->fetch();
 
   $output = array(
