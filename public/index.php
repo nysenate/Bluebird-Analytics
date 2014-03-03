@@ -49,7 +49,7 @@ $navigation['performance']['overview'] = array('link'=>'/performance', 'content'
 // $navigation['performance']['dashboar3d'] = array('link'=>'/performance/dashboar3d', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
 // $navigation['performance']['dashboard4'] = array('link'=>'/performance/dashboard4', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
 
-$navigation['content']['overview'] =  array('link'=>'/content', 'content'=>'content.php','view'=>'content','name'=>'Site Content','icon'=>'fa-list','about'=>'Content Consumption');
+$navigation['datatable']['overview'] =  array('link'=>'/datatable', 'content'=>'datatable.php','view'=>'datatable','name'=>'Datatable','icon'=>'fa-list','about'=>'Datatable');
 
 // $navigation['users']['overview'] = array('link'=>'/users', 'content'=>'users.php','view'=>'users','name'=>'Users','icon'=>'fa-users','about'=>'User Overview');
 

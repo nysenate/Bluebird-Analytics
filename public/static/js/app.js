@@ -49,43 +49,9 @@
         }
       },
     },
-    content: {
-      // summary : {
-      //   uptime: '',
-      //   app_errors: '',
-      //   db_errors: '',
-      //   render_speed: ''
-      // },
-      // chart : {
-      //   element: 'overview',
-      //   ykeys: ['page_views'],
-      //   labels: ['Page Views'],
-      // },
-      // list : {
-      //     most_viewed: {
-      //       element: '#most_viewed',
-      //       headers: ['Path', 'Total Views', 'Average Response Time']
-      //     }
-      // }
-    },
-    audience: {
-      // summary : {
-      //   render_speed: ''
-      // },
-      chart : {
-      // element: 'overview',
-      // ykeys: ['page_views'],
-      // labels: ['Page Views'],
-      },
-      list : {
-        table: ''
-      },
-    },
-    behavior: {
-      summary : {
-        page_views: ''
-      }
-    }
+    datatable: {},
+    audience: {},
+    behavior: {}
   };
 
   $(document).ready(function() {
