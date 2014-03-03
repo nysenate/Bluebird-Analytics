@@ -465,8 +465,11 @@
 
     $('#page-wrapper').Render();
 
-    var dimensions = [], observations = [];
 
+    ////////////////////////////////
+    // Data tables code starts here
+    ////////////////////////////////
+    var dimensions = [], observations = [];
     $('#select-observation').multiSelect({
       keepOrder: true,
       selectableHeader: "<div class='custom-header'>Available Observations</div>",
@@ -479,7 +482,7 @@
           return values.indexOf(observation) == -1
         });
       }
-    }).multiSelect('select', ['avg_response_time', 'total_views']);
+    });
 
     $('#select-dimension').multiSelect({
       keepOrder: true,
@@ -493,7 +496,7 @@
           return values.indexOf(dimension) == -1
         });
       }
-    }).multiSelect('select', ['remote_ip']);
+    });
 
     $('#build-table').click(function() {
       var headers = [];
@@ -526,7 +529,17 @@
         },
         "aoColumns": aoColumns,
       }).fnSetFilteringDelay(500);
-    }).click();
+    })
 
+    function loadQuery(new_dimensions, new_observations) {
+      $('#select-dimension').multiSelect('deselect_all').multiSelect('select', new_dimensions);
+      $('#select-observation').multiSelect('deselect_all').multiSelect('select', new_observations);
+      $('#build-table').click();
+    }
+
+    loadQuery(
+      $('#datatable-container').data('dimensions').split(','),
+      $('#datatable-container').data('observations').split(',')
+    );
   });
 }(jQuery)

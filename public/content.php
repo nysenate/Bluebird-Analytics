@@ -24,7 +24,7 @@
         <h3 class="panel-title"><i class="fa fa-file-text"></i>&nbsp;Datatable</h3>
       </div>
       <div class="panel-body">
-        <div id="datatable-container">
+        <div id="datatable-container" data-dimensions="remote_ip" data-observations="avg_response_time,total_views">
         </div>
       </div>
     </div>
