@@ -503,9 +503,10 @@
       $('#build-table').click();
     }
 
-    loadQuery(
-      $('#datatable-container').data('dimensions').split(','),
-      $('#datatable-container').data('observations').split(',')
-    );
+    $('#saved-queries').change(function() {
+      var option = $(this).find('option:selected');
+      loadQuery(option.data('dimensions').split(','), option.data('observations').split(','));
+    }).change();
+
   });
 }(jQuery)
