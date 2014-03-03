@@ -125,7 +125,7 @@
 
     <div class="panel chart panel-primary">
       <div class="panel-heading">
-        <h3 class="panel-title"><i class="fa fa-bar-chart-o"></i> Traffic Statistics</h3>
+        <h3 class="panel-title"><i class="fa fa-bar-chart-o"></i> Page Views</h3>
       </div>
       <div class="panel-body">
         <div id="overview" style="height: 250px;"></div>

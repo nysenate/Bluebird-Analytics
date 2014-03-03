@@ -254,7 +254,7 @@ function do_chart($view, $install_class, $instance_name, $start_datetime, $end_d
       $result = $dbcon->query("
         SELECT
           time as chart_time,
-          sum(response_time)/sum(page_views) as avg_response_time,
+          CAST(IFNULL(sum(response_time)/sum(page_views)/1000000, 0) AS DECIMAL(12,2)) as avg_response_time,
           sum(503_errors) as 503_errors,
           sum(500_errors) as 500_errors,
           sum(response_time) as response_time,

@@ -39,8 +39,8 @@
       },
       chart : {
         element: 'overview',
-        ykeys: ['page_views','500_errors','503_errors'],//,'avg_response_time'],
-        labels: ['Page Views','App Errors','Database Errors']//,'Render Speed'],
+        ykeys: ['500_errors','503_errors','avg_response_time'],//,'page_view']
+        labels: ['App Errors','Database Errors','Response Time'],//,'Page Views']
       },
       list : {
         slow_queries: {
@@ -218,7 +218,7 @@
              // 'Last Month': [moment().subtract('month', 1).startOf('month').startOf('day'), moment().subtract('month', 1).endOf('month').endOf('day')]
             },
           timePicker: true,
-          dateLimit: { days: 180 },
+          dateLimit: { days: 360 },
           minDate: '04/10/2013',
           maxDate: moment().endOf('day'),
           timePickerIncrement: 15,
@@ -357,20 +357,55 @@
                 xkey: 'chart_time',
                 ykeys: settings['ykeys'],
                 labels: settings['labels'],
-                // hideHover: true,
-                pointSize: 0,
-                // pointFillColors: '#ccc',
-                // pointStrokeColors: '#ccc',
-                // lineWidth: '1px',
-                lineColors: ["#53777A", "#542437","#C02942", "#D95B43","#DF151A"],
-                // parseTime: true,
+                pointSize: 3,
+                // C02942 - lt red
+                // D95B43 - lt orange
+                // 53777A - slate blue
+                // 542437 - deep purple
+                // DF151A - fire truck red
+                lineColors: ["#C02942", "#D95B43","#53777A", "#542437","#DF151A"],
+                parseTime: true,
+                // goals: [5.0,10.0,50.0,100.0],
+                // goalLineColors: ["#EA7E58","#D13A43", "#A51D35","#931A21"],
+                // goalStrokeWidth:2,
+                continuousLine: false,
                 // axes: false,
                 // ymin: 0,
-                // grid: true,
-                // ymax: 'auto 300',
-                // xlabels: 'minute',
-                // smooth: true
+                grid: true,
+                ymax: 'auto 100',
+                hideHover: true,
+                hoverCallback: function (index, options, content) {
+                  switch (DateRange.granularity) {
+                    case 'minute':
+                    case '15minute':
+                        var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
+                      break;
+                    case 'hour':
+                        var time = moment(options.data[index]["chart_time"]).format('ddd l, h A');
+                      break;
+                    case 'day':
+                        var time = moment(options.data[index]["chart_time"]).format('ddd l');
+                      break;
+                    case 'month':
+                        var time = moment(options.data[index]["chart_time"]).format('MMMM YYYY');
+                      break;
+                    default:
+                        var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
+                      break
+                  }
+                  var i = options.labels.length;
+                  var html = " <div class='morris-hover-row-label'> "+time+"</div>";
+                  $.each(options.data[index], function( key, values ) {
+                    if (key != 'chart_time' && typeof options.labels[i] != "undefined") {
+                      html += " <div class='morris-hover-point' style='color: "+options.lineColors[i]+"'> "+options.labels[i]+": "+values+"</div> ";
+                    };
+                    i--;
+                  });
+                  return html;
+                },
+                smooth: true
               });
+
             }
 
           } else if (type === "list") {
