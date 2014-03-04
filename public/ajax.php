@@ -258,7 +258,7 @@ function do_chart($view, $install_class, $instance_name, $start_datetime, $end_d
           sum(503_errors) as 503_errors,
           sum(500_errors) as 500_errors,
           sum(response_time) as response_time,
-          sum(page_views) as page_view
+          CAST(IFNULL(sum(page_views)/1000, 0) AS DECIMAL(12,1))  as page_view
         FROM summary_$table_suffix, instance
         $WHERE
         GROUP BY chart_time

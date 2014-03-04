@@ -39,8 +39,8 @@
       },
       chart : {
         element: 'overview',
-        ykeys: ['500_errors','503_errors','avg_response_time'],//,'page_view']
-        labels: ['App Errors','Database Errors','Response Time'],//,'Page Views']
+        ykeys: ['500_errors','503_errors','avg_response_time','page_view'],
+        labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)'],
       },
       list : {
         slow_queries: {
@@ -359,13 +359,12 @@
                         var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
                       break
                   }
-                  var i = options.labels.length;
                   var html = " <div class='morris-hover-row-label'> "+time+"</div>";
                   $.each(options.data[index], function( key, values ) {
-                    if (key != 'chart_time' && typeof options.labels[i] != "undefined") {
-                      html += " <div class='morris-hover-point' style='color: "+options.lineColors[i]+"'> "+options.labels[i]+": "+values+"</div> ";
-                    };
-                    i--;
+                    if($.inArray(key, options.ykeys)!==-1){
+                      var id = $.inArray(key, options.ykeys);
+                      html += " <div class='morris-hover-point' style='color: "+options.lineColors[id]+"'> "+options.labels[id]+": "+values+"</div> ";
+                    }
                   });
                   return html;
                 },
