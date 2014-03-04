@@ -4,19 +4,33 @@
  * This is our header stuff that gets included in every page
  */
 require_once('../lib/utils.php');
-
-global $config;
-$config = load_config();
-$request = 'dashboard';
-$sub = 'overview';
-
 date_default_timezone_set('America/New_York');
 
-// Default view is the dashboard overview
+///////////////////////////////
+// Bootstrap the environment
+///////////////////////////////
+$config = load_config();
+if ($config === false) {
+  die("Unable to load the configuration.");
+}
+
+$g_log_file = get_log_file($config['debug']);
+$g_log_level = get_log_level($config['debug']);
+$dbcon = get_db_connection($config['database']);
+if ($dbcon === false) {
+  die("Unable to connect to the database.");
+}
+
+///////////////////////////////
+// Validate $_GET parameters
+///////////////////////////////
 if (!isset($_GET['req'])) {
   die("Please check your .htaccess file to confirm that rewrite rules are working.");
 }
 
+// Default view is the dashboard overview
+$request = 'dashboard';
+$sub = 'overview';
 $req = explode('/', $_GET['req'], 2);
 if (!empty($req[0])) {
   $request = $req[0];

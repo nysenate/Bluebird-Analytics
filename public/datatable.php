@@ -13,14 +13,15 @@
     </select>
   </div>
   <div class="col-lg-4" style="text-align:center;">
-    <button id="build-table" class="button">Build Table!</button>
-    <br/><br/>
     Select a saved query:
-    <select id="saved-queries">
-      <option data-dimensions="remote_ip" data-observations="avg_response_time,total_views" selected>Custom</option>
-      <option data-dimensions="path,remote_ip" data-observations="total_views">Test1</option>
-      <option data-dimensions="remote_ip,path" data-observations="avg_response_time">Test2</option>
-    </select>
+    <select id="saved-queries"><?php
+      $result = $dbcon->query("SELECT * FROM datatable");
+      while( $row = $result->fetch(PDO::FETCH_ASSOC) ) {
+        echo "<option val='${row['id']}' data-dimensions='${row['dimensions']}' data-observations='${row['observations']}'>${row['name']}</option>\n";
+      }
+    ?></select>
+    <br/><br/>
+    <button id="build-table" class="button">Build Table!</button>
   </div>
 </div>
 <br/>

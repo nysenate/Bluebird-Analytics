@@ -246,9 +246,12 @@
     // on callback place data in correct container
     // use a count to see if we have processed view types
     $.fn.Render = function() {
-      $(".dataTable").each(function() {
-        $(this).dataTable().fnDraw();
-      });
+      if (view == 'datatable') {
+        $(".dataTable").each(function() {
+          $(this).dataTable().fnDraw();
+        });
+        return;
+      }
 
       // don't duplicate previous requests
       $('.jumbotron h1 .fa').remove();
@@ -499,13 +502,14 @@
     function loadQuery(new_dimensions, new_observations) {
       $('#select-dimension').multiSelect('deselect_all').multiSelect('select', new_dimensions);
       $('#select-observation').multiSelect('deselect_all').multiSelect('select', new_observations);
-      $('#build-table').click();
     }
 
     $('#saved-queries').change(function() {
       var option = $(this).find('option:selected');
       loadQuery(option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
+
+    $('#build-table').click();
 
   });
 }(jQuery)

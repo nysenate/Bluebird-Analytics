@@ -9,6 +9,25 @@ const INFO  = 3;
 const DEBUG = 4;
 
 
+function send_response($code, $message, $data=NULL)
+{
+  header("Content-Type: application/json; charset=UTF-8");
+  http_response_code($code);
+  echo json_encode(array(
+      'code' => $code,
+      'message' => $message,
+      'data' => $data,
+  ));
+  exit(0);
+}
+
+
+function clean_string($input)
+{
+  return preg_replace('/[^-a-zA-Z0-9: _,]/', '', $input);
+}
+
+
 /**
  *  Inserts a batch of rows of arbitrary size.
  */

@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS datatable;
 DROP TABLE IF EXISTS request;
 DROP TABLE IF EXISTS summary_1m;
 DROP TABLE IF EXISTS uniques_1m;
@@ -10,6 +11,12 @@ DROP TABLE IF EXISTS uniques_1d;
 DROP TABLE IF EXISTS instance;
 DROP TABLE IF EXISTS apache_cron_runs;
 
+CREATE TABLE datatable (
+    id int unsigned AUTO_INCREMENT PRIMARY KEY,
+    name varchar(255) UNIQUE KEY,
+    dimensions varchar(255),
+    observations varchar(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE instance (
     id int unsigned AUTO_INCREMENT PRIMARY KEY,

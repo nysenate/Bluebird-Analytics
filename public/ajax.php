@@ -408,13 +408,6 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
   echo json_encode( $output );
 }
 
-
-function clean_string($input)
-{
-  return preg_replace('/[^-a-zA-Z0-9: _,]/', '', $input);
-}
-
-
 function get_table_suffix()
 {
   if (!isset($_GET['granularity'])) {
@@ -442,17 +435,4 @@ function uniques_to_row($rows)
     $data[$row['type']] = $row['total'];
   }
   return $data;
-}
-
-
-function send_response($code, $message, $data=NULL)
-{
-  header("Content-Type: application/json; charset=UTF-8");
-  http_response_code($code);
-  echo json_encode(array(
-      'code' => $code,
-      'message' => $message,
-      'data' => $data,
-  ));
-  exit(0);
 }
