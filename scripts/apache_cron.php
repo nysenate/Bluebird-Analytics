@@ -287,8 +287,8 @@ function summarize($dbcon, $start_time, $end_time)
     }
 
     // Process the day block every day
-    $end_range = $start_range + 86400;
-    if ($start_range % 86400 == 0 && $end_range > $start_time) {
+    $end_range = strtotime('today', $start_range + 86400);
+    if (strtotime('today', $start_range) == $start_range && $end_range > $start_time) {
       create_summary_entries($dbcon, $mysql_date, '1d', $start_range, $end_range);
       create_uniques_entries($dbcon, $mysql_date, '1d', $start_range, $end_range);
     }
@@ -325,7 +325,6 @@ function create_summary_entries($dbcon, $mysql_date, $table_suffix, $start_range
 
 function create_uniques_entries($dbcon, $mysql_date, $table_suffix, $start_range, $end_range)
 {
-  $mysql_date = date("Y-m-d H:i:s", $start_range);
   $rows = array();
   foreach(array('path') as $stat) {
     $result = $dbcon->query("
