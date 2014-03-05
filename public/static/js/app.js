@@ -259,11 +259,10 @@
       $.each(config[view], function( index, settings ) {
         var type = index
         jqxhr[index] = $.ajax({
-          url: $("body").data("context-path")+"/ajax.php",
+          url: $("body").data("context-path")+"/api/get_"+type,
           timeout: 100000,
           data: {
             view: view,
-            type: type,
             start_datetime: DateRange.start_moment.format(data_df),
             end_datetime: DateRange.end_moment.format(data_df),
             granularity: DateRange.granularity,
@@ -481,11 +480,10 @@
       $('#datatable-container').html(html).find('table').dataTable({
         bProcessing: true,
         bServerSide: true,
-        sAjaxSource: $("body").data("context-path")+"/ajax.php",
+        sAjaxSource: $("body").data("context-path")+"/api/get_datatable",
         fnServerParams: function ( aoData ) {
           aoData.push(
-            { name: "view", value: "content"},
-            { name: "type", value: "datatable"},
+            { name: "view", value: "datatable"},
             { name: "start_datetime", value: DateRange.start_moment.format(data_df)},
             { name: "end_datetime", value: DateRange.end_moment.format(data_df)},
             { name: "granularity", value: DateRange.granularity},
@@ -499,17 +497,69 @@
       }).fnSetFilteringDelay(500);
     })
 
-    function loadQuery(new_dimensions, new_observations) {
+    function loadQuery(name, new_dimensions, new_observations) {
       $('#select-dimension').multiSelect('deselect_all').multiSelect('select', new_dimensions);
       $('#select-observation').multiSelect('deselect_all').multiSelect('select', new_observations);
+      if (name != "New Query") {
+        $('#query-name').val(name);
+        $("#save-query").html("Update Query");
+        $("#delete-query").show();
+      }
+      else {
+        $('#query-name').val('');
+        $("#save-query").html("Save Query");
+        $("#delete-query").hide();
+      }
     }
+
+    $("#delete-query").click(function() {
+      $.ajax({
+        url: $("body").data("context-path")+"/api/delete_query",
+        dataType: 'json',
+        data: {
+          id: $("#saved-queries").val(),
+        },
+        success: function(data) {
+          $('#saved-queries option[value='+data.id+']').remove();
+          $('#saved-queries').change();
+        },
+        error: function(data) {
+          alert("Delete failure!");
+        }
+      });
+    });
+
+    $("#save-query").click(function() {
+      $.ajax({
+        url: $("body").data("context-path")+"/api/save_query",
+        dataType: 'json',
+        data: {
+          id: $("#saved-queries").val(),
+          name: $('#query-name').val(),
+          dimensions: dimensions.join(','),
+          observations: observations.join(','),
+        },
+        success: function(data) {
+          option = $('#saved-queries option[value='+data.id+']');
+          if (option.length) {
+            option.data('dimensions', data.dimensions);
+            option.data('observations', data.observations);
+            option.html(data.name);
+          }
+          else {
+            var option = "<option value='"+data.id+"' data-dimensions='"+data.dimensions+"' data-observations='"+data.observations+"'>"+data.name+"</option>";
+            $('#saved-queries').append(option).val(data.id).change();
+          }
+        },
+        error: function(data) {
+          alert("Save failure!");
+        }
+      });
+    });
 
     $('#saved-queries').change(function() {
       var option = $(this).find('option:selected');
-      loadQuery(option.data('dimensions').split(','), option.data('observations').split(','));
+      loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
-
-    $('#build-table').click();
-
   });
 }(jQuery)

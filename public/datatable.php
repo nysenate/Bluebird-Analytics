@@ -16,11 +16,16 @@
     </select>
   </div>
   <div class="col-lg-4" style="text-align:center;">
-    Select a saved query:
-    <select id="saved-queries"><?php
+    Query Name: <input id="query-name" type='text' placeholder="Enter query name"/>
+    <button id="save-query" class="button">Save Query</button>
+    <button id="delete-query" class="button">Delete Query</button>
+    <br/><br/>
+    Choose a query:
+    <select id="saved-queries">
+      <option value="0" data-dimensions="" data-observations="">New Query</option><?php
       $result = $dbcon->query("SELECT * FROM datatable");
       while( $row = $result->fetch(PDO::FETCH_ASSOC) ) {
-        echo "<option val='${row['id']}' data-dimensions='${row['dimensions']}' data-observations='${row['observations']}'>${row['name']}</option>\n";
+        echo "<option value='${row['id']}' data-dimensions='${row['dimensions']}' data-observations='${row['observations']}'>${row['name']}</option>\n";
       }
     ?></select>
     <br/><br/>
