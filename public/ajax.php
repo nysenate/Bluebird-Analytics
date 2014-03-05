@@ -284,12 +284,19 @@ function do_chart($view, $install_class, $instance_name, $start_datetime, $end_d
 
 function do_datatable($view, $install_class, $instance_name, $start_datetime, $end_datetime, $dbcon)
 {
-  $OBSERVATION_LOOKUP = array(
+  $COLUMN_LOOKUP = array(
+    // Dimensions
+    'path' => 'path',
+    'query' => 'query',
+    'remote_ip' => 'remote_ip',
+    'instance.name' => 'instance.name as `instance.name`',
+
+    // Observations
     'total_views' => 'count(*) as total_views',
     'avg_response_time' => 'CAST(IFNULL(avg(response_time)/1000000, 0) AS DECIMAL(12,2)) as avg_response_time',
+    '503_errors' => 'IFNULL(sum(response_code = 503), 0) as 503_errors',
+    '500_errors' => 'IFNULL(sum(response_code = 500), 0) as 500_errors',
   );
-  $valid_observations = array_keys($OBSERVATION_LOOKUP);
-  $valid_dimensions = array('path', 'instance', 'remote_ip');
 
   foreach(array('dimensions', 'observations') as $key) {
     if (!isset($_GET[$key])) {
@@ -304,24 +311,25 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
 
   // Validate the dimensions
   foreach($dimensions as $dimension) {
-    if (!in_array($dimension, $valid_dimensions)) {
+    if (!array_key_exists($dimension, $COLUMN_LOOKUP)) {
       send_response(400, "Dimension '$dimension' must be one of ".implode(',', $valid_dimensions));
     }
   }
 
   // Validate the observations
   foreach($observations as $observation) {
-    if (!in_array($observation, $valid_observations)) {
+    if (!array_key_exists($observation, $COLUMN_LOOKUP)) {
       send_response(400, "Observation '$observation' must be one of ".implode(',', $valid_observations));
     }
   }
 
   // Construct the standard query parts based on the requested dimensions/observations
-  $selectColumns = $dimensions;
-  foreach($observations as $observation) {
-    $selectColumns[] = $OBSERVATION_LOOKUP[$observation];
+  $selectColumns = array();
+  foreach($columns as $column) {
+    $selectColumns[] = $COLUMN_LOOKUP[$column];
   }
   $select = implode(', ', $selectColumns);
+
   $from = "request, instance";
   $where = "instance.id = instance_id
         AND instance.install_class = '$install_class'
@@ -348,7 +356,7 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
   if (isset($_GET['sSearch']) && $_GET['sSearch'] != "") {
       for ($i=0; $i<count($columns); $i++) {
           if (isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == 'true') {
-              $dataFilteringRules[] = "`".$columns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch'].'%');
+              $dataFilteringRules[] = $columns[$i]." LIKE ".$dbcon->quote('%'.$_GET['sSearch'].'%');
           }
       }
       if (!empty($dataFilteringRules)) {
@@ -359,7 +367,7 @@ function do_datatable($view, $install_class, $instance_name, $start_datetime, $e
   // Individual column filtering
   for ( $i=0 ; $i<count($columns) ; $i++ ) {
       if ( isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == 'true' && $_GET['sSearch_'.$i] != '' ) {
-          $dataFilteringRules[] = "`".$columns[$i]."` LIKE ".$dbcon->quote('%'.$_GET['sSearch_'.$i].'%');
+          $dataFilteringRules[] = $columns[$i]." LIKE ".$dbcon->quote('%'.$_GET['sSearch_'.$i].'%');
       }
   }
 

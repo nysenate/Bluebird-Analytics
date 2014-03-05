@@ -470,7 +470,7 @@
       var headers = [];
       var aoColumns = [];
       $.each(dimensions, function() {
-        headers.push("<th data-searchable='1'>"+$('#select-dimension option[value='+this+']').html()+"</th>");
+        headers.push("<th data-searchable='1'>"+$('#select-dimension option[value="'+this+'"]').html()+"</th>");
         aoColumns.push({ bSearchable: true});
       });
       $.each(observations, function() {

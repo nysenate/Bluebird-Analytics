@@ -1,8 +1,9 @@
 <div class="row">
   <div class="col-lg-4">
     <select multiple="multiple" id="select-dimension" name="my-select[]">
-      <option value='instance'>Instance</option>
+      <option value='instance.name'>Instance Name</option>
       <option value='path'>Path</option>
+      <option value='query'>Query</option>
       <option value='remote_ip'>Remote IP</option>
     </select>
   </div>
@@ -10,6 +11,8 @@
     <select multiple="multiple" id="select-observation" name="my-select[]" float>
       <option value='total_views'>Total Views</option>
       <option value='avg_response_time'>Avg Response Time</option>
+      <option value='500_errors'>App Errors</option>
+      <option value='503_errors'>DB Errors</option>
     </select>
   </div>
   <div class="col-lg-4" style="text-align:center;">
