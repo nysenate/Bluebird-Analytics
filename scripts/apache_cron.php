@@ -261,7 +261,7 @@ function summarize($dbcon, $start_time, $end_time)
   // Go all the way back to the last possible block that there could be new data for.
   // Only process blocks on the even, e.g. 1:00, 1:15, 1:30
   // Don't process blocks that end before our offical start time
-  $start_range = $start_time - $start_time % 86400;
+  $start_range = strtotime('today', $start_time);
   while ($start_range < $end_time) {
     $mysql_date = date("Y-m-d H:i:s", $start_range);
 
