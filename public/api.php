@@ -225,7 +225,6 @@ function get_summary($args, $dbcon)
       send_response(200, "success", array(
         'page_views' => $numbers['page_views'],
         'distinct_pages' => $uniques['path'],
-        'unique_ips' => $uniques['remote_ip'],
         '503_errors' => $numbers['503_errors'],
         '500_errors' => $numbers['500_errors'],
         'active_instances' => $instances['active_instances'],
