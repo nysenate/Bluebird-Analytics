@@ -43,7 +43,7 @@ $result = $dbcon->query("SELECT * FROM apache_cron_runs ORDER BY final_ctime DES
 $row = $result->fetch(PDO::FETCH_ASSOC);
 $final_offset = $start_offset = $row['final_offset'];
 $final_ctime = $start_ctime = strtotime($row['final_ctime']);
-echo "Last run ended at ".DateTime::createFromFormat('U', $start_ctime)->format(DateTime::ISO8601)." offset $start_offset\n";
+echo "Last APACHE run ended at ".DateTime::createFromFormat('U', $start_ctime)->format(DateTime::ISO8601)." offset $start_offset\n";
 
 // Process log files that have been updated since the last run. Use >= here so that we
 // catch files that were rotated immediately after our last run. Otherwise we might apply

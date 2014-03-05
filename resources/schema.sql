@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS mysql;
 DROP TABLE IF EXISTS datatable;
 DROP TABLE IF EXISTS request;
 DROP TABLE IF EXISTS summary_1m;
@@ -10,6 +11,48 @@ DROP TABLE IF EXISTS summary_1d;
 DROP TABLE IF EXISTS uniques_1d;
 DROP TABLE IF EXISTS instance;
 DROP TABLE IF EXISTS apache_cron_runs;
+DROP TABLE IF EXISTS mysql_cron_runs;
+
+CREATE TABLE mysql (
+  time datetime PRIMARY KEY,
+  aborted_connects int unsigned,
+  bytes_received int unsigned,
+  bytes_sent int unsigned,
+  connections int unsigned,
+  created_tmp_disk_tables int unsigned,
+  created_tmp_files int unsigned,
+  created_tmp_tables int unsigned,
+  delayed_errors int unsigned,
+  delayed_insert_threads int unsigned,
+  delayed_writes int unsigned,
+  innodb_row_lock_current_waits int unsigned,
+  innodb_row_lock_time int unsigned,
+  innodb_row_lock_time_avg int unsigned,
+  innodb_row_lock_time_max int unsigned,
+  innodb_row_lock_waits int unsigned,
+  innodb_rows_deleted int unsigned,
+  innodb_rows_inserted int unsigned,
+  innodb_rows_read int unsigned,
+  innodb_rows_updated int unsigned,
+  max_used_connections int unsigned,
+  open_files int unsigned,
+  open_streams int unsigned,
+  open_table_definitions int unsigned,
+  open_tables int unsigned,
+  opened_files int unsigned,
+  queries int unsigned,
+  questions int unsigned,
+  slow_launch_threads int unsigned,
+  slow_queries int unsigned,
+  table_locks_immediate int unsigned,
+  table_locks_waited int unsigned,
+  threads_cached int unsigned,
+  threads_connected int unsigned,
+  threads_created int unsigned,
+  threads_running int unsigned,
+  uptime int unsigned,
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 CREATE TABLE datatable (
     id int unsigned AUTO_INCREMENT PRIMARY KEY,

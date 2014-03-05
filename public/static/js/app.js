@@ -388,10 +388,8 @@
                         var time = moment(options.data[index]["chart_time"]).format('ddd l, h A');
                       break;
                     case 'day':
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l');
-                      break;
                     case 'month':
-                        var time = moment(options.data[index]["chart_time"]).format('MMMM YYYY');
+                        var time = moment(options.data[index]["chart_time"]).format('ddd l');
                       break;
                     default:
                         var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
