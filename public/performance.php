@@ -123,8 +123,7 @@
   <div class="col-lg-12">
     <div class="panel chart panel-primary">
       <div class="panel-heading">
-
-        <h3 class="panel-title" ><i class="fa fa-bar-chart-o"></i> Overview</h3>
+       <h3 class="panel-title" ><i class="fa fa-bar-chart-o"></i> Overview</h3>
       </div>
       <div class="panel-body">
         <div id="overview"></div>

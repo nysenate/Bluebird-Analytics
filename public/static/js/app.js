@@ -237,9 +237,45 @@
       return this;
     };
 
+    $.fn.chartpicker = function(user_options) {
+      var options = $.extend({}, user_options);
+
+      // // We automatically bind update to 'this' to avoid context errors
+      // var update = function(new_instance) {
+      //   console.log("Updating instance name to: "+new_instance);
+      //   if (this.instance_name != new_instance) {
+      //     this.val(new_instance);
+      //   }
+      //   this.instance_name = new_instance;
+      //   $.cookie('data-instance', new_instance);
+      //   HashStorage.update({'data-instance': new_instance});
+      // }.bind(this);
+
+
+      // if(HashStorage.has(['data-instance'])) {
+      //   update(HashStorage.data['data-instance']);
+      // }
+      // else if ($.cookie('data-instance') != undefined) {
+      //   console.log('Cookie val: '+$.cookie('data-instance'));
+      //   update($.cookie('data-instance'));
+      // }
+      // else {
+      //   update(this.val());
+      // }
+
+      // this.selectpicker();
+      // this.change(function (event) {
+      //   update($(this).val());
+      //   $('#page-wrapper').Render();
+      // });
+      // return this;
+    };
+
+
 
     var DateRange = $('#reportrange').bbdaterangepicker();
     var Instance = $('#instance-picker').instancepicker();
+    var Performance = $('#performance-picker').chartpicker();
 
 
     // for each of the configuration parameters execute an AJAX call
@@ -500,7 +536,7 @@
     function loadQuery(name, new_dimensions, new_observations) {
       $('#select-dimension').multiSelect('deselect_all').multiSelect('select', new_dimensions);
       $('#select-observation').multiSelect('deselect_all').multiSelect('select', new_observations);
-      if (name != "New Query") {
+      if (name != "Create New Query") {
         $('#query-name').val(name);
         $("#save-query").html("Update Query");
         $("#delete-query").show();

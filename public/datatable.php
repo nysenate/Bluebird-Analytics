@@ -15,21 +15,41 @@
       <option value='503_errors'>DB Errors</option>
     </select>
   </div>
-  <div class="col-lg-4" style="text-align:center;">
-    Query Name: <input id="query-name" type='text' placeholder="Enter query name"/>
-    <button id="save-query" class="button">Save Query</button>
-    <button id="delete-query" class="button">Delete Query</button>
-    <br/><br/>
-    Choose a query:
-    <select id="saved-queries">
-      <option value="0" data-dimensions="" data-observations="">New Query</option><?php
-      $result = $dbcon->query("SELECT * FROM datatable");
-      while( $row = $result->fetch(PDO::FETCH_ASSOC) ) {
-        echo "<option value='${row['id']}' data-dimensions='${row['dimensions']}' data-observations='${row['observations']}'>${row['name']}</option>\n";
-      }
-    ?></select>
-    <br/><br/>
-    <button id="build-table" class="button">Build Table!</button>
+  <div class="col-lg-4">
+
+    <div class="row">
+      <label class="control-label col-lg-3" for="inputSuccess3">Select:</label>
+      <div class="col-lg-9">
+        <select id="saved-queries" class="form-control">
+          <option value="0" data-dimensions="" data-observations="">Create New Query</option>
+          <?php
+            $result = $dbcon->query("SELECT * FROM datatable");
+            while( $row = $result->fetch(PDO::FETCH_ASSOC) ) {
+              echo "<option value='${row['id']}' data-dimensions='${row['dimensions']}' data-observations='${row['observations']}'>${row['name']}</option>\n";
+            }?>
+        </select>
+      </div>
+    </div>
+
+    <hr/>
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="input-group">
+          <input id="query-name"  class="form-control" type='text' placeholder="Enter query name"/>
+          <div class="input-group-btn">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+              Action <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu pull-right">
+              <li><a href="#" id="save-query">Save Query</a></li>
+              <li><a href="#" id="delete-query">Delete Query</a></li>
+            </ul>
+          </div><!-- /btn-group -->
+        </div><!-- /input-group -->
+      </div>
+    </div>
+    <hr/>
+    <button id="build-table" class="button btn-primary form-control">Build Table!</button>
   </div>
 </div>
 <br/>

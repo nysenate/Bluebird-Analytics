@@ -90,7 +90,7 @@ $scripts = array(
     array('src'=>'/static/vendor/jquery.datatables-1.9.4/css/jquery.dataTables.css'),
     array('src'=>'/static/vendor/lou-multi-select-0.9.11/css/multi-select.css'),
     array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.2/daterangepicker.css'),
-    array('src'=>'/static/vendor/bootstrap-select-1.4.2/bootstrap-select.min.css'),
+    array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.1-0/bootstrap-select.min.css'),
     array('src'=>'/static/css/sb-admin.css'),
   ),
   'js' => array(
@@ -104,7 +104,7 @@ $scripts = array(
     array('src'=>'/static/vendor/jquery.cookie-1.4.0.js'),
     array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.2/daterangepicker.js'),
     array('src'=>'/static/vendor/moment-2.5.1.min.js'),
-    array('src'=>'/static/vendor/bootstrap-select-1.4.2/bootstrap-select.min.js'),
+    array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.1-0/bootstrap-select.min.js'),
     array('src'=>'/static/js/app.js'),
   )
 );
