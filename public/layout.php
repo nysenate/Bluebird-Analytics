@@ -60,7 +60,7 @@
 
           <ul class="nav navbar-nav navbar-right navbar-user">
             <li class="instance-choice">
-              <select id="instance-picker" class="selectpicker" data-size="5" data-style="btn-inverse">
+              <select id="instance-picker" class="selectpicker" data-live-search="true" data-size="5" data-style="btn-inverse">
                 <option>ALL</option>
                 <option data-divider="true"></option>
                 <?php
