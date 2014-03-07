@@ -109,7 +109,7 @@ $scripts = array(
   )
 );
 
-$instances = array('skelos', 'breslin', 'fuschillo', 'marchione');
+$instances = array('123click','3rdparty','3rdpartystatewide','adams','addabbo','alesi','avella','ball','bonacic','boyle','breslin','carlucci','defrancisco','demcomms','demo','diaz','dilan','espaillat','example','farley','felder','flanagan','fuschillo','gallivan','gianaris','gipson','golden','griffo','grisanti','hannon','hassellthompson','hoylman','huntley','kennedy','klein','krueger','lanza','larkin','latimer','lavalle','libous','little','marcellino','marchione','martins','maziarz','montgomery','neison','nozzolio','obrien','omara','parker','peralta','perkins','ranzenhofer','ritchie','rivera','robach','ruralresources','saland','sampson','sanders','savino','sd83','sd95','sd98','sd99','serrano','seward','skelos','smith','squadron','stavisky','stewartcousins','template','tkaczyk','training1','training2','training3','training4','valesky','young','zeldin');
 
 require_once('../lib/template_helpers.php');
 include('layout.php');
