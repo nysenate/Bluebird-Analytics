@@ -82,7 +82,7 @@ $layout_content = $navigation[$request][$sub]['content'];
 
 $scripts = array(
   'css' => array(
-    array('src'=>'/static/vendor/bootstrap-3.1.0/bootstrap.css'),
+    array('src'=>'/static/vendor/bootstrap-3.1.1/css/bootstrap.min.css'),
     array('src'=>'/static/vendor/font-awesome-4.0.3/css/font-awesome.min.css'),
     array('src'=>'/static/vendor/opensans-v6/css/opensans.css'),
     array('src'=>'/static/vendor/ubuntu-v4/css/ubuntu.css'),
@@ -95,7 +95,7 @@ $scripts = array(
   ),
   'js' => array(
     array('src'=>'/static/vendor/jquery-2.1.0.min.js'),
-    array('src'=>'/static/vendor/bootstrap-3.1.0/bootstrap.min.js'),
+    array('src'=>'/static/vendor/bootstrap-3.1.1/js/bootstrap.min.js'),
     array('src'=>'/static/vendor/raphael-2.1.2.min.js'),
     array('src'=>'/static/vendor/morris-0.4.3/morris.min.js'),
     array('src'=>'/static/vendor/jquery.datatables-1.9.4/js/jquery.dataTables.min.js'),

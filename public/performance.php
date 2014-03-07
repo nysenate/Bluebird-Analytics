@@ -131,26 +131,23 @@
             <button type="button" class="btn active btn-default">All</button>
             <button type="button" class="btn btn-default">Apache</button>
             <button type="button" class="btn btn-default">Database</button>
-            <div class="btn-group btn-group-xs">
-              <button type="button" class="btn btn-default dropdown-toggle " data-toggle="dropdown">
-                custom
-                <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu pull-right" role="menu" aria-labelledby="dLabel">
-                <li role="presentation" class="dropdown-header">Apache</li>
-                <li><a href="#">Dropdown link</a></li>
-                <li><a href="#">Dropdown link</a></li>
-                <li><a href="#">Dropdown link</a></li>
-
-                <li role="presentation" class="divider"></li>
-                <li role="presentation" class="dropdown-header">Database</li>
-                <li class="list-group-item">Cras justo odio</li>
-                <li class="list-group-item">Dapibus ac facilisis in</li>
-                <li class="list-group-item">Morbi leo risus</li>
-                <li class="list-group-item">Porta ac consectetur ac</li>
-                <li class="list-group-item">Vestibulum at eros</li>
-              </ul>
-            </div>
+            <select id="performance-picker" class="btn-group-xs" multiple title='Custom' data-selected-text-format="count">
+              <optgroup label="Apache">
+                <option value='0'>App Errors</option>
+                <option value='1'>Database Errors</option>
+                <option value='2'>Response Time</option>
+                <option value='3'>Page Views (x1000)</option>
+              </optgroup>
+              <optgroup label="Database" disabled>
+                <option value='4'>Queries</option>
+                <option value='5'>Slow Queries</option>
+                <option value='6'>queries</option>
+                <option value='7'>Max Connections</option>
+                <option value='8'>questions</option>
+                <option value='9'>innodb_lock_avg</option>
+                <option value='10'>innodb_lock_max</option>
+              </optgroup>
+            </select>
           </div>
         </div>
       </div>

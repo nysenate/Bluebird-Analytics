@@ -41,6 +41,8 @@
         element: 'overview',
         ykeys: ['500_errors','503_errors','avg_response_time','page_view','queries','slow_queries','queries','max_con','questions','innodb_lock_avg','innodb_lock_max'],
         labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)','Queries','Slow Queries','queries','Max Connections','questions','innodb_lock_avg','innodb_lock_max'],
+        bank_ykeys: ['500_errors','503_errors','avg_response_time','page_view','queries','slow_queries','queries','max_con','questions','innodb_lock_avg','innodb_lock_max'],
+        bank_labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)','Queries','Slow Queries','queries','Max Connections','questions','innodb_lock_avg','innodb_lock_max'],
       },
       list : {
         slow_queries: {
@@ -53,7 +55,6 @@
     audience: {},
     behavior: {}
   };
-
   $(document).ready(function() {
     function get_granularity(start_moment, end_moment) {
       var difference = end_moment.unix() - start_moment.unix();
@@ -240,35 +241,28 @@
     $.fn.chartpicker = function(user_options) {
       var options = $.extend({}, user_options);
 
-      // // We automatically bind update to 'this' to avoid context errors
-      // var update = function(new_instance) {
-      //   console.log("Updating instance name to: "+new_instance);
-      //   if (this.instance_name != new_instance) {
-      //     this.val(new_instance);
-      //   }
-      //   this.instance_name = new_instance;
-      //   $.cookie('data-instance', new_instance);
-      //   HashStorage.update({'data-instance': new_instance});
-      // }.bind(this);
+      // We automatically bind update to 'this' to avoid context errors
+      var update = function(fields) {
+        console.log("Updating graph to show: "+fields);
+        // console.log("Labels Pre: "+config[view]['chart']['labels']);
+        // console.log("Keys Pre: "+config[view]['chart']['ykeys']);
+        config[view]['chart']['ykeys'] = [];
+        config[view]['chart']['labels'] = [];
+        $.each(fields, function( index, value ) {
+          config[view]['chart']['ykeys'].push(config[view]['chart']['bank_ykeys'][value]);
+          config[view]['chart']['labels'].push(config[view]['chart']['bank_labels'][value]);
+        });
+        // console.log("Labels Post: "+config[view]['chart']['labels']);
+        // console.log("Keys Post: "+config[view]['chart']['ykeys']);
+      }.bind(this);
 
 
-      // if(HashStorage.has(['data-instance'])) {
-      //   update(HashStorage.data['data-instance']);
-      // }
-      // else if ($.cookie('data-instance') != undefined) {
-      //   console.log('Cookie val: '+$.cookie('data-instance'));
-      //   update($.cookie('data-instance'));
-      // }
-      // else {
-      //   update(this.val());
-      // }
-
-      // this.selectpicker();
-      // this.change(function (event) {
-      //   update($(this).val());
-      //   $('#page-wrapper').Render();
-      // });
-      // return this;
+      this.selectpicker();
+      this.change(function (event) {
+        update($(this).val());
+        $('#page-wrapper').Render();
+      });
+      return this;
     };
 
 
@@ -291,7 +285,6 @@
 
       // don't duplicate previous requests
       $('.jumbotron h1 .fa').remove();
-      // $('.selectpicker').selectpicker();
       $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
       $.each(config[view], function( index, settings ) {
         var type = index
@@ -352,70 +345,67 @@
           }else if (type === "chart") {
             // add data to chart
             $('.chart').slideDown();
-            if($('#'+settings['element']+" svg").length) {
-              // update existing chart
-              graph.setData(response.data);
-            }else{
-              // parse data in morris
-              graph = Morris.Line({
-                element: settings['element'],
-                data: response.data,
-                xkey: 'chart_time',
-                ykeys: settings['ykeys'],
-                labels: settings['labels'],
-                pointSize: 3,
-                // http://flatuicolors.com/
-                lineColors: [
-                 "#3498db",
-                 "#2ecc71",
-                 "#16a085",
-                 "#9b59b6",
-                 "#34495e",
-                 "#e74c3c",
-                 "#f39c12",
-                 "#c0392b",
-                 "#d35400"
-                 ],
-                parseTime: true,
-                // goals: [5.0,10.0,50.0,100.0],
-                // goalLineColors: ["#EA7E58","#D13A43", "#A51D35","#931A21"],
-                // goalStrokeWidth:2,
-                continuousLine: false,
-                // axes: false,
-                // ymin: 0,
-                grid: true,
-                ymax: 'auto 100',
-                hideHover: true,
-                hoverCallback: function (index, options, content) {
-                  switch (DateRange.granularity) {
-                    case 'minute':
-                    case '15minute':
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
-                      break;
-                    case 'hour':
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l, h A');
-                      break;
-                    case 'day':
-                    case 'month':
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l');
-                      break;
-                    default:
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
-                      break
+            $('#'+settings['element']+" svg,.morris-hover").remove();
+            // update existing chart
+            console.log('reloading Chart with: ',settings['ykeys'],' - ',settings['labels']);
+            graph = Morris.Line({
+              element: settings['element'],
+              data: response.data,
+              xkey: 'chart_time',
+              ykeys: settings['ykeys'],
+              labels: settings['labels'],
+              pointSize: 3,
+              // http://flatuicolors.com/
+              lineColors: [
+               "#3498db",
+               "#2ecc71",
+               "#16a085",
+               "#9b59b6",
+               "#34495e",
+               "#e74c3c",
+               "#f39c12",
+               "#c0392b",
+               "#d35400"
+               ],
+              parseTime: true,
+              // goals: [5.0,10.0,50.0,100.0],
+              // goalLineColors: ["#EA7E58","#D13A43", "#A51D35","#931A21"],
+              // goalStrokeWidth:2,
+              continuousLine: false,
+              // axes: false,
+              // ymin: 0,
+              grid: true,
+              ymax: 'auto 50',
+              hideHover: true,
+              hoverCallback: function (index, options, content) {
+                switch (DateRange.granularity) {
+                  case 'minute':
+                  case '15minute':
+                      var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
+                    break;
+                  case 'hour':
+                      var time = moment(options.data[index]["chart_time"]).format('ddd l, h A');
+                    break;
+                  case 'day':
+                  case 'month':
+                      var time = moment(options.data[index]["chart_time"]).format('ddd l');
+                    break;
+                  default:
+                      var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
+                    break
+                }
+                var html = " <div class='morris-hover-row-label'> "+time+"</div>";
+                $.each(options.data[index], function( key, values ) {
+                  if($.inArray(key, options.ykeys)!==-1){
+                    var id = $.inArray(key, options.ykeys);
+                    html += " <div class='morris-hover-point' style='color: "+options.lineColors[id]+"'> "+options.labels[id]+": "+values+"</div> ";
                   }
-                  var html = " <div class='morris-hover-row-label'> "+time+"</div>";
-                  $.each(options.data[index], function( key, values ) {
-                    if($.inArray(key, options.ykeys)!==-1){
-                      var id = $.inArray(key, options.ykeys);
-                      html += " <div class='morris-hover-point' style='color: "+options.lineColors[id]+"'> "+options.labels[id]+": "+values+"</div> ";
-                    }
-                  });
-                  return html;
-                },
-                smooth: true
-              });
+                });
+                return html;
+              },
+              smooth: true
+            });
 
-            }
 
           } else if (type === "list") {
             $.each(settings, function( table, table_data ) {
@@ -542,7 +532,7 @@
     function loadQuery(name, new_dimensions, new_observations) {
       $('#select-dimension').multiSelect('deselect_all').multiSelect('select', new_dimensions);
       $('#select-observation').multiSelect('deselect_all').multiSelect('select', new_observations);
-      if (name != "Create New Query") {
+      if (name != "New Query") {
         $('#query-name').val(name);
         $("#save-query").html("Update Query");
         $("#delete-query").show();
