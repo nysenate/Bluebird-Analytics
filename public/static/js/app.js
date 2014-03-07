@@ -398,7 +398,9 @@
                 $.each(options.data[index], function( key, values ) {
                   if($.inArray(key, options.ykeys)!==-1){
                     var id = $.inArray(key, options.ykeys);
-                    html += " <div class='morris-hover-point' style='color: "+options.lineColors[id]+"'> "+options.labels[id]+": "+values+"</div> ";
+                    var colorid = $.inArray(key, config[view]['chart']['bank_ykeys']);
+                    console.log(colorid,id);
+                    html += " <div class='morris-hover-point' style='color: "+options.lineColors[colorid]+"'> "+options.labels[id]+": "+values+"</div> ";
                   }
                 });
                 return html;
