@@ -5,6 +5,7 @@
       <option value='path'>Path</option>
       <option value='query'>Query</option>
       <option value='remote_ip'>Remote IP</option>
+      <option value='time'>Time of Request</option>
     </select>
   </div>
   <div class="col-lg-4">

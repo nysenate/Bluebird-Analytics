@@ -327,6 +327,7 @@ function get_datatable($args, $dbcon)
     'instance.name' => 'instance.name as `instance.name`',
 
     // Observations
+    'time' => 'time',
     'total_views' => 'count(*) as total_views',
     'avg_response_time' => 'CAST(IFNULL(avg(response_time)/1000000, 0) AS DECIMAL(12,2)) as avg_response_time',
     '503_errors' => 'IFNULL(sum(response_code = 503), 0) as 503_errors',
