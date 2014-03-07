@@ -32,8 +32,8 @@
     },
     performance: {
       summary : {
-        'app_errors': '503_errors',
-        'db_errors': '500_errors',
+        'app_errors': '500_errors',
+        'db_errors': '503_errors',
         response_time : 'avg_response_time',
         uptime : "",
       },
