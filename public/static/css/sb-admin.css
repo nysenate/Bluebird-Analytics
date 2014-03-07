@@ -125,6 +125,7 @@ h1 .fa-spin {
   background: #dadada;
   color: #333;
   border-color: #ccc;
+  min-height: 40px;
 }
 
 .panel-primary {

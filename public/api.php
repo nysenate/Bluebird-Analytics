@@ -293,7 +293,17 @@ function get_chart($args, $dbcon)
           sum(503_errors) as 503_errors,
           sum(500_errors) as 500_errors,
           sum(response_time) as response_time,
-          CAST(IFNULL(sum(page_views)/1000, 0) AS DECIMAL(12,1))  as page_view
+          CAST(IFNULL(sum(page_views)/1000, 0) AS DECIMAL(12,1))  as page_view,
+
+          CAST(IFNULL(sum(500_errors)*4, 0) AS DECIMAL(12,1)) as queries,
+          CAST(IFNULL(sum(500_errors)*6, 0) AS DECIMAL(12,1)) as slow_queries,
+          CAST(IFNULL(sum(500_errors)/12, 0) AS DECIMAL(12,1)) as innodb_reads,
+          CAST(IFNULL(sum(page_views)/22, 0) AS DECIMAL(12,1))  as innodb_updateds,
+          CAST(IFNULL(sum(page_views)/466, 0) AS DECIMAL(12,1)) as innodb_lock_avg,
+          CAST(IFNULL(sum(page_views)/423, 0) AS DECIMAL(12,1)) as innodb_lock_max,
+          CAST(IFNULL(sum(page_views)/411, 0) AS DECIMAL(12,1)) as max_con,
+          CAST(IFNULL(sum(page_views)/450, 0) AS DECIMAL(12,1)) as questions
+
         FROM summary_$table_suffix, instance
         $WHERE
         GROUP BY chart_time

@@ -39,8 +39,8 @@
       },
       chart : {
         element: 'overview',
-        ykeys: ['500_errors','503_errors','avg_response_time','page_view'],
-        labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)'],
+        ykeys: ['500_errors','503_errors','avg_response_time','page_view','queries','slow_queries','queries','max_con','questions','innodb_lock_avg','innodb_lock_max'],
+        labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)','Queries','Slow Queries','queries','Max Connections','questions','innodb_lock_avg','innodb_lock_max'],
       },
       list : {
         slow_queries: {
@@ -291,6 +291,7 @@
 
       // don't duplicate previous requests
       $('.jumbotron h1 .fa').remove();
+      // $('.selectpicker').selectpicker();
       $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
       $.each(config[view], function( index, settings ) {
         var type = index
@@ -328,10 +329,11 @@
                 break;
               case 'uptime':
                 output = (response.data['503_errors']+response.data['500_errors'])/response.data['page_views'];
-                output = !isNaN(output) ? parseFloat((100-output)).toFixed(2)+"%" : "N/A";
                 if(parseInt(output) != 100 && isNaN(output)) {
+                  output = !isNaN(output) ? parseFloat((100-output)).toFixed(2)+"%" : "N/A";
                   $('#'+key).parent().parent().parent().parent().removeClass('panel-info').addClass('panel-danger');
                 }else{
+                  output = '100%';
                   $('#'+key).parent().parent().parent().parent().removeClass('panel-danger').addClass('panel-info');
                 };
                 break;
@@ -362,12 +364,18 @@
                 ykeys: settings['ykeys'],
                 labels: settings['labels'],
                 pointSize: 3,
-                // C02942 - lt red
-                // D95B43 - lt orange
-                // 53777A - slate blue
-                // 542437 - deep purple
-                // DF151A - fire truck red
-                lineColors: ["#C02942", "#D95B43","#53777A", "#542437","#DF151A"],
+                // http://flatuicolors.com/
+                lineColors: [
+                 "#3498db",
+                 "#2ecc71",
+                 "#16a085",
+                 "#9b59b6",
+                 "#34495e",
+                 "#e74c3c",
+                 "#f39c12",
+                 "#c0392b",
+                 "#d35400"
+                 ],
                 parseTime: true,
                 // goals: [5.0,10.0,50.0,100.0],
                 // goalLineColors: ["#EA7E58","#D13A43", "#A51D35","#931A21"],

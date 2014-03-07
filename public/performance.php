@@ -123,7 +123,36 @@
   <div class="col-lg-12">
     <div class="panel chart panel-primary">
       <div class="panel-heading">
-       <h3 class="panel-title" ><i class="fa fa-bar-chart-o"></i> Overview</h3>
+        <div class="pull-left">
+          <h3 class="panel-title" ><i class="fa fa-bar-chart-o"></i> Overview</h3>
+        </div>
+        <div class="pull-right">
+          <div class="btn-group btn-group-xs">
+            <button type="button" class="btn active btn-default">All</button>
+            <button type="button" class="btn btn-default">Apache</button>
+            <button type="button" class="btn btn-default">Database</button>
+            <div class="btn-group btn-group-xs">
+              <button type="button" class="btn btn-default dropdown-toggle " data-toggle="dropdown">
+                custom
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu pull-right" role="menu" aria-labelledby="dLabel">
+                <li role="presentation" class="dropdown-header">Apache</li>
+                <li><a href="#">Dropdown link</a></li>
+                <li><a href="#">Dropdown link</a></li>
+                <li><a href="#">Dropdown link</a></li>
+
+                <li role="presentation" class="divider"></li>
+                <li role="presentation" class="dropdown-header">Database</li>
+                <li class="list-group-item">Cras justo odio</li>
+                <li class="list-group-item">Dapibus ac facilisis in</li>
+                <li class="list-group-item">Morbi leo risus</li>
+                <li class="list-group-item">Porta ac consectetur ac</li>
+                <li class="list-group-item">Vestibulum at eros</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="panel-body">
         <div id="overview"></div>
