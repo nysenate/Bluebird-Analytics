@@ -186,7 +186,7 @@
           dateLimit: { days: 360 },
           minDate: '04/10/2013',
           maxDate: moment().endOf('day'),
-          timePickerIncrement: 15,
+          timePickerIncrement: 1,
           startDate: this.start_moment,
           endDate: this.end_moment,
       });
