@@ -172,8 +172,7 @@
       }
 
       // Initialize the date picker
-      this.daterangepicker(
-        {
+      this.daterangepicker({
           ranges: {
              'Last Hour': [ moment().subtract('hours', 1), moment()],
              'Today': [moment().startOf('day'), moment()],
@@ -190,12 +189,13 @@
           timePickerIncrement: 15,
           startDate: this.start_moment,
           endDate: this.end_moment,
-        },
-        function(new_start_moment, new_end_moment) {
-          update(new_start_moment, new_end_moment);
+      });
+
+      this.on('apply.daterangepicker', function(ev, picker) {
+          update(picker.startDate, picker.endDate);
           $('#page-wrapper').Render();
-        }
-      );
+      });
+
       return this;
     }
 
