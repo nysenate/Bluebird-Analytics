@@ -156,17 +156,17 @@
           'data-start': new_start_moment.format(data_df),
           'data-end': new_end_moment.format(data_df)
         });
-        $.cookie('data-start', new_start_moment.format(data_df), { expires: 1, path: '/' });
-        $.cookie('data-end', new_end_moment.format(data_df), { expires: 1, path: '/' });
+        // $.cookie('data-start', new_start_moment.format(data_df), { expires: 1, path: '/' });
+        // $.cookie('data-end', new_end_moment.format(data_df), { expires: 1, path: '/' });
       }.bind(this);
 
       // Initialize the date range
       if (HashStorage.has(['data-start', 'data-end'])) {
         update(moment(HashStorage.data['data-start']), moment(HashStorage.data['data-end']));
       }
-      else if ($.cookie('data-start') !== undefined) {
-        update(moment($.cookie('data-start')), moment($.cookie('data-end')));
-      }
+      // else if ($.cookie('data-start') !== undefined) {
+      //   update(moment($.cookie('data-start')), moment($.cookie('data-end')));
+      // }
       else {
         update(moment().subtract('hours', 1), moment());
       }
@@ -213,7 +213,7 @@
           this.val(new_instance);
         }
         this.instance_name = new_instance;
-        $.cookie('data-instance', new_instance);
+        // $.cookie('data-instance', new_instance);
         HashStorage.update({'data-instance': new_instance});
       }.bind(this);
 
@@ -221,10 +221,10 @@
       if(HashStorage.has(['data-instance'])) {
         update(HashStorage.data['data-instance']);
       }
-      else if ($.cookie('data-instance') != undefined) {
-        console.log('Cookie val: '+$.cookie('data-instance'));
-        update($.cookie('data-instance'));
-      }
+      // else if ($.cookie('data-instance') != undefined) {
+      //   console.log('Cookie val: '+$.cookie('data-instance'));
+      //   update($.cookie('data-instance'));
+      // }
       else {
         update(this.val());
       }
@@ -247,7 +247,7 @@
       //     this.val(new_instance);
       //   }
       //   this.instance_name = new_instance;
-      //   $.cookie('data-instance', new_instance);
+      //   // $.cookie('data-instance', new_instance);
       //   HashStorage.update({'data-instance': new_instance});
       // }.bind(this);
 
@@ -255,10 +255,10 @@
       // if(HashStorage.has(['data-instance'])) {
       //   update(HashStorage.data['data-instance']);
       // }
-      // else if ($.cookie('data-instance') != undefined) {
-      //   console.log('Cookie val: '+$.cookie('data-instance'));
-      //   update($.cookie('data-instance'));
-      // }
+      // // else if ($.cookie('data-instance') != undefined) {
+      // //   console.log('Cookie val: '+$.cookie('data-instance'));
+      // //   update($.cookie('data-instance'));
+      // // }
       // else {
       //   update(this.val());
       // }
