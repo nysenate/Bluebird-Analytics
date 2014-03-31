@@ -287,7 +287,7 @@ function summarize($dbcon, $start_time, $end_time)
     }
 
     // Process the day block every day
-    $end_range = strtotime('today', $start_range + 86400);
+    $end_range = $start_range + 86400;
     if (strtotime('today', $start_range) == $start_range && $end_range > $start_time) {
       create_summary_entries($dbcon, $mysql_date, '1d', $start_range, $end_range);
       create_uniques_entries($dbcon, $mysql_date, '1d', $start_range, $end_range);
@@ -319,6 +319,7 @@ function create_summary_entries($dbcon, $mysql_date, $table_suffix, $start_range
     $rows[] = $row;
   }
   $result->closeCursor();
+  $dbcon->query("DELETE FROM summary_$table_suffix WHERE time=?", array($mysql_date))
   insert_batch($dbcon, "summary_$table_suffix", $rows);
 }
 
@@ -341,6 +342,7 @@ function create_uniques_entries($dbcon, $mysql_date, $table_suffix, $start_range
     }
     $result->closeCursor();
   }
+  $dbcon->query("DELETE FROM uniques_$table_suffix WHERE time=?", array($mysql_date))
   insert_batch($dbcon, "uniques_$table_suffix", $rows);
 }
 

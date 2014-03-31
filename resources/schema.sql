@@ -54,7 +54,7 @@ CREATE TABLE summary_1m (
     500_errors int unsigned,
     page_views int unsigned,
     response_time int unsigned,
-    INDEX(time),
+    PRIMARY KEY (time, instance_id, remote_ip),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -66,8 +66,8 @@ CREATE TABLE uniques_1m (
     instance_id int unsigned,
     type varchar(255),
     value varchar(255),
-    INDEX(time),
-    INDEX(type),
+    PRIMARY KEY (time, instance_id, remote_ip, type),
+    INDEX (type),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -81,7 +81,7 @@ CREATE TABLE summary_15m (
     500_errors int unsigned,
     page_views int unsigned,
     response_time int unsigned,
-    INDEX(time),
+    PRIMARY KEY (time, instance_id, remote_ip),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -93,8 +93,8 @@ CREATE TABLE uniques_15m (
     instance_id int unsigned,
     type varchar(255),
     value varchar(255),
-    INDEX(time),
-    INDEX(type),
+    PRIMARY KEY (time, instance_id, remote_ip, type),
+    INDEX (type),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -108,7 +108,7 @@ CREATE TABLE summary_1h (
     500_errors int unsigned,
     page_views int unsigned,
     response_time int unsigned,
-    INDEX(time),
+    PRIMARY KEY (time, instance_id, remote_ip),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -120,8 +120,8 @@ CREATE TABLE uniques_1h (
     instance_id int unsigned,
     type varchar(255),
     value varchar(255),
-    INDEX(time),
-    INDEX(type),
+    PRIMARY KEY (time, instance_id, remote_ip, type),
+    INDEX (type),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -135,7 +135,7 @@ CREATE TABLE summary_1d (
     500_errors int unsigned,
     page_views int unsigned,
     response_time int unsigned,
-    INDEX(time),
+    PRIMARY KEY (time, instance_id, remote_ip),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -147,8 +147,8 @@ CREATE TABLE uniques_1d (
     instance_id int unsigned,
     type varchar(255),
     value varchar(255),
-    INDEX(time),
-    INDEX(type),
+    PRIMARY KEY (time, instance_id, remote_ip, type),
+    INDEX (type),
     INDEX (remote_ip),
     FOREIGN KEY (instance_id) REFERENCES instance(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
