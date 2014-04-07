@@ -319,7 +319,8 @@ function create_summary_entries($dbcon, $mysql_date, $table_suffix, $start_range
     $rows[] = $row;
   }
   $result->closeCursor();
-  $dbcon->query("DELETE FROM summary_$table_suffix WHERE time=?", array($mysql_date));
+  $result = $dbcon->prepare("DELETE FROM summary_$table_suffix WHERE time=?");
+  $result->execute(array($mysql_date));
   insert_batch($dbcon, "summary_$table_suffix", $rows);
 }
 
@@ -342,7 +343,8 @@ function create_uniques_entries($dbcon, $mysql_date, $table_suffix, $start_range
     }
     $result->closeCursor();
   }
-  $dbcon->query("DELETE FROM uniques_$table_suffix WHERE time=?", array($mysql_date));
+  $result = $dbcon->prepare("DELETE FROM uniques_$table_suffix WHERE time=?");
+  $result->execute(array($mysql_date));
   insert_batch($dbcon, "uniques_$table_suffix", $rows);
 }
 
