@@ -162,6 +162,7 @@ function process_entry($entry_parts, $dbcon)
   $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
   $instance = get_or_create_instance($dbcon, $servername, $instance_type, $instance_name);
   $remote_ip = $entry_parts[3];
+  $remote_location = ip_match($entry_parts[3]);
   $response_time = $entry_parts[4];
   $response_code = $entry_parts[5];
   $transfer_rx = $entry_parts[6];
@@ -182,6 +183,7 @@ function process_entry($entry_parts, $dbcon)
     "id" => NULL,
     "instance_id" => $instance['id'],
     "remote_ip" => $remote_ip,
+    //"remote_location" => $remote_location,
     "response_code" => $response_code,
     "response_time" => $response_time,
     "transfer_rx" => $transfer_rx,
@@ -192,6 +194,160 @@ function process_entry($entry_parts, $dbcon)
     "time" => $datetime->format(DateTime::ISO8601),
     "is_page" => $is_page
   );
+
+
+}
+
+function ip_match($ip)
+{
+
+$location = ip2long($ip);
+
+$locations =
+  array(
+    '0' =>
+      array('name' => "LOB Fl B3", "range_start" => "10.11.3.26", "range_end" => "10.11.3.254"),
+    '1' =>
+      array('name' => "LOB Fl B2", "range_start" => "10.12.3.26", "range_end" => "10.12.3.254"),
+    '2' =>
+      array('name' => "LOB Fl 1", "range_start" => "10.13.4.26", "range_end" => "10.13.5.254"),
+    '3' =>
+      array('name' => "LOB Fl 2", "range_start" => "10.14.3.26", "range_end" => "10.14.3.254"),
+    '4' =>
+      array('name' => "LOB Fl 3", "range_start" => "10.15.3.26", "range_end" => "10.15.3.254"),
+    '5' =>
+      array('name' => "LOB Fl 4", "range_start" => "10.16.3.26", "range_end" => "10.16.3.254"),
+    '6' =>
+      array('name' => "LOB Fl 5", "range_start" => "10.17.3.26", "range_end" => "10.17.3.254"),
+    '7' =>
+      array('name' => "LOB Fl 6", "range_start" => "10.18.3.26", "range_end" => "10.18.3.254"),
+    '8' =>
+      array('name' => "LOB Fl 7", "range_start" => "10.19.3.26", "range_end" => "10.19.3.254"),
+    '9' =>
+      array('name' => "LOB Fl 8", "range_start" => "10.20.4.26", "range_end" => "10.20.5.254"),
+    '10' =>
+      array('name' => "LOB Fl 9", "range_start" => "10.21.4.26", "range_end" => "10.21.5.254"),
+    '11' =>
+      array('name' => "LOB 250 Broadway", "range_start" => "10.28.3.26", "range_end" => "10.28.3.26"),
+    '12' =>
+      array('name' => "A.E.S. Fl 13", "range_start" => "10.23.3.26", "range_end" => "10.23.3.254"),
+    '13' =>
+      array('name' => "A.E.S. Fl 14", "range_start" => "10.23.4.26", "range_end" => "10.23.4.254"),
+    '14' =>
+      array('name' => "A.E.S. Fl 15", "range_start" => "10.23.5.26", "range_end" => "10.23.5.254"),
+    '15' =>
+      array('name' => "A.E.S. Fl 16", "range_start" => "10.23.6.26", "range_end" => "10.23.6.254"),
+    '16' =>
+      array('name' => "A.E.S. Fl 24", "range_start" => "10.23.7.26", "range_end" => "10.23.7.254"),
+    '17' =>
+      array('name' => "A.E.S. Fl 25", "range_start" => "10.23.8.26", "range_end" => "10.23.8.254"),
+    '18' =>
+      array('name' => "A.E.S. Fl 26", "range_start" => "10.23.9.26", "range_end" => "10.23.9.254"),
+    '19' =>
+      array('name' => "A.E.S. Basement", "range_start" => "10.23.10.26", "range_end" => "10.23.10.254"),
+    '20' =>
+      array('name' => "Corporate Woods", "range_start" => "10.31.3.26", "range_end" => "10.31.3.254"),
+    '21' =>
+      array('name' => "Capitol West", "range_start" => "10.24.4.26", "range_end" => "10.24.5.254"),
+    '22' =>
+      array('name' => "Capitol East Fl 3", "range_start" => "10.25.3.26", "range_end" => "10.25.3.254"),
+    '23' =>
+      array('name' => "Capitol East Fl 4", "range_start" => "10.25.4.26", "range_end" => "10.25.4.254"),
+    '24' =>
+      array('name' => "Capitol East Fl 5", "range_start" => "10.25.5.26", "range_end" => "10.25.5.254"),
+    '25' =>
+      array('name' => "Agency-4 Fl 2 & Fl 11", "range_start" => "10.26.3.26", "range_end" => "10.26.3.254"),
+    '26' =>
+      array('name' => "Agency-4 Fl 16 & Fl 17", "range_start" => "10.26.4.26", "range_end" => "10.26.4.254"),
+    '27' =>
+      array('name' => "Agency-4 Fl 18", "range_start" => "10.26.5.26", "range_end" => "10.26.5.254"),
+    '28' =>
+      array('name' => "Satellite Offices", "range_start" => "10.99.1.0", "range_end" => "10.99.40.0"),
+    '29' =>
+      array('name' => "VPN User", "range_start" => "10.99.96.0", "range_end" => "10.99.96.255"),
+    '30' =>
+      array('name' => "VPN Sfms", "range_start" => "10.99.97.241", "range_end" => "10.99.97.254"),
+    '31' =>
+      array('name' => "VPN Telecom Vendor", "range_start" => "10.99.97.230", "range_end" => "10.99.97.239"),
+    '32' =>
+      array('name' => "VPN Asax", "range_start" => "10.99.98.0", "range_end" => "10.99.98.255"),
+    '33' =>
+      array('name' => "District Offices", "range_start" => "10.41.0.0", "range_end" => "10.41.255.255"),
+    '34' =>
+      array('name' => "District Offices", "range_start" => "10.42.0.0", "range_end" => "10.42.255.255"),
+    '35' =>
+      array('name' => "District Offices", "range_start" => "172.18.0.0", "range_end" => "172.18.255.255"),
+    '36' =>
+      array('name' => "District Offices", "range_start" => "172.28.0.0", "range_end" => "172.28.255.255"),
+    '37' =>
+      array('name' => "District Offices Visitor", "range_start" => "172.19.0.0", "range_end" => "172.19.255.255"),
+    '38' =>
+      array('name' => "District Offices Visitor", "range_start" => "172.29.0.0", "range_end" => "172.29.255.255"),
+    '39' =>
+      array('name' => "Wireless", "range_start" => "172.29.0.0", "range_end" => "172.29.255.255"),
+    '40' =>
+      array('name' => "Wireless LOB", "range_start" => "10.3.12.0", "range_end" => "10.3.12.255"),
+    '41' =>
+      array('name' => "Wireless Agency-4", "range_start" => "10.3.13.0", "range_end" => "10.3.13.255"),
+    '42' =>
+      array('name' => "Wireless A.E.S.", "range_start" => "10.3.14.0", "range_end" => "10.3.14.255"),
+    '43' =>
+      array('name' => "Wireless Capitol", "range_start" => "10.3.15.0", "range_end" => "10.3.15.255"),
+    '44' =>
+      array('name' => "Wireless C.Woods", "range_start" => "10.3.16.0", "range_end" => "10.3.16.255"),
+    '45' =>
+      array('name' => "Wireless District Offices", "range_start" => "10.3.17.0", "range_end" => "10.3.17.255"),
+    '46' =>
+      array('name' => "Wireless LOB-Top-Fls", "range_start" => "10.3.18.0", "range_end" => "10.3.18.255"),
+    '47' =>
+      array('name' => "Wireless Visitor", "range_start" => "10.99.70.0", "range_end" => "10.99.71.254"),
+    '48' =>
+      array('name' => "Wireless Visitor LOB", "range_start" => "10.99.72.0", "range_end" => "10.99.72.255"),
+    '49' =>
+      array('name' => "Wireless Visitor Agency-4", "range_start" => "10.99.73.0", "range_end" => "10.99.73.255"),
+    '50' =>
+      array('name' => "Wireless Visitor A.E.S.", "range_start" => "10.99.74.0", "range_end" => "10.99.74.255"),
+    '51' =>
+      array('name' => "Wireless Visitor Capitol", "range_start" => "10.99.75.0", "range_end" => "10.99.75.255"),
+    '52' =>
+      array('name' => "Wireless Visitor C.Woods", "range_start" => "10.99.76.0", "range_end" => "10.99.76.255"),
+    '53' =>
+      array('name' => "Wireless Visitor District Offices", "range_start" => "10.99.77.0", "range_end" => "10.99.77.255"),
+    '54' =>
+      array('name' => "Wireless Visitor LOB-Top-Fls", "range_start" => "10.99.78.0", "range_end" => "10.99.78.255"),
+    '55' =>
+      array('name' => "Serverfarm 1", "range_start" => "10.1.3.1", "range_end" => "10.1.3.30"),
+    '56' =>
+      array('name' => "Serverfarm 1", "range_start" => "10.1.4.1", "range_end" => "10.1.4.254"),
+    '57' =>
+      array('name' => "Serverfarm 2", "range_start" => "10.1.3.33", "range_end" => "10.1.3.62"),
+    '58' =>
+      array('name' => "Serverfarm 2", "range_start" => "10.1.5.1", "range_end" => "10.1.5.254"),
+    '59' =>
+      array('name' => "Serverfarm 3", "range_start" => "10.2.3.1", "range_end" => "10.2.3.30"),
+    '60' =>
+      array('name' => "Serverfarm 3", "range_start" => "10.1.6.1", "range_end" => "10.1.6.254"),
+    '61' =>
+      array('name' => "Serverfarm 4", "range_start" => "10.2.3.33", "range_end" => "10.2.3.62"),
+    '62' =>
+      array('name' => "Serverfarm 4", "range_start" => "10.1.7.1", "range_end" => "10.1.7.254"),
+    '63' =>
+      array('name' => "Serverfarm 5", "range_start" => "10.2.3.65", "range_end" => "10.2.3.126"),
+    '64' =>
+      array('name' => "AVAYA", "range_start" => "10.1.3.129", "range_end" => "10.1.3.254"),
+    '65' =>
+      array('name' => "AVAYA", "range_start" => "10.1.8.1", "range_end" => "10.1.8.254"),
+
+  );
+
+foreach ($locations as $id => $value) {
+  if ($ip < $value['range_end'] && $ip > $value['range_start'] ) {
+    $Location = $value['name'];
+    
+
+   return $Location;
+        }
+    }
 }
 
 

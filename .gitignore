@@ -4,3 +4,5 @@ locations.txt
 bbanalytics.2014024*
 reports/*
 locations.csv
+analytics.log
+access.log
