@@ -1,2 +1,6 @@
 analytics.ini
 locations.txt
+*.sublime*
+bbanalytics.2014024*
+reports/*
+locations.csv
