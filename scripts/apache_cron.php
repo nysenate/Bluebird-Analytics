@@ -162,6 +162,10 @@ function process_entry($entry_parts, $dbcon)
   $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
   $instance = get_or_create_instance($dbcon, $servername, $instance_type, $instance_name);
   $remote_ip = $entry_parts[3];
+  var_dump(ipv6_numeric("BF02:0:0:FFFF:0:0:FFFF:1"));
+  // var_dump(ipv6_numeric("DF03:0:0:0:0:0:0:6"));
+  // var_dump(ipv6_numeric("FF04:0:0:0:0:0:0:A"));
+  exit();
   $remote_location = ip_match($entry_parts[3]);
   $response_time = $entry_parts[4];
   $response_code = $entry_parts[5];
@@ -176,7 +180,7 @@ function process_entry($entry_parts, $dbcon)
   $request_query = isset($request_parts['query']) ? $request_parts['query'] : "";
   $request_protocol = $entry_parts[11];
 
-  // We don't care about public files, accidental copy/pasta, or static files
+  // We don't care about public files, accidental copy/paste, or static files
   $is_page = !preg_match('/(^\\/sites\\/|https?:|\\.(css|js|jpg|jpeg|gif|img|txt|ico|png|bmp|pdf|tif|tiff|oft|ttf|eot|woff|svg|svgz|doc|mp4|mp3)$)/i', $request_path);
 
   return array(
@@ -197,6 +201,54 @@ function process_entry($entry_parts, $dbcon)
 
 
 }
+
+/**
+ * This function converts an ipv6 address into a string of numbers
+ * and then looks through an array to find the location based on the ipv6 address.
+ *
+ * @param  IPv6 Address    $ip  the ipv6 address
+ * @return the name of the location of the IPv6 address
+ */ 
+
+/*
+function ipv6_numeric($ip) {
+
+// converts input ipv6 address into a string of numbers
+    $binNum = '';
+    foreach (unpack('C*', inet_pton($ip)) as $byte) {
+        $binNum .= str_pad(decbin($byte), 8, "0", STR_PAD_LEFT);
+    }
+    $ip = base_convert(ltrim($binNum, '0'), 2, 10);
+    echo $ip;
+ 
+ $locations=
+   array(     '0' =>
+      array('name' => "LOB Fl B3", "range_start" => "232625283856077366246242426644202260602", "range_end" => "338973908112587648462008040488242244084"));
+
+ // goes through array of locations array to see if ipv6 input address 
+ // is in between start and end
+ 
+ foreach ($locations as $id => $value) {
+   if ($ip < $value['range_end'] && $ip > $value['range_start'] ) {
+
+// if a match is found, gets the value of the name location in the array
+// and saves it into a variable then returns the name location
+     $Location = $value['name'];
+    
+
+    return $Location;
+         
+// used for testing when the ipv6 address is not in between start and end
+
+    }else{ 
+
+    echo 'not in between'; 
+       }
+   }
+}
+*/
+
+
 
 function ip_match($ip)
 {
