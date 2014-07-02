@@ -153,23 +153,26 @@
         if (chosenLabel === "Custom Range") {
           new_start_moment =  new_start_moment;
           new_end_moment = new_end_moment;
-        } else if(chosenLabel === "Last Hour"){
-          new_start_moment =  moment().subtract('hours', 1);
-          new_end_moment = moment();
-        } else if(chosenLabel === "Today"){
-          new_start_moment =  moment().startOf('day');
-          new_end_moment = moment();
-        } else if(chosenLabel === "Yesterday"){
-          new_start_moment = moment().subtract('days', 1).startOf('day');
-          new_end_moment = moment().subtract('days', 1).endOf('day');
-        } else if(chosenLabel === "Last 7 Days"){
-          new_start_moment = moment().subtract('days', 6).startOf('day');
-          new_end_moment = moment();
-        } else if(chosenLabel === "Last 30 Days"){
-          new_start_moment = moment().subtract('days', 29).startOf('day');
-          new_end_moment = moment();
-        };
-        console.log("Updated values  \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+          console.log("Custom Range, Not Updating anything");
+        } else {
+          if(chosenLabel === "Last Hour"){
+            new_start_moment =  moment().subtract('hours', 1);
+            new_end_moment = moment();
+          } else if(chosenLabel === "Today"){
+            new_start_moment =  moment().startOf('day');
+            new_end_moment = moment();
+          } else if(chosenLabel === "Yesterday"){
+            new_start_moment = moment().subtract('days', 1).startOf('day');
+            new_end_moment = moment().subtract('days', 1).endOf('day');
+          } else if(chosenLabel === "Last 7 Days"){
+            new_start_moment = moment().subtract('days', 6).startOf('day');
+            new_end_moment = moment();
+          } else if(chosenLabel === "Last 30 Days"){
+            new_start_moment = moment().subtract('days', 29).startOf('day');
+            new_end_moment = moment();
+          };
+          console.log("Updated values  \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+        }
 
         this.start_moment = new_start_moment;
         this.end_moment = new_end_moment
@@ -367,6 +370,7 @@
                   $('#'+key).parent().parent().parent().parent().removeClass('panel-info').addClass('panel-danger');
                 }else{
                   $('#'+key).parent().parent().parent().parent().removeClass('panel-danger').addClass('panel-info');
+                  output = "100%";
                 };
                 break;
               case 'app_errors':
