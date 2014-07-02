@@ -55,6 +55,10 @@
   };
 
   $(document).ready(function() {
+
+    var msg = "      _   ,\n -====;o`\/ }\n       \-'\-'----.   New York State Senate\n        \\ |-..-'`  Bluebird Analytics \n        /\/\ \n        `--`\n ";
+    console.log(msg);
+
     function get_granularity(start_moment, end_moment) {
       var difference = end_moment.unix() - start_moment.unix();
       var granularity;
@@ -108,7 +112,7 @@
           parts = values[key].split('=', 2)
           this.data[parts[0]] = parts[1];
         }
-        console.log(this.data);
+        console.log("Data stored in url hash: ",this.data);
       }
       return this;
     };
@@ -145,11 +149,8 @@
 
       // We automatically bind update to 'this' to avoid context errors
       var update = function(chosenLabel, new_start_moment, new_end_moment) {
-        console.log("----");
-
-        console.log("Processing \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+        console.log("Checking values \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
         if (chosenLabel === "Custom Range") {
-          console.log('Not Updating Date, Custom range chosen');
           new_start_moment =  new_start_moment;
           new_end_moment = new_end_moment;
         } else if(chosenLabel === "Last Hour"){
@@ -165,11 +166,11 @@
           new_start_moment = moment().subtract('days', 6).startOf('day');
           new_end_moment = moment();
         } else if(chosenLabel === "Last 30 Days"){
-          console.log('Updating Date, Last 30 Days chosen');
           new_start_moment = moment().subtract('days', 29).startOf('day');
           new_end_moment = moment();
         };
-        console.log("Processed. \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+        console.log("Updated values  \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+
         this.start_moment = new_start_moment;
         this.end_moment = new_end_moment
         this.chosenLabel = chosenLabel
@@ -192,16 +193,16 @@
 
       // // Initialize the date range
       if (HashStorage.has(['data-start', 'data-end', 'data-type'])) {
-        console.log('setting from hash',HashStorage.data['data-start'], HashStorage.data['data-end'], HashStorage.data['data-type']);
+        // console.log('setting from hash',HashStorage.data['data-start'], HashStorage.data['data-end'], HashStorage.data['data-type']);
         update(HashStorage.data['data-type'], moment(HashStorage.data['data-start']), moment(HashStorage.data['data-end']));
       }
       else if ($.cookie('data-start') !== undefined) {
         update($.cookie('data-type'), moment($.cookie('data-start')), moment($.cookie('data-end')));
-        console.log('setting from cookie',$.cookie('data-start'), $.cookie('data-end'),$.cookie('data-type'));
+        // console.log('setting from cookie',$.cookie('data-start'), $.cookie('data-end'),$.cookie('data-type'));
       }
       else {
         update("Last Hour", moment().subtract('hours', 1), moment(), 'Relative');
-        console.log('setting from blank', "Last Hour", moment().subtract('hours', 1)._d, moment()._d);
+        // console.log('setting from blank', "Last Hour", moment().subtract('hours', 1)._d, moment()._d);
       }
 
       // Initialize the date picker
@@ -352,7 +353,7 @@
               {
               case 'response_time':
                 output = parseFloat((response.data[value] /1000000)).toFixed(2)+"s";
-                console.log(parseInt(output));
+                // console.log(parseInt(output));
                 if(parseInt(output) > 1 ) {
                   $('#'+key).parent().parent().parent().parent().removeClass('panel-info').addClass('panel-danger');
                 }else{
@@ -630,5 +631,7 @@
       var option = $(this).find('option:selected');
       loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
+
   });
+
 }(jQuery)

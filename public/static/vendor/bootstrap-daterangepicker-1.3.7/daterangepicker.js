@@ -371,11 +371,12 @@
         setStartDate: function(startDate) {
             if (typeof startDate === 'string')
                 this.startDate = moment(startDate, this.format);
-
-            if (typeof startDate === 'object')
+            else if (typeof startDate === 'object')
                 this.startDate = moment(startDate);
 
-            if (!this.timePicker)
+            if (this.timePicker)
+                this.leftCalendar.month=this.startDate.clone(); // copy it because minutes and hours of this.leftCalendar.month are used when building the calendar
+            else
                 this.startDate = this.startDate.startOf('day');
 
             this.oldStartDate = this.startDate.clone();
@@ -387,11 +388,12 @@
         setEndDate: function(endDate) {
             if (typeof endDate === 'string')
                 this.endDate = moment(endDate, this.format);
-
-            if (typeof endDate === 'object')
+            else if (typeof endDate === 'object')
                 this.endDate = moment(endDate);
 
-            if (!this.timePicker)
+            if (this.timePicker)
+                this.rightCalendar.month=this.endDate.clone();  // copy it because minutes and hours of this.rightCalendar.month are used when building the calendar
+            else
                 this.endDate = this.endDate.endOf('day');
 
             this.oldEndDate = this.endDate.clone();
@@ -424,7 +426,7 @@
             var dateString = this.element.val().split(this.separator),
                 start = null,
                 end = null;
-            
+
             if(dateString.length === 2) {
                 start = moment(dateString[0], this.format);
                 end = moment(dateString[1], this.format);
@@ -434,7 +436,7 @@
                 start = moment(this.element.val(), this.format);
                 end = start;
             }
-            
+
             if (end.isBefore(start)) return;
 
             this.oldStartDate = this.startDate.clone();
@@ -698,7 +700,34 @@
         },
 
         clickApply: function (e) {
+
+            var start_hour = parseInt($('.calendar.left .hourselect').val(), 10);
+            var start_min = parseInt($('.calendar.left .minuteselect').val(), 10);
+            var start_ampm = $('.calendar.left .ampmselect').val();
+
+            var end_hour = parseInt($('.calendar.right .hourselect').val(), 10);
+            var end_min = parseInt($('.calendar.right .minuteselect').val(), 10);
+            var end_ampm = $('.calendar.right .ampmselect').val();
+
+            // console.log(start_hour,start_min,start_ampm," - ",end_hour,end_min,end_ampm);
+
+
+            var start = this.startDate.clone();
+            start.hour(start_hour);
+            start.minute(start_min);
+            this.startDate = start;
+
+            var end = this.endDate.clone();
+            end.hour(end_hour);
+            end.minute(end_min);
+            this.endDate = end;
+
+            this.leftCalendar.month.hour(start_hour).minute(start_min);
+            this.rightCalendar.month.hour(end_hour).minute(end_min);
+
             this.updateInputText();
+            // console.log(this.startDate._d,this.endDate._d);
+
             this.hide();
             this.element.trigger('apply.daterangepicker', this);
         },
@@ -727,7 +756,7 @@
         },
 
         updateTime: function(e) {
-
+            // console.log(e);
             var cal = $(e.target).closest('.calendar'),
                 isLeft = cal.hasClass('left');
 
