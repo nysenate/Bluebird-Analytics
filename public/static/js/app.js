@@ -144,31 +144,64 @@
       var options = $.extend({}, user_options);
 
       // We automatically bind update to 'this' to avoid context errors
-      var update = function(new_start_moment, new_end_moment) {
-        console.log("Updating date range to: "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+      var update = function(chosenLabel, new_start_moment, new_end_moment) {
+        console.log("----");
+
+        console.log("Processing \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+        if (chosenLabel === "Custom Range") {
+          console.log('Not Updating Date, Custom range chosen');
+          new_start_moment =  new_start_moment;
+          new_end_moment = new_end_moment;
+        } else if(chosenLabel === "Last Hour"){
+          new_start_moment =  moment().subtract('hours', 1);
+          new_end_moment = moment();
+        } else if(chosenLabel === "Today"){
+          new_start_moment =  moment().startOf('day');
+          new_end_moment = moment();
+        } else if(chosenLabel === "Yesterday"){
+          new_start_moment = moment().subtract('days', 1).startOf('day');
+          new_end_moment = moment().subtract('days', 1).endOf('day');
+        } else if(chosenLabel === "Last 7 Days"){
+          new_start_moment = moment().subtract('days', 6).startOf('day');
+          new_end_moment = moment();
+        } else if(chosenLabel === "Last 30 Days"){
+          console.log('Updating Date, Last 30 Days chosen');
+          new_start_moment = moment().subtract('days', 29).startOf('day');
+          new_end_moment = moment();
+        };
+        console.log("Processed. \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
         this.start_moment = new_start_moment;
         this.end_moment = new_end_moment
+        this.chosenLabel = chosenLabel
+
         this.granularity = get_granularity(this.start_moment, this.end_moment);
         this.find('span').html(new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
 
         // Save these new values to the hash and cookie
         HashStorage.update({
           'data-start': new_start_moment.format(data_df),
-          'data-end': new_end_moment.format(data_df)
+          'data-end': new_end_moment.format(data_df),
+          'data-type': chosenLabel
         });
-        // $.cookie('data-start', new_start_moment.format(data_df), { expires: 1, path: '/' });
-        // $.cookie('data-end', new_end_moment.format(data_df), { expires: 1, path: '/' });
+
+        $.cookie('data-start',new_start_moment.format(data_df),{expires:1,path:'/'});
+        $.cookie('data-end',new_end_moment.format(data_df),{expires:1,path:'/'});
+        $.cookie('data-type',chosenLabel,{expires:1,path:'/'});
+
       }.bind(this);
 
-      // Initialize the date range
-      if (HashStorage.has(['data-start', 'data-end'])) {
-        update(moment(HashStorage.data['data-start']), moment(HashStorage.data['data-end']));
+      // // Initialize the date range
+      if (HashStorage.has(['data-start', 'data-end', 'data-type'])) {
+        console.log('setting from hash',HashStorage.data['data-start'], HashStorage.data['data-end'], HashStorage.data['data-type']);
+        update(HashStorage.data['data-type'], moment(HashStorage.data['data-start']), moment(HashStorage.data['data-end']));
       }
-      // else if ($.cookie('data-start') !== undefined) {
-      //   update(moment($.cookie('data-start')), moment($.cookie('data-end')));
-      // }
+      else if ($.cookie('data-start') !== undefined) {
+        update($.cookie('data-type'), moment($.cookie('data-start')), moment($.cookie('data-end')));
+        console.log('setting from cookie',$.cookie('data-start'), $.cookie('data-end'),$.cookie('data-type'));
+      }
       else {
-        update(moment().subtract('hours', 1), moment());
+        update("Last Hour", moment().subtract('hours', 1), moment(), 'Relative');
+        console.log('setting from blank', "Last Hour", moment().subtract('hours', 1)._d, moment()._d);
       }
 
       // Initialize the date picker
@@ -179,23 +212,23 @@
              'Yesterday': [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
              'Last 7 Days': [moment().subtract('days', 6).startOf('day'), moment()],
              'Last 30 Days': [moment().subtract('days', 29).startOf('day'), moment()],
-             // 'This Month': [moment().startOf('month').startOf('day'), moment().endOf('month')],
-             // 'Last Month': [moment().subtract('month', 1).startOf('month').startOf('day'), moment().subtract('month', 1).endOf('month').endOf('day')]
-            },
+          },
           timePicker: true,
           dateLimit: { days: 360 },
           minDate: '04/10/2013',
           maxDate: moment().endOf('day'),
-          timePickerIncrement: 1,
+          timePickerIncrement: 5,
           startDate: this.start_moment,
           endDate: this.end_moment,
+          parentEl: ".navbar",
       });
 
       this.on('apply.daterangepicker', function(ev, picker) {
-          update(picker.startDate, picker.endDate);
-          $('#page-wrapper').Render();
+        update(picker.chosenLabel, picker.startDate, picker.endDate);
+        $('#page-wrapper').Render();
       });
-
+      $('.ranges li').removeClass('active');
+      $('.ranges li:contains("'+this.chosenLabel+'")').addClass('active');
       return this;
     }
 
@@ -530,7 +563,7 @@
           );
         },
         "aoColumns": aoColumns,
-      }).fnSetFilteringDelay(500);
+      }); //.fnSetFilteringDelay(500);
     })
 
     function loadQuery(name, new_dimensions, new_observations) {
