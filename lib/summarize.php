@@ -43,7 +43,7 @@ function summarize($dbcon, $start_time, $end_time)
 }
 
 
-function create_summary_entries($dbcon, $mysql_date, $table_suffix, $start_range, $end_range)
+function create_summary_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_range, $end_range)
 {
   $result = $dbcon->query("
       SELECT
@@ -91,5 +91,3 @@ function create_uniques_entries($dbcon, $mysql_date, $table_suffix, $start_range
   $result->execute(array($mysql_date));
   insert_batch($dbcon, "uniques_$table_suffix", $rows);
 }
-
-?>
