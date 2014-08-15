@@ -1,6 +1,6 @@
 <?php
 
-function summarize($dbcon, $start_time, $end_time)
+function summarize(PDO $dbcon, $start_time, $end_time)
 {
   // Go all the way back to the last possible block that there could be new data for.
   // Only process blocks on the even, e.g. 1:00, 1:15, 1:30
@@ -69,7 +69,7 @@ function create_summary_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
 }
 
 
-function create_uniques_entries($dbcon, $mysql_date, $table_suffix, $start_range, $end_range)
+function create_uniques_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_range, $end_range)
 {
   $rows = array();
   foreach(array('path') as $stat) {
@@ -91,3 +91,5 @@ function create_uniques_entries($dbcon, $mysql_date, $table_suffix, $start_range
   $result->execute(array($mysql_date));
   insert_batch($dbcon, "uniques_$table_suffix", $rows);
 }
+
+?>
