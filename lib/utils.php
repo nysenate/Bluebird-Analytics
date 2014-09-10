@@ -9,6 +9,17 @@ const INFO  = 3;
 const DEBUG = 4;
 
 
+/**
+ * Implements Python's dict.get() and CiviCRM's CRM_Utils_Array::value()
+ * Check an array for a key.  If the key exists, return its value.
+ * Otherwise, return a default value.
+ */
+function array_value($array, $key, $default_value = null)
+{
+  return (is_array($array) && isset($array[$key])) ? $array[$key] : $default_value;
+} // array_value()
+
+
 function send_response($code, $message, $data=NULL)
 {
   header("Content-Type: application/json; charset=UTF-8");
