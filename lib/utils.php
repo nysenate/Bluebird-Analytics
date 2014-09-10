@@ -27,6 +27,12 @@ function clean_string($input)
   return preg_replace('/[^-a-zA-Z0-9: _,.]/', '', $input);
 }
 
+function convert($size)
+{
+  $unit=array('b','kb','mb','gb','tb','pb');
+  return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
+}
+
 
 /**
  *  Inserts a batch of rows of arbitrary size.

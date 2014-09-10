@@ -46,6 +46,7 @@ $final_offset = $start_offset = $row['final_offset'];
 $final_ctime = $start_ctime = strtotime($row['final_ctime']);
 echo "Last run ended at ".DateTime::createFromFormat('U', $start_ctime)->format(DateTime::ISO8601)." offset $start_offset\n";
 
+
 // Process log files that have been updated since the last run. Use >= here so that we
 // catch files that were rotated immediately after our last run. Otherwise we might apply
 // the byte offset to a new, unrelated file.
@@ -70,7 +71,7 @@ foreach($source_paths as $source_path) {
  *  database. Returns the final log entry time and byte offset so that future runs can avoid
  *  reprocessing the same entries.
  */
-function process_apache_log($source_path, $offset, $dbcon)
+function process_apache_log($source_path, $offset, PDO $dbcon)
 {
   $handle = fopen($source_path, "r");
   if ($handle === false) {
@@ -148,7 +149,7 @@ function process_apache_log($source_path, $offset, $dbcon)
 /**
  * Transforms a single line in the log file into an array of request parameters.
  */
-function process_entry($entry_parts, $dbcon)
+function process_entry($entry_parts, PDO $dbcon)
 {
   // Format the datetime by removing the [ ] and replacing the first :
   $datetime = DateTime::createFromFormat("d/M/Y:H:i:s O", substr($entry_parts[0],1)." ".substr($entry_parts[1], 0, 5));
@@ -162,12 +163,7 @@ function process_entry($entry_parts, $dbcon)
   $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
   $instance = get_or_create_instance($dbcon, $servername, $instance_type, $instance_name);
   $remote_ip = $entry_parts[3];
-  // var_dump(ipv6_numeric("BF02:0:0:FFFF:0:0:FFFF:1"));
-  // var_dump(ipv6_numeric("DF03:0:0:0:0:0:0:6"));
-  // var_dump(ipv6_numeric("FF04:0:0:0:0:0:0:A"));
-  // exit();
   $remote_location = ip_match($entry_parts[3]);
-  $remote_location = findLocation($entry_parts[3]);
   $response_time = $entry_parts[4];
   $response_code = $entry_parts[5];
   $transfer_rx = $entry_parts[6];
@@ -179,6 +175,7 @@ function process_entry($entry_parts, $dbcon)
   $request_parts = parse_url($request_string);
   $request_path = $request_parts['path'];
   $request_query = isset($request_parts['query']) ? $request_parts['query'] : "";
+  $request_action = url_match($request_path,$request_query);
   $request_protocol = $entry_parts[11];
 
   // We don't care about public files, accidental copy/paste, or static files
@@ -188,7 +185,8 @@ function process_entry($entry_parts, $dbcon)
     "id" => NULL,
     "instance_id" => $instance['id'],
     "remote_ip" => $remote_ip,
-    //"remote_location" => $remote_location,
+    "location_id" => $remote_location,
+    "url_id" => $request_action,
     "response_code" => $response_code,
     "response_time" => $response_time,
     "transfer_rx" => $transfer_rx,
@@ -199,334 +197,66 @@ function process_entry($entry_parts, $dbcon)
     "time" => $datetime->format(DateTime::ISO8601),
     "is_page" => $is_page
   );
-
-
 }
 
-/**
- * ipv6_numeric converts an ipv6 address into a string of numbers
- * and looks through an array to find the location based on the ipv6 address.
- *
- * @param  IPv6 Address    $ip  the ipv6 address
- * @return the name of the location of the IPv6 address
- */
-
-function ipv6_numeric($ip) {
-  // converts input ipv6 address into a string of numbers
-  $binNum = '';
-  foreach (unpack('C*', inet_pton($ip)) as $byte) {
-    $binNum .= str_pad(decbin($byte), 8, "0", STR_PAD_LEFT);
-  }
-  $ip = base_convert(ltrim($binNum, '0'), 2, 10);
-
-  // exmaple pre-processed list
-  $locations = array(
-    array(
-      "name" => "LOB Fl B3",
-      "range_start" => "232625283856077366246242426644202260602",
-      "range_end" => "338973908112587648462008040488242244084"
-    )
-  );
-
-  // Iterates over array of locations array to see if ipv6 input address
-  // is in between start and end
-  foreach ($locations as $id => $value) {
-    if ($ip < $value['range_end'] && $ip > $value['range_start'] ) {
-      // if a match is found, gets the value of the name location in the array
-      // and saves it into a variable then returns the name location
-      $Location = $value["name"];
-      return $Location;
-    // used for testing when the ipv6 address is not in between start and end
-    }else{
-      echo 'not in between';
-    }
-  }
-}
-
-
-
-
+// get a small list of office locations
+$locations = $dbcon->query("SELECT * FROM location WHERE id != 1");
 function ip_match($ip)
 {
-  $location = ip2long($ip);
-  $locations = array(
-      array(
-        "name" => "LOB Fl B3",
-        "range_start" => "10.11.3.26",
-        "range_end" => "10.11.3.254"
-      ),array(
-        "name" => "LOB Fl B2",
-        "range_start" => "10.12.3.26",
-        "range_end" => "10.12.3.254"
-      ),array(
-        "name" => "LOB Fl 1",
-        "range_start" => "10.13.4.26",
-        "range_end" => "10.13.5.254"
-      ),array(
-        "name" => "LOB Fl 2",
-        "range_start" => "10.14.3.26",
-        "range_end" => "10.14.3.254"
-      ),array(
-        "name" => "LOB Fl 3",
-        "range_start" => "10.15.3.26",
-        "range_end" => "10.15.3.254"
-      ),array(
-        "name" => "LOB Fl 4",
-        "range_start" => "10.16.3.26",
-        "range_end" => "10.16.3.254"
-      ),array(
-        "name" => "LOB Fl 5",
-        "range_start" => "10.17.3.26",
-        "range_end" => "10.17.3.254"
-      ),array(
-        "name" => "LOB Fl 6",
-        "range_start" => "10.18.3.26",
-        "range_end" => "10.18.3.254"
-      ),array(
-        "name" => "LOB Fl 7",
-        "range_start" => "10.19.3.26",
-        "range_end" => "10.19.3.254"
-      ),array(
-        "name" => "LOB Fl 8",
-        "range_start" => "10.20.4.26",
-        "range_end" => "10.20.5.254"
-      ),array(
-        "name" => "LOB Fl 9",
-        "range_start" => "10.21.4.26",
-        "range_end" => "10.21.5.254"
-      ),array(
-        "name" => "LOB 250 Broadway",
-        "range_start" => "10.28.3.26",
-        "range_end" => "10.28.3.26"
-      ),array(
-        "name" => "A.E.S. Fl 13",
-        "range_start" => "10.23.3.26",
-        "range_end" => "10.23.3.254"
-      ),array(
-        "name" => "A.E.S. Fl 14",
-        "range_start" => "10.23.4.26",
-        "range_end" => "10.23.4.254"
-      ),array(
-        "name" => "A.E.S. Fl 15",
-        "range_start" => "10.23.5.26",
-        "range_end" => "10.23.5.254"
-      ),array(
-        "name" => "A.E.S. Fl 16",
-        "range_start" => "10.23.6.26",
-        "range_end" => "10.23.6.254"
-      ),array(
-        "name" => "A.E.S. Fl 24",
-        "range_start" => "10.23.7.26",
-        "range_end" => "10.23.7.254"
-      ),array(
-        "name" => "A.E.S. Fl 25",
-        "range_start" => "10.23.8.26",
-        "range_end" => "10.23.8.254"
-      ),array(
-        "name" => "A.E.S. Fl 26",
-        "range_start" => "10.23.9.26",
-        "range_end" => "10.23.9.254"
-      ),array(
-        "name" => "A.E.S. Basement",
-        "range_start" => "10.23.10.26",
-        "range_end" => "10.23.10.254"
-      ),array(
-        "name" => "Corporate Woods",
-        "range_start" => "10.31.3.26",
-        "range_end" => "10.31.3.254"
-      ),array(
-        "name" => "Capitol West",
-        "range_start" => "10.24.4.26",
-        "range_end" => "10.24.5.254"
-      ),array(
-        "name" => "Capitol East Fl 3",
-        "range_start" => "10.25.3.26",
-        "range_end" => "10.25.3.254"
-      ),array(
-        "name" => "Capitol East Fl 4",
-        "range_start" => "10.25.4.26",
-        "range_end" => "10.25.4.254"
-      ),array(
-        "name" => "Capitol East Fl 5",
-        "range_start" => "10.25.5.26",
-        "range_end" => "10.25.5.254"
-      ),array(
-        "name" => "Agency-4 Fl 2 & Fl 11",
-        "range_start" => "10.26.3.26",
-        "range_end" => "10.26.3.254"
-      ),array(
-        "name" => "Agency-4 Fl 16 & Fl 17",
-        "range_start" => "10.26.4.26",
-        "range_end" => "10.26.4.254"
-      ),array(
-        "name" => "Agency-4 Fl 18",
-        "range_start" => "10.26.5.26",
-        "range_end" => "10.26.5.254"
-      ),array(
-        "name" => "Satellite Offices",
-        "range_start" => "10.99.1.0",
-        "range_end" => "10.99.40.0"
-      ),array(
-        "name" => "VPN User",
-        "range_start" => "10.99.96.0",
-        "range_end" => "10.99.96.255"
-      ),array(
-        "name" => "VPN Sfms",
-        "range_start" => "10.99.97.241",
-        "range_end" => "10.99.97.254"
-      ),array(
-        "name" => "VPN Telecom Vendor",
-        "range_start" => "10.99.97.230",
-        "range_end" => "10.99.97.239"
-      ),array(
-        "name" => "VPN Asax",
-        "range_start" => "10.99.98.0",
-        "range_end" => "10.99.98.255"
-      ),array(
-        "name" => "District Offices",
-        "range_start" => "10.41.0.0",
-        "range_end" => "10.41.255.255"
-      ),array(
-        "name" => "District Offices",
-        "range_start" => "10.42.0.0",
-        "range_end" => "10.42.255.255"
-      ),array(
-        "name" => "District Offices",
-        "range_start" => "172.18.0.0",
-        "range_end" => "172.18.255.255"
-      ),array(
-        "name" => "District Offices",
-        "range_start" => "172.28.0.0",
-        "range_end" => "172.28.255.255"
-      ),array(
-        "name" => "District Offices Visitor",
-        "range_start" => "172.19.0.0",
-        "range_end" => "172.19.255.255"
-      ),array(
-        "name" => "District Offices Visitor",
-        "range_start" => "172.29.0.0",
-        "range_end" => "172.29.255.255"
-      ),array(
-        "name" => "Wireless",
-        "range_start" => "172.29.0.0",
-        "range_end" => "172.29.255.255"
-      ),array(
-        "name" => "Wireless LOB",
-        "range_start" => "10.3.12.0",
-        "range_end" => "10.3.12.255"
-      ),array(
-        "name" => "Wireless Agency-4",
-        "range_start" => "10.3.13.0",
-        "range_end" => "10.3.13.255"
-      ),array(
-        "name" => "Wireless A.E.S.",
-        "range_start" => "10.3.14.0",
-        "range_end" => "10.3.14.255"
-      ),array(
-        "name" => "Wireless Capitol",
-        "range_start" => "10.3.15.0",
-        "range_end" => "10.3.15.255"
-      ),array(
-        "name" => "Wireless C.Woods",
-        "range_start" => "10.3.16.0",
-        "range_end" => "10.3.16.255"
-      ),array(
-        "name" => "Wireless District Offices",
-        "range_start" => "10.3.17.0",
-        "range_end" => "10.3.17.255"
-      ),array(
-        "name" => "Wireless LOB-Top-Fls",
-        "range_start" => "10.3.18.0",
-        "range_end" => "10.3.18.255"
-      ),array(
-        "name" => "Wireless Visitor",
-        "range_start" => "10.99.70.0",
-        "range_end" => "10.99.71.254"
-      ),array(
-        "name" => "Wireless Visitor LOB",
-        "range_start" => "10.99.72.0",
-        "range_end" => "10.99.72.255"
-      ),array(
-        "name" => "Wireless Visitor Agency-4",
-        "range_start" => "10.99.73.0",
-        "range_end" => "10.99.73.255"
-      ),array(
-        "name" => "Wireless Visitor A.E.S.",
-        "range_start" => "10.99.74.0",
-        "range_end" => "10.99.74.255"
-      ),array(
-        "name" => "Wireless Visitor Capitol",
-        "range_start" => "10.99.75.0",
-        "range_end" => "10.99.75.255"
-      ),array(
-        "name" => "Wireless Visitor C.Woods",
-        "range_start" => "10.99.76.0",
-        "range_end" => "10.99.76.255"
-      ),array(
-        "name" => "Wireless Visitor District Offices",
-        "range_start" => "10.99.77.0",
-        "range_end" => "10.99.77.255"
-      ),array(
-        "name" => "Wireless Visitor LOB-Top-Fls",
-        "range_start" => "10.99.78.0",
-        "range_end" => "10.99.78.255"
-      ),array(
-        "name" => "Serverfarm 1",
-        "range_start" => "10.1.3.1",
-        "range_end" => "10.1.3.30"
-      ),array(
-        "name" => "Serverfarm 1",
-        "range_start" => "10.1.4.1",
-        "range_end" => "10.1.4.254"
-      ),array(
-        "name" => "Serverfarm 2",
-        "range_start" => "10.1.3.33",
-        "range_end" => "10.1.3.62"
-      ),array(
-        "name" => "Serverfarm 2",
-        "range_start" => "10.1.5.1",
-        "range_end" => "10.1.5.254"
-      ),array(
-        "name" => "Serverfarm 3",
-        "range_start" => "10.2.3.1",
-        "range_end" => "10.2.3.30"
-      ),array(
-        "name" => "Serverfarm 3",
-        "range_start" => "10.1.6.1",
-        "range_end" => "10.1.6.254"
-      ),array(
-        "name" => "Serverfarm 4",
-        "range_start" => "10.2.3.33",
-        "range_end" => "10.2.3.62"
-      ),array(
-        "name" => "Serverfarm 4",
-        "range_start" => "10.1.7.1",
-        "range_end" => "10.1.7.254"
-      ),array(
-        "name" => "Serverfarm 5",
-        "range_start" => "10.2.3.65",
-        "range_end" => "10.2.3.126"
-      ),array(
-        "name" => "AVAYA",
-        "range_start" => "10.1.3.129",
-        "range_end" => "10.1.3.254"
-      ),array(
-        "name" => "AVAYA",
-        "range_start" => "10.1.8.1",
-        "range_end" => "10.1.8.254"
-      )
-    );
+  global $locations;
+  $ip_long = ip2long($ip);
+  // determine a "key" to make array based matching faster
+  $index = substr($ip_long, 0,3);
+  foreach ($locations[$index] as $id => $value) {
+    if ($ip_long < $value['ipv4_end'] && $ip_long > $value['ipv4_start'] ) {
+      $output = $value["id"];
+      break;
+    }
+  }
+  return (empty($output)) ? "1" : $output ;
+}
 
-    foreach ($locations as $id => $value) {
-      echo $value['range_end'];
-      if ($ip < $value['range_end'] && $ip > $value['range_start'] ) {
-        $Loaction = $value["name"];
+$query = $dbcon->query("SELECT id,path_hash,search FROM url");
+$urls_raw = $query->fetchAll(PDO::FETCH_ASSOC);
+foreach ($urls_raw as $key => $value) {
+  if ($value['search'] === NULL) {
+    $urls[$value['path_hash']] = array('id'=>$value['id'])  ;
+  }else{
+    $urlArray[$value['path_hash']][] = array('search'=>$value['search'],'id'=>$value['id']) ;
+  }
+}
+unset($urls_raw);
+
+function url_match($path,$search)
+{
+  global $urls,$urlArray;
+  $s = $path;
+  if (strlen($path) > 1) {
+    $path  = preg_replace('/\/$|(\/user\/)[0-9]+|\/[0-9]+$|([a-z]+),.*|\/[0-9]+\,.*|\&.*/', '$1', $path);
+    $path  = preg_replace('/(_vti).*/', '$1', $path);
+  }
+  $hash = md5($path);
+  if (isset($urls[$hash]['id'])) {
+    $output = intval($urls[$hash]['id']);
+    $method = 'urls';
+  }else if(isset($urlArray[$hash][0]['search'])){
+    foreach ($urlArray[$hash] as $key => $value) {
+      if(isset($value['search'])){
+        $method = 'urlArray';
+        if (preg_match('/.*'.$value['search'].'.*/', $search)){
+          $output = $value['id'];
+        }
       }
     }
-    if (empty($Loaction)) {
-      $Loaction = "not found";
-    }
+  }
+  if (empty($output)) {
+    $output = "1";
+    echo "----\nUnknown path :\"".$s."\" -> \"".$path."\"\nhash: \"".$hash."\"\nsearch: \"".$search."\"\n----\n";
+  }
+  return $output;
+  unset($s,$path,$hash,$output);
 }
+
 
 
 /**
@@ -562,7 +292,7 @@ function get_source_files($config)
  *  Uses the given parameters to fetch an existing instance. If one cannot be found,
  *  it creates a new one and returns that instead.
  */
-function get_or_create_instance($dbcon, $servername, $install_class, $name)
+function get_or_create_instance(PDO $dbcon, $servername, $install_class, $name)
 {
   // Check our cache first
   global $INSTANCE_CACHE;

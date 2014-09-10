@@ -13,18 +13,7 @@
         </div>
       </div>
 
-      <a href="#uptime">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Uptime Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
+
     </div>
   </div>
 
@@ -42,18 +31,6 @@
         </div>
       </div>
 
-      <a href="#application">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Application Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
     </div>
   </div>
 
@@ -71,18 +48,7 @@
         </div>
       </div>
 
-      <a href="#database">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Database Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
+
     </div>
   </div>
 
@@ -96,23 +62,11 @@
           </div>
           <div class="col-xs-10 text-right">
             <p class="announcement-heading" id="response_time"></p>
-            <p class="announcement-text">Average Response Time </p>
+            <p class="announcement-text">Avg. Response Time </p>
           </div>
         </div>
       </div>
 
-      <a href="#pagespeed">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Pagespeed Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
     </div>
   </div>
 

@@ -1,0 +1,11 @@
+1.1 Offices & Users
+* Support for offices specified by IP address rage
+* Traffic is broken down into user studies
+
+1.0 "Public" Release
+
+0.3
+
+0.2
+
+0.1

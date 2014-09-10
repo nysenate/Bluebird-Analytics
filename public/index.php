@@ -5,7 +5,8 @@
  */
 require_once('../lib/utils.php');
 date_default_timezone_set('America/New_York');
-
+error_reporting(-1);
+ini_set('display_errors', 'On');
 ///////////////////////////////
 // Bootstrap the environment
 ///////////////////////////////
@@ -32,6 +33,19 @@ if (!isset($_GET['req'])) {
 $request = 'dashboard';
 $sub = 'overview';
 $req = explode('/', $_GET['req'], 2);
+
+// our url rewriting wasn't allowing me to access GET vars
+// so here's a hack
+$uri = parse_url($_SERVER['REQUEST_URI']);
+if (isset($uri['query'])) {
+  parse_str($uri['query'], $tmp);
+  foreach ($tmp as $key => $value) {
+    $_GET[$key]=$value;
+  }
+}
+unset($tmp,$uri);
+
+
 if (!empty($req[0])) {
   $request = $req[0];
 }
@@ -63,7 +77,15 @@ $navigation['performance']['overview'] = array('link'=>'/performance', 'content'
 // $navigation['performance']['dashboar3d'] = array('link'=>'/performance/dashboar3d', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
 // $navigation['performance']['dashboard4'] = array('link'=>'/performance/dashboard4', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
 
+$navigation['users']['overview'] =  array('link'=>'#', 'content'=>'none','view'=>'noe','name'=>'Users','icon'=>'fa-users','about'=>'#');
+
+$navigation['users']['list'] =  array('link'=>'/users/list', 'content'=>'users.php','view'=>'users','name'=>'User Overview','icon'=>'fa-users','about'=>'User Overview List');
+$navigation['users']['details'] = array('link'=>'/users/details', 'content'=>'userdetails.php', 'view'=>'userdetails','name'=>'User Details','icon'=>'fa-sitemap','about'=>'User Details');
+
+// $navigation['offices']['overview'] =  array('link'=>'/offices', 'content'=>'offices.php','view'=>'offices','name'=>'Offices','icon'=>'fa-building','about'=>'Offices');
+
 $navigation['datatable']['overview'] =  array('link'=>'/datatable', 'content'=>'datatable.php','view'=>'datatable','name'=>'Datatable','icon'=>'fa-list','about'=>'Datatable');
+
 
 // $navigation['users']['overview'] = array('link'=>'/users', 'content'=>'users.php','view'=>'users','name'=>'Users','icon'=>'fa-users','about'=>'User Overview');
 
@@ -83,13 +105,13 @@ $layout_content = $navigation[$request][$sub]['content'];
 $scripts = array(
   'css' => array(
     array('src'=>'/static/vendor/bootstrap-3.1.0/bootstrap.css'),
-    array('src'=>'/static/vendor/font-awesome-4.0.3/css/font-awesome.min.css'),
+    array('src'=>'/static/vendor/font-awesome-4.1.0/css/font-awesome.min.css'),
     array('src'=>'/static/vendor/opensans-v6/css/opensans.css'),
     array('src'=>'/static/vendor/ubuntu-v4/css/ubuntu.css'),
     array('src'=>'/static/vendor/morris-0.4.3/morris.min.css'),
     array('src'=>'/static/vendor/jquery.datatables-1.10.0/css/jquery.dataTables.css'),
     array('src'=>'/static/vendor/lou-multi-select-0.9.11/css/multi-select.css'),
-    array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.7/daterangepicker-bs3.css'),
+    array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker-bs3.css'),
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.css'),
     array('src'=>'/static/css/sb-admin.css'),
   ),
@@ -103,7 +125,8 @@ $scripts = array(
     array('src'=>'/static/vendor/lou-multi-select-0.9.11/js/jquery.multi-select.js'),
     array('src'=>'/static/vendor/jquery.cookie-1.4.1.js'),
     array('src'=>'/static/vendor/moment-2.5.1.min.js'),
-    array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.7/daterangepicker.js'),
+    array('src'=>'/static/vendor/jquery.tablesorter.min.js'),
+    array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker.js'),
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.js'),
     array('src'=>'/static/js/app.js'),
   )

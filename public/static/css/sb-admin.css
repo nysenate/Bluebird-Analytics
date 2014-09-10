@@ -134,6 +134,7 @@ h1 .fa-spin {
 .panel-info > .panel-heading {
   background-color: #f8f8f8;
   border-color: #B3BDC1;
+  border-bottom:none;
   color: #444;
 }
 .panel-info {

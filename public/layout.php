@@ -13,10 +13,11 @@
     foreach ($scripts['css'] as $key => $value) {
       echo '<link href="'.url_for($value['src']).'" rel="stylesheet" >'."\n\t";
     }
+
     ?>
   </head>
 
-  <body data-context-path="<?php echo $_SERVER['CONTEXT_PREFIX'] ?>" data-view="<?php echo $navigation[$request][$sub]['view'] ?>" class="<?php echo $navigation[$request][$sub]['name'] ?>">
+  <body data-context-path="<?php echo $_SERVER['CONTEXT_PREFIX'] ?>" data-view="<?php echo $navigation[$request][$sub]['view'] ?>" class="<?php echo $navigation[$request][$sub]['name'] ?>" data-filter="<?php if(isset($_GET['filter'])){ echo $_GET['filter'];} ?>">
     <div id="wrapper">
       <!-- Sidebar -->
       <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">

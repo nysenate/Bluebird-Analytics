@@ -1,5 +1,8 @@
 <div class="ipaddress hidden">
 <?php
+if(!isset($_GET['filter'])){
+echo "<script type='text/javascript'>window.location = '/users/list';</script>\n";
+}
 function get_client_ip() {
     $ipaddress = '';
     if (getenv('HTTP_CLIENT_IP'))
@@ -22,6 +25,62 @@ echo get_client_ip();
 ?>
 </div>
 <div class="row">
+   <div class="col-lg-3">
+    <div class="panel summary panel-info">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-2">
+            <i class="fa fa-file-o fa-5x"></i>
+          </div>
+          <div class="col-xs-10 text-right">
+            <p class="announcement-heading" id="distinct_pages"></p>
+            <p class="announcement-text">Unique pages</p>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <div class="col-lg-3">
+    <div class="panel summary panel-info">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-2">
+            <i class="fa fa-files-o fa-5x"></i>
+          </div>
+          <div class="col-xs-10 text-right">
+            <p class="announcement-heading" id="page_views"></p>
+            <p class="announcement-text">Total Pageviews</p>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+
+  <div class="col-lg-3">
+    <div class="panel summary panel-info">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-xs-4">
+            <i class="fa fa-rotate-right fa-5x"></i>
+          </div>
+          <div class="col-xs-8 text-right">
+            <p class="announcement-heading" id="avg_response_time"></p>
+            <p class="announcement-text">Avg. Response time</p>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+
   <div class="col-lg-3">
     <div class="panel summary panel-info">
       <div class="panel-heading">
@@ -30,115 +89,13 @@ echo get_client_ip();
             <i class="fa fa-bar-chart-o fa-5x"></i>
           </div>
           <div class="col-xs-10 text-right">
-            <p class="announcement-heading" id="uptime"> </p>
+            <p class="announcement-heading" id="uptime"></p>
             <p class="announcement-text">Uptime</p>
           </div>
         </div>
       </div>
-
-      <a href="#uptime">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Uptime Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
-  </div>
-
-   <div class="col-lg-3">
-    <div class="panel summary panel-info">
-      <div class="panel-heading">
-        <div class="row">
-          <div class="col-xs-2">
-            <i class="fa fa-cloud fa-5x"></i>
-          </div>
-          <div class="col-xs-10 text-right">
-            <p class="announcement-heading" id="app_errors"></p>
-            <p class="announcement-text">Application errors</p>
-          </div>
-        </div>
       </div>
-
-      <a href="#application">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Application Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
   </div>
-
-  <div class="col-lg-3">
-    <div class="panel summary panel-info">
-      <div class="panel-heading">
-        <div class="row">
-          <div class="col-xs-2">
-            <i class="fa fa-hdd-o fa-5x"></i>
-          </div>
-          <div class="col-xs-10 text-right">
-            <p class="announcement-heading"id="db_errors"></p>
-            <p class="announcement-text">Database errors</p>
-          </div>
-        </div>
-      </div>
-
-      <a href="#database">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Database Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
-  </div>
-
-
-  <div class="col-lg-3">
-    <div class="panel summary panel-info">
-      <div class="panel-heading">
-        <div class="row">
-          <div class="col-xs-2">
-            <i class="fa fa-rotate-right fa-5x"></i>
-          </div>
-          <div class="col-xs-10 text-right">
-            <p class="announcement-heading" id="response_time"></p>
-            <p class="announcement-text">Average Response Time </p>
-          </div>
-        </div>
-      </div>
-
-      <a href="#pagespeed">
-        <div class="panel-footer announcement-bottom">
-          <div class="row">
-            <div class="col-xs-10">
-              Pagespeed Overview
-            </div>
-            <div class="col-xs-2 text-right">
-              <i class="fa fa-arrow-circle-right"></i>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
-  </div>
-
 
 </div><!-- /.row -->
 
@@ -163,7 +120,7 @@ echo get_client_ip();
       </div>
       <div class="panel-body">
         <div class="table-responsive">
-          <table id="user-overview" class="table table-bordered table-hover table-striped tablesorter">
+          <table id="user-detail" class="table table-bordered table-hover table-striped tablesorter">
           </table>
         </div>
 

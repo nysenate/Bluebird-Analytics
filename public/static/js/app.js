@@ -49,15 +49,57 @@
         }
       },
     },
+    offices: {
+      summary : {
+        'app_errors': '500_errors',
+        'db_errors': '503_errors',
+        response_time : 'avg_response_time',
+        uptime : "",
+      },
+      chart : {
+        element: 'overview',
+        ykeys: ['500_errors','503_errors','avg_response_time','page_view'],
+        labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)'],
+      },
+      list : {
+        slow_queries: {
+          element: '#slow_queries',
+          headers: ["Path", "Total Views", "Average Response Time"]
+        }
+      },
+    },
+    users: {
+      list : {
+        user_overview: {
+          element: '#user-overview',
+          headers: ["Total Views", "Office Location", "Server", "Remote IP"]
+        }
+      }
+    },
+    userdetails: {
+
+      summary : {
+        page_views : "page_views",
+        distinct_pages : "distinct_pages",
+        avg_response_time : "avg_response_time",
+        active_instances : "active_instances",
+        uptime : "uptime",
+      },
+      list : {
+        user_detail: {
+          element: '#user-detail',
+          headers: ["Action", "Url Path", "Time","Request TIme", "Time Between Requests"]
+        }
+      }
+    },
     datatable: {},
-    audience: {},
     behavior: {}
   };
 
   $(document).ready(function() {
 
-    var msg = "      _   ,\n -====;o`\/ }\n       \-'\-'----.   New York State Senate\n        \\ |-..-'`  Bluebird Analytics \n        /\/\ \n        `--`\n ";
-    console.log(msg);
+    // var msg = "      _   ,\n -====;o`\/ }\n       \-'\-'----.   New York State Senate\n        \\ |-..-'`  Bluebird Analytics \n        /\/\ \n        `--`\n ";
+    // console.log(msg);
 
     function get_granularity(start_moment, end_moment) {
       var difference = end_moment.unix() - start_moment.unix();
@@ -150,6 +192,7 @@
       // We automatically bind update to 'this' to avoid context errors
       var update = function(chosenLabel, new_start_moment, new_end_moment) {
         console.log("Checking values \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+        console.log("URL values \""+chosenLabel+"\" : "+new_start_moment.format(data_df) + ' - ' + new_end_moment.format(data_df));
         if (chosenLabel === "Custom Range") {
           new_start_moment =  new_start_moment;
           new_end_moment = new_end_moment;
@@ -209,24 +252,42 @@
       }
 
       // Initialize the date picker
-      this.daterangepicker({
+      // this.daterangepicker({
+      //     ranges: {
+      //        'Last Hour': [ moment().subtract('hours', 1), moment()],
+      //        'Today': [moment().startOf('day'), moment()],
+      //        'Yesterday': [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+      //        'Last 7 Days': [moment().subtract('days', 6).startOf('day'), moment()],
+      //        'Last 30 Days': [moment().subtract('days', 29).startOf('day'), moment()],
+      //     },
+      //     timePicker: true,
+      //     dateLimit: { days: 360 },
+      //     minDate: '04/10/2013',
+      //     maxDate: moment().endOf('day'),
+      //     timePickerIncrement: 5,
+      //     startDate: this.start_moment,
+      //     endDate: this.end_moment,
+      //     parentEl: ".navbar"
+      // });
+      $('#reportrange').daterangepicker(
+      {
           ranges: {
-             'Last Hour': [ moment().subtract('hours', 1), moment()],
-             'Today': [moment().startOf('day'), moment()],
-             'Yesterday': [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-             'Last 7 Days': [moment().subtract('days', 6).startOf('day'), moment()],
-             'Last 30 Days': [moment().subtract('days', 29).startOf('day'), moment()],
+            'Last Hour': [ moment().subtract('hours', 1), moment()],
+            'Today': [moment().startOf('day'), moment()],
+            'Yesterday': [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+            'Last 7 Days': [moment().subtract('days', 6).startOf('day'), moment()],
+            'Last 30 Days': [moment().subtract('days', 29).startOf('day'), moment()],
           },
           timePicker: true,
+          timePicker12Hour: false,
           dateLimit: { days: 360 },
           minDate: '04/10/2013',
           maxDate: moment().endOf('day'),
           timePickerIncrement: 5,
           startDate: this.start_moment,
           endDate: this.end_moment,
-          parentEl: ".navbar",
+          parentEl: ".navbar"
       });
-
       this.on('apply.daterangepicker', function(ev, picker) {
         update(picker.chosenLabel, picker.startDate, picker.endDate);
         $('#page-wrapper').Render();
@@ -277,35 +338,35 @@
     $.fn.chartpicker = function(user_options) {
       var options = $.extend({}, user_options);
 
-      // // We automatically bind update to 'this' to avoid context errors
-      // var update = function(new_instance) {
-      //   console.log("Updating instance name to: "+new_instance);
-      //   if (this.instance_name != new_instance) {
-      //     this.val(new_instance);
-      //   }
-      //   this.instance_name = new_instance;
-      //   // $.cookie('data-instance', new_instance);
-      //   HashStorage.update({'data-instance': new_instance});
-      // }.bind(this);
+      // We automatically bind update to 'this' to avoid context errors
+      var update = function(new_instance) {
+        console.log("Updating instance name to: "+new_instance);
+        if (this.instance_name != new_instance) {
+          this.val(new_instance);
+        }
+        this.instance_name = new_instance;
+        // $.cookie('data-instance', new_instance);
+        HashStorage.update({'data-instance': new_instance});
+      }.bind(this);
 
 
-      // if(HashStorage.has(['data-instance'])) {
-      //   update(HashStorage.data['data-instance']);
+      if(HashStorage.has(['data-instance'])) {
+        update(HashStorage.data['data-instance']);
+      }
+      // else if ($.cookie('data-instance') != undefined) {
+      //   console.log('Cookie val: '+$.cookie('data-instance'));
+      //   update($.cookie('data-instance'));
       // }
-      // // else if ($.cookie('data-instance') != undefined) {
-      // //   console.log('Cookie val: '+$.cookie('data-instance'));
-      // //   update($.cookie('data-instance'));
-      // // }
-      // else {
-      //   update(this.val());
-      // }
+      else {
+        update(this.val());
+      }
 
-      // this.selectpicker();
-      // this.change(function (event) {
-      //   update($(this).val());
-      //   $('#page-wrapper').Render();
-      // });
-      // return this;
+      this.selectpicker();
+      this.change(function (event) {
+        update($(this).val());
+        $('#page-wrapper').Render();
+      });
+      return this;
     };
 
 
@@ -331,11 +392,17 @@
       $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
       $.each(config[view], function( index, settings ) {
         var type = index
+          $.each(jqxhr, function( key, value ) {
+            jqxhr[value].abort();
+            console.log(jqxhr[value]);
+          });
+
         jqxhr[index] = $.ajax({
           url: $("body").data("context-path")+"/api/get_"+type,
           timeout: 100000,
           data: {
             view: view,
+            filter: $("body").data("filter"),
             start_datetime: DateRange.start_moment.format(data_df),
             end_datetime: DateRange.end_moment.format(data_df),
             granularity: DateRange.granularity,
@@ -355,7 +422,8 @@
               switch(key)
               {
               case 'response_time':
-                output = parseFloat((response.data[value] /1000000)).toFixed(2)+"s";
+              case 'avg_response_time':
+                output = parseFloat(response.data[value]).toFixed(2)+"s";
                 // console.log(parseInt(output));
                 if(parseInt(output) > 1 ) {
                   $('#'+key).parent().parent().parent().parent().removeClass('panel-info').addClass('panel-danger');
@@ -451,6 +519,8 @@
 
           } else if (type === "list") {
             $.each(settings, function( table, table_data ) {
+              var call = table;
+              var table_id = table_data['element'];
               var response_data = response['data'][table];
               var table = $(table_data['element']);
               var thead = "<thead><tr>";
@@ -462,17 +532,29 @@
               for (var row in response_data) {
                 var row_data = response_data[row]
                 tbody += "<tr>";
-                for (var col in row_data) {
-                  // if row isn't a number, link it to the
-                  if (isNaN(row_data[col])) {
-                    tbody += "<td> <a href='/"+table_data['link_to']+"?q="+row_data[col]+"'>"+toTitleCase(row_data[col])+"</a></td>";
-                  }else{
-                    tbody += "<td>"+toTitleCase(row_data[col])+"</td>";
+                if (call == 'user_overview') {
+                  key = row_data['remote_ip']+","+row_data['location_id']+","+row_data['instance_id'];
+                  delete row_data["location_id"];
+                  delete row_data["instance_id"];
+                  for (var col in row_data) {
+                    tbody += "<td><a class='userdetails' href='/users/details?filter=["+key+"]'>"+row_data[col]+"</a></td>";
                   }
-                }
+                  tbody +="</a>";
+                }else{
+                  for (var col in row_data) {
+                    // if row isn't a number, link it to the
+                    if (isNaN(row_data[col])) {
+                      tbody += "<td>"+toTitleCase(row_data[col])+"</td>";
+                    }else{
+                      tbody += "<td>"+(row_data[col])+"</td>";
+                    }
+                  }
+                };
+
                 tbody += "</tr>";
               }
               table.append(tbody+"</tbody>");
+              $(table).tablesorter();
             });
             $('.table-list').slideDown();
           }

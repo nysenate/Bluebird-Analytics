@@ -3,8 +3,10 @@
     <select multiple="multiple" id="select-dimension" name="my-select[]">
       <option value='instance.name'>Instance Name</option>
       <option value='path'>Path</option>
+      <option value='action'>User Action</option>
       <option value='query'>Query</option>
       <option value='remote_ip'>Remote IP</option>
+      <option value='office'>Office Location</option>
       <option value='time'>Time of Request</option>
     </select>
   </div>
