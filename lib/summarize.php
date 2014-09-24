@@ -75,7 +75,7 @@ function create_uniques_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
   $rows = array();
   foreach(array('path') as $stat) {
     $result = $dbcon->query("
-      SELECT instance_id, remote_ip,location_id, $stat as value
+      SELECT instance_id, remote_ip,trans_ip,location_id, $stat as value
       FROM request
       WHERE time BETWEEN FROM_UNIXTIME($start_range) AND FROM_UNIXTIME($end_range)
       GROUP BY instance_id, remote_ip, $stat

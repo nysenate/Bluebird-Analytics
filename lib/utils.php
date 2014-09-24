@@ -2,11 +2,16 @@
 
 // Define these constants prior to calling parse_ini_file().  That way, the
 // function will translate the debug_level string into an integer value.
-const FATAL = 0;
-const ERROR = 1;
-const WARN  = 2;
-const INFO  = 3;
-const DEBUG = 4;
+const FATAL     = 0;
+const ERROR     = 1;
+const WARN      = 2;
+const INFO      = 3;
+const DEBUG     = 4;
+const FULLDEBUG = 5;
+
+/* __print_log indicates if logging is tee'd to stdout as well as error log */
+global $utils__print_log;
+$utils__print_log = FALSE;
 
 
 /**
@@ -93,11 +98,10 @@ function load_config()
 
 function log_($log_level, $message)
 {
-  global $g_debug_level, $g_log_file;
-  echo "$message\n";
+  global $g_debug_level, $g_log_file, $utils__print_log;
 
   //Get the integer level for each and ignore out of scope log messages
-  if ($g_debug_level > $log_level) {
+  if ($g_debug_level < $log_level) {
     return;
   }
 
@@ -109,14 +113,20 @@ function log_($log_level, $message)
     case DEBUG: $debug_level = 'DEBUG'; break;
     default: $debug_level = $log_level; break;
   }
+
   $date = date('Y-m-d H:i:s');
+  $message = "[stats:$debug_level] $message";
+
+  if ($utils__print_log) {
+    echo "[$date] $message\n";
+  }
 
   //Log to a debug file, or to Apache if debug file was not opened.
   if ($g_log_file) {
-    fwrite($g_log_file, "$date [$debug_level] $message\n");
+    fwrite($g_log_file, "[$date] $message\n");
   }
   else {
-    error_log("[statserver] $date [$debug_level] $message\n");
+    error_log("$message");
   }
 }
 

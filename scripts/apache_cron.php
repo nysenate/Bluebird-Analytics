@@ -216,6 +216,8 @@ function ip_match($ip)
   return (empty($output)) ? "1" : $output ;
 }
 
+/* This may be obsolete now...  */
+/*
 $query = $dbcon->query("SELECT id,path_hash,search FROM url");
 $urls_raw = $query->fetchAll(PDO::FETCH_ASSOC);
 foreach ($urls_raw as $key => $value) {
@@ -232,8 +234,10 @@ function url_match($path,$search)
   global $urls,$urlArray;
   $s = $path;
   if (strlen($path) > 1) {
-    $path  = preg_replace('/\/$|(\/user\/)[0-9]+|\/[0-9]+$|([a-z]+),.*|\/[0-9]+\,.*|\&.*/', '$1', $path);
-    $path  = preg_replace('/(_vti).*/', '$1', $path);
+    // ----------------------------->>>remember to remove the extra space
+    // ----------------------------->>>between * and / at the end of these patterns
+    $path  = preg_replace('/\/$|(\/user\/)[0-9]+|\/[0-9]+$|([a-z]+),.*|\/[0-9]+\,.*|\&.* /', '$1', $path);
+    $path  = preg_replace('/(_vti).* /', '$1', $path);
   }
   $hash = md5($path);
   if (isset($urls[$hash]['id'])) {
@@ -243,7 +247,8 @@ function url_match($path,$search)
     foreach ($urlArray[$hash] as $key => $value) {
       if(isset($value['search'])){
         $method = 'urlArray';
-        if (preg_match('/.*'.$value['search'].'.*/', $search)){
+        // ----------------------------->>>additional space here too
+        if (preg_match('/.*'.$value['search'].'.* /', $search)){
           $output = $value['id'];
         }
       }
@@ -256,7 +261,7 @@ function url_match($path,$search)
   return $output;
   unset($s,$path,$hash,$output);
 }
-
+*/
 
 
 /**
