@@ -1,10 +1,10 @@
 /* set the current database */
-USE analytics;
+USE senate_bbanalytics;
 
 /* Create the debug log procedure */
 DROP PROCEDURE IF EXISTS nyss_debug_log;
 DELIMITER //
-CREATE DEFINER=CURRENT_USER PROCEDURE `nyss_debug_log`(IN `msg` TEXT)
+CREATE DEFINER=CURRENT_USER PROCEDURE nyss_debug_log(IN msg TEXT)
 	LANGUAGE SQL
 	NOT DETERMINISTIC
 	CONTAINS SQL
@@ -30,7 +30,7 @@ BEGIN
 					);
 				END;
 			END IF;
-			INSERT INTO nyss_debug (`msg`) VALUES (@nyss_debug_function_thismsg);
+			INSERT INTO nyss_debug (msg) VALUES (@nyss_debug_function_thismsg);
 			SET @nyss_debug_function_thismsg = NULL;
 			SET @nyss_debug_function_table_count = NULL;
 		END;
@@ -503,7 +503,7 @@ INSERT INTO url (name,match_full,action,path,search)VALUES
 
 DROP TRIGGER IF EXISTS request_before_insert;
 DELIMITER //
-CREATE TRIGGER `request_before_insert` BEFORE INSERT ON `request` FOR EACH ROW BEGIN
+CREATE TRIGGER request_before_insert BEFORE INSERT ON request FOR EACH ROW BEGIN
   /* clear the temp variables */
   SET @t_loc_id = NULL;
   SET @t_url_id = NULL;
@@ -526,7 +526,7 @@ CREATE TRIGGER `request_before_insert` BEFORE INSERT ON `request` FOR EACH ROW B
     FROM url
     WHERE
       (match_full = 0 AND path=@clean_url)
-      OR (match_full = 1 AND path=@clean_url AND preg_match(search, NEW.`query`))
+      OR (match_full = 1 AND path=@clean_url AND preg_match(search, NEW.query))
     ORDER BY match_full DESC, path
     LIMIT 1;
   SET NEW.url_id = IFNULL(@t_url_id,1);
@@ -536,7 +536,7 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS upgrade_11;
 DELIMITER //
-CREATE DEFINER=CURRENT_USER PROCEDURE `upgrade_11`()
+CREATE DEFINER=CURRENT_USER PROCEDURE upgrade_11()
 	LANGUAGE SQL
 	NOT DETERMINISTIC
 	CONTAINS SQL
@@ -638,7 +638,7 @@ CALL upgrade_11();
 /* Adding trigger to request table */
 DROP TRIGGER IF EXISTS request_before_insert;
 DELIMITER //
-CREATE DEFINER=`root`@`localhost` TRIGGER `request_before_insert` BEFORE INSERT ON `request` FOR EACH ROW BEGIN
+CREATE DEFINER=CURRENT_USER TRIGGER request_before_insert BEFORE INSERT ON request FOR EACH ROW BEGIN
   /* Initialize */
   SET @t_loc_id = NULL;
   SET @t_url_id = NULL;
@@ -661,7 +661,7 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `request_before_insert` BEFORE INSERT 
     FROM url
     WHERE
       (match_full = 0 AND path=@clean_url)
-      OR (match_full = 1 AND path=@clean_url AND preg_match(search, NEW.`query`))
+      OR (match_full = 1 AND path=@clean_url AND preg_match(search, NEW.query))
     ORDER BY match_full DESC, path
     LIMIT 1;
   SET NEW.url_id = IFNULL(@t_url_id,1);
