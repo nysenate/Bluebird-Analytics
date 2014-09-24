@@ -11,7 +11,7 @@ global $g_debug_level, $utils__print_log;
     entries per request row processed).  DON'T DO IT unless you have a really
     good reason, and intend to actively monitor it.
 */
-$g_debug_level = DEBUG;
+$g_debug_level = WARN;
 $utils__print_log = FALSE;
 
 /* *****************************
