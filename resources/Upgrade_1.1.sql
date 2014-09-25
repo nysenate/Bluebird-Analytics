@@ -1,6 +1,3 @@
-/* set the current database */
-USE senate_bbanalytics;
-
 /* Create the debug log procedure */
 DROP PROCEDURE IF EXISTS nyss_debug_log;
 DELIMITER //
@@ -501,39 +498,7 @@ INSERT INTO url (name,match_full,action,path,search)VALUES
 ("Contact Create Household",1,"create",'/civicrm/contact/add',"Household"),
 ("Contact Create Organization",1,"create",'/civicrm/contact/add',"Organization");
 
-DROP TRIGGER IF EXISTS request_before_insert;
-DELIMITER //
-CREATE TRIGGER request_before_insert BEFORE INSERT ON request FOR EACH ROW BEGIN
-  /* clear the temp variables */
-  SET @t_loc_id = NULL;
-  SET @t_url_id = NULL;
-  /* translate the IP */
-  SET NEW.trans_ip = INET_ATON(NEW.remote_ip);
-  /* find the location match based on translated IP */
-  SELECT id INTO @t_loc_id FROM location WHERE NEW.trans_ip BETWEEN ipv4_start AND ipv4_end;
-  SET NEW.location_id = IFNULL(@t_loc_id,1);
-  /* attempt to find a URL match based on a "clean" URL */
-  SET @clean_url = preg_replace('([a-z]+),.*/', '$1',
-                    preg_replace('/(_vti).*/', '$1',
-                     preg_replace('/(\\/user\\/)[0-9]+/', '$1',
-                      preg_replace('/^(.+)\\/$/', '$1',
-                       preg_replace('/\\/[0-9]+$|\\/[0-9]+\\,.*|\\&.*/', '', NEW.path)
-                      )
-                     )
-                    )
-                   );
-  SELECT id INTO @t_url_id
-    FROM url
-    WHERE
-      (match_full = 0 AND path=@clean_url)
-      OR (match_full = 1 AND path=@clean_url AND preg_match(search, NEW.query))
-    ORDER BY match_full DESC, path
-    LIMIT 1;
-  SET NEW.url_id = IFNULL(@t_url_id,1);
-END
-//
-DELIMITER ;
-
+/* Create the upgrade procedure */
 DROP PROCEDURE IF EXISTS upgrade_11;
 DELIMITER //
 CREATE DEFINER=CURRENT_USER PROCEDURE upgrade_11()
@@ -638,7 +603,7 @@ CALL upgrade_11();
 /* Adding trigger to request table */
 DROP TRIGGER IF EXISTS request_before_insert;
 DELIMITER //
-CREATE DEFINER=CURRENT_USER TRIGGER request_before_insert BEFORE INSERT ON request FOR EACH ROW BEGIN
+CREATE DEFINER=CURRENT_USER TRIGGER `request_before_insert` BEFORE INSERT ON `request` FOR EACH ROW BEGIN
   /* Initialize */
   SET @t_loc_id = NULL;
   SET @t_url_id = NULL;
@@ -650,9 +615,9 @@ CREATE DEFINER=CURRENT_USER TRIGGER request_before_insert BEFORE INSERT ON reque
   /* Clean the URL and try matching it to the known list */
   SET @clean_url = preg_replace('([a-z]+),.*/', '$1',
                     preg_replace('/(_vti).*/', '$1',
-                     preg_replace('/(\/user\/)[0-9]+/', '$1',
-                      preg_replace('/^(.+)\/$/', '$1',
-                       preg_replace('/\/[0-9]+$|\/[0-9]+\,.*|\&.*/', '', NEW.path)
+                     preg_replace('/(\\/user\\/)[0-9]+/', '$1',
+                      preg_replace('/^(.+)\\/$/', '$1',
+                       preg_replace('/\\/[0-9]+$|\\/[0-9]+\\,.*|\\&.*/', '', NEW.path)
                       )
                      )
                     )
