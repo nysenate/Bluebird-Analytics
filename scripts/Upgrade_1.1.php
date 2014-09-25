@@ -67,17 +67,16 @@ log_(INFO,"Found {$obj->TotalRecs} records ($totalloops batches) to populate");
    regex replacement will be applied to each requested path.  The "clean"
    path will either be found in $urls, or default to 1 ("No Match") */
 $query = "SELECT id,path,query FROM request WHERE url_id IS NULL LIMIT 10000";
-$regpatterns = array('/([a-z]+),.*/',
-                     '/(_vti).*/',
-                     '/(\\/user\\/)[0-9]+/',
-                     '/^(.+)\\/$/',
-                     '/\\/[0-9]+$|\\/[0-9]+\\,.*|\\&.*/'
+
+$regpatterns = array('#(.+)/(?:[0-9]+)?$#',
+                     '#([a-z0-9]+),.*$#',
+                     '#(/_vti_).*#',
+                     '#(/user)/[0-9]+#',
                      );
 $regreplace =  array('$1',
                      '$1',
                      '$1',
                      '$1',
-                     ''
                      );
 
 log_(DEBUG,"Beginning url loop");
