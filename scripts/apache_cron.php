@@ -37,9 +37,10 @@ if (empty($source_paths)) {
   exit(1);
 }
 
-// Get the time and final offset of the last run. These values are also the default
-// final values in case there was no new data to run. The schema automatically inserts
-// a default 0/0 entry in this table so it will always have atleast 1 result row.
+// Get the time and final offset of the last run. These values are also the
+// default final values in case there was no new data to run. The schema
+// automatically inserts a default 0/0 entry in this table so it will always
+// have at least one result row.
 $result = $dbcon->query("SELECT * FROM apache_cron_runs ORDER BY final_ctime DESC LIMIT 1");
 $row = $result->fetch(PDO::FETCH_ASSOC);
 $final_offset = $start_offset = $row['final_offset'];
@@ -144,7 +145,8 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
   $final_offset = ftell($handle);
   fclose($handle);
   return array($final_offset, $final_ctime);
-}
+} // process_apache_log()
+
 
 /**
  * Transforms a single line in the log file into an array of request parameters.
@@ -152,7 +154,7 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
 function process_entry($entry_parts, PDO $dbcon)
 {
   // Format the datetime by removing the [ ] and replacing the first :
-  $datetime = DateTime::createFromFormat("d/M/Y:H:i:s O", substr($entry_parts[0],1)." ".substr($entry_parts[1], 0, 5));
+  $datetime = DateTime::createFromFormat('d/M/Y:H:i:s O', substr($entry_parts[0],1).' '.substr($entry_parts[1], 0, 5));
 
   $servername = $entry_parts[2];
   $server_parts = explode('.', $servername);
@@ -162,106 +164,30 @@ function process_entry($entry_parts, PDO $dbcon)
   }
   $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
   $instance = get_or_create_instance($dbcon, $servername, $instance_type, $instance_name);
-  $remote_ip = $entry_parts[3];
-  $remote_location = ip_match($entry_parts[3]);
-  $response_time = $entry_parts[4];
-  $response_code = $entry_parts[5];
-  $transfer_rx = $entry_parts[6];
-  $transfer_tx = $entry_parts[7];
-  $connection_status = $entry_parts[8];
-  $method = trim($entry_parts[9], '"');
-
-  $request_string = $entry_parts[10];
-  $request_parts = parse_url($request_string);
+  $request_parts = parse_url($entry_parts[10]);
   $request_path = $request_parts['path'];
-  $request_query = isset($request_parts['query']) ? $request_parts['query'] : "";
-  $request_action = url_match($request_path,$request_query);
-  $request_protocol = $entry_parts[11];
 
   // We don't care about public files, accidental copy/paste, or static files
   $is_page = !preg_match('/(^\\/sites\\/|https?:|\\.(css|js|jpg|jpeg|gif|img|txt|ico|png|bmp|pdf|tif|tiff|oft|ttf|eot|woff|svg|svgz|doc|mp4|mp3)$)/i', $request_path);
 
+  // Note that location_id and url_id will be set by the trigger on
+  // the REQUEST table.
+
   return array(
-    "id" => NULL,
-    "instance_id" => $instance['id'],
-    "remote_ip" => $remote_ip,
-    "location_id" => $remote_location,
-    "url_id" => $request_action,
-    "response_code" => $response_code,
-    "response_time" => $response_time,
-    "transfer_rx" => $transfer_rx,
-    "transfer_tx" => $transfer_tx,
-    "method" => $method,
-    "path" => $request_path,
-    "query" => $request_query,
-    "time" => $datetime->format(DateTime::ISO8601),
-    "is_page" => $is_page
+    'id' => NULL,
+    'instance_id' => $instance['id'],
+    'remote_ip' => $entry_parts[3],
+    'response_code' => $entry_parts[5],
+    'response_time' => $entry_parts[4],
+    'transfer_rx' => $entry_parts[6],
+    'transfer_tx' => $entry_parts[7],
+    'method' => trim($entry_parts[9], '"'),
+    'path' => $request_path,
+    'query' => isset($request_parts['query']) ? $request_parts['query'] : '',
+    'time' => $datetime->format(DateTime::ISO8601),
+    'is_page' => $is_page
   );
-}
-
-// get a small list of office locations
-$locations = $dbcon->query("SELECT * FROM location WHERE id != 1");
-function ip_match($ip)
-{
-  global $locations;
-  $ip_long = ip2long($ip);
-  // determine a "key" to make array based matching faster
-  $index = substr($ip_long, 0,3);
-  foreach ($locations[$index] as $id => $value) {
-    if ($ip_long < $value['ipv4_end'] && $ip_long > $value['ipv4_start'] ) {
-      $output = $value["id"];
-      break;
-    }
-  }
-  return (empty($output)) ? "1" : $output ;
-}
-
-/* This may be obsolete now...  */
-/*
-$query = $dbcon->query("SELECT id,path_hash,search FROM url");
-$urls_raw = $query->fetchAll(PDO::FETCH_ASSOC);
-foreach ($urls_raw as $key => $value) {
-  if ($value['search'] === NULL) {
-    $urls[$value['path_hash']] = array('id'=>$value['id'])  ;
-  }else{
-    $urlArray[$value['path_hash']][] = array('search'=>$value['search'],'id'=>$value['id']) ;
-  }
-}
-unset($urls_raw);
-
-function url_match($path,$search)
-{
-  global $urls,$urlArray;
-  $s = $path;
-  if (strlen($path) > 1) {
-    // ----------------------------->>>remember to remove the extra space
-    // ----------------------------->>>between * and / at the end of these patterns
-    $path  = preg_replace('/\/$|(\/user\/)[0-9]+|\/[0-9]+$|([a-z]+),.*|\/[0-9]+\,.*|\&.* /', '$1', $path);
-    $path  = preg_replace('/(_vti).* /', '$1', $path);
-  }
-  $hash = md5($path);
-  if (isset($urls[$hash]['id'])) {
-    $output = intval($urls[$hash]['id']);
-    $method = 'urls';
-  }else if(isset($urlArray[$hash][0]['search'])){
-    foreach ($urlArray[$hash] as $key => $value) {
-      if(isset($value['search'])){
-        $method = 'urlArray';
-        // ----------------------------->>>additional space here too
-        if (preg_match('/.*'.$value['search'].'.* /', $search)){
-          $output = $value['id'];
-        }
-      }
-    }
-  }
-  if (empty($output)) {
-    $output = "1";
-    echo "----\nUnknown path :\"".$s."\" -> \"".$path."\"\nhash: \"".$hash."\"\nsearch: \"".$search."\"\n----\n";
-  }
-  return $output;
-  unset($s,$path,$hash,$output);
-}
-*/
+} // process_entry()
 
 
 /**
@@ -290,12 +216,12 @@ function get_source_files($config)
     return $anum - $bnum;
   });
   return array_reverse($files);
-}
+} // get_source_files()
 
 
 /**
- *  Uses the given parameters to fetch an existing instance. If one cannot be found,
- *  it creates a new one and returns that instead.
+ *  Uses the given parameters to fetch an existing instance. If one cannot be
+ *  found, it creates a new one and returns that instead.
  */
 function get_or_create_instance(PDO $dbcon, $servername, $install_class, $name)
 {
@@ -323,6 +249,6 @@ function get_or_create_instance(PDO $dbcon, $servername, $install_class, $name)
 
   $INSTANCE_CACHE[$servername] = $instance;
   return $instance;
-}
+} // get_or_create_instance()
 
 ?>
