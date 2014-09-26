@@ -620,7 +620,7 @@ CREATE DEFINER=CURRENT_USER TRIGGER request_before_insert BEFORE INSERT ON reque
     FROM url
     WHERE
       (match_full = 0 AND path=@clean_url)
-      OR (match_full = 1 AND path=@clean_url AND preg_match(search, NEW.query))
+      OR (match_full = 1 AND path=@clean_url AND preg_rlike(search, NEW.query))
     ORDER BY match_full DESC, path
     LIMIT 1;
   SET NEW.url_id = IFNULL(@t_url_id,1);
