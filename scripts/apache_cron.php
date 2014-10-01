@@ -11,6 +11,8 @@ if ($config === false) {
   exit(1);
 }
 
+global $INSTANCE_CACHE, $dbcon;
+
 $g_log_file = get_log_file($config['debug']);
 $g_log_level = get_log_level($config['debug']);
 $dbcon = get_db_connection($config['database']);
@@ -25,24 +27,12 @@ if ($dbcon === false) {
 /****************
  * create the instance cache
  */
-global $INSTANCE_CACHE;
 $INSTANCE_CACHE = load_bluebird_instances($config);
 // match to the IDs in the instance table
 $result = $dbcon->query("SELECT id,name FROM instance");
 while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
   if (array_key_exists($row['name'],$INSTANCE_CACHE)) {
     $INSTANCE_CACHE[$row['name']]['id']=$row['id'];
-  } else {
-    $INSTANCE_CACHE[$row['name']] = array('id'=>0);
-  }
-}
-// if any bluebird instance did not have a match, insert it into the table
-foreach ($INSTANCE_CACHE as $k=>$v) {
-  if (array_value('id',$v,-1)==-1) {
-    $query="INSERT INTO instance (install_class, servername, name) VALUES " .
-           "('prod', '{$k}.crm.nysenate.gov', '$k');");
-    $dbcon->exec($query);
-    $INSTANCE_CACHE[$k]['id']=$dbcon->lastInsertId();
   }
 }
 
@@ -247,15 +237,20 @@ function get_source_files($config)
  */
 function get_instance_id($name)
 {
-  global $INSTANCE_CACHE;
+  global $INSTANCE_CACHE,$dbcon;
 
   $ret = false;
   $name = (string)$name;
   if ($name && array_key_exists($name,$INSTANCE_CACHE)) {
-    $ret = $INSTANCE_CACHE[$name]['id'];
+    $ret = (int)array_value('id', $INSTANCE_CACHE[$name], -1);
+    if ($ret < 0) {
+      $sth = $dbcon->prepare("INSERT INTO instance (install_class, servername, name) VALUES " .
+                            "('prod', :servername, :instname);");
+      $sth->execute(array(':servername'=>"{$name}.crm.nysenate.gov", ':instname'=>$name));
+      $ret = $INSTANCE_CACHE[$name]['id'] = $dbcon->lastInsertId();
+    }
   }
-
   return $ret;
-} // get_or_create_instance()
+} // get_instance_id()
 
 ?>
