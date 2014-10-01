@@ -189,4 +189,31 @@ function get_log_file($config)
   return $log_file;
 }
 
+/**
+ * Load all instances from bluebird.cfg
+ * The bb_cfg setting in analytics.ini dictates the searched path
+ * The default value for bb_cfg is './bluebird.cfg'
+ * To force a reload of a previously cached cfg, use the $force parameter
+ * Returns an array keyed by server name, with value of array('in_cfg'=>true)
+ */
+function load_bluebird_instances($config,$force=false) {
+  static $bbini = false;
+
+  $instances = array();
+  $path = array_value('bb_cfg',$config,'./bluebird.cfg');
+  if (($force || !$bbini) && file_exists($path)) {
+    $bbini = parse_ini_file($path,true);
+  }
+  if (!$bbini) {
+    log_(FATAL,"Could not find bluebird.cfg ($path).  Check bb_cfg in analytics.ini");
+    return false;
+  }
+  foreach ($bbini as $k=>$v) {
+    if (substr($k,0,9)=='instance:') {
+      $iname = substr($k,9);
+      $instances[$iname]=array('in_cfg'=>true);
+    }
+  }
+  return $instances;
+}
 ?>

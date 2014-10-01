@@ -21,8 +21,30 @@ if ($dbcon === false) {
 ///////////////////////////////
 // Script specific setup
 ///////////////////////////////
+
+/****************
+ * create the instance cache
+ */
 global $INSTANCE_CACHE;
-$INSTANCE_CACHE = array();
+$INSTANCE_CACHE = load_bluebird_instances($config);
+// match to the IDs in the instance table
+$result = $dbcon->query("SELECT id,name FROM instance");
+while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+  if (array_key_exists($row['name'],$INSTANCE_CACHE)) {
+    $INSTANCE_CACHE[$row['name']]['id']=$row['id'];
+  } else {
+    $INSTANCE_CACHE[$row['name']] = array('id'=>0);
+  }
+}
+// if any bluebird instance did not have a match, insert it into the table
+foreach ($INSTANCE_CACHE as $k=>$v) {
+  if (array_value('id',$v,-1)==-1) {
+    $query="INSERT INTO instance (install_class, servername, name) VALUES " .
+           "('prod', '{$k}.crm.nysenate.gov', '$k');");
+    $dbcon->exec($query);
+    $INSTANCE_CACHE[$k]['id']=$dbcon->lastInsertId();
+  }
+}
 
 $INSTANCE_TYPE = array(
   'crm'     => 'prod',
@@ -163,7 +185,7 @@ function process_entry($entry_parts, PDO $dbcon)
     return null;
   }
   $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
-  $instance = get_or_create_instance($dbcon, $servername, $instance_type, $instance_name);
+  $instance_id = (int)get_instance_id($instance_name);
   $request_parts = parse_url($entry_parts[10]);
   $request_path = $request_parts['path'];
 
@@ -175,7 +197,7 @@ function process_entry($entry_parts, PDO $dbcon)
 
   return array(
     'id' => NULL,
-    'instance_id' => $instance['id'],
+    'instance_id' => $instance_id,
     'remote_ip' => $entry_parts[3],
     'response_code' => $entry_parts[5],
     'response_time' => $entry_parts[4],
@@ -223,32 +245,17 @@ function get_source_files($config)
  *  Uses the given parameters to fetch an existing instance. If one cannot be
  *  found, it creates a new one and returns that instead.
  */
-function get_or_create_instance(PDO $dbcon, $servername, $install_class, $name)
+function get_instance_id($name)
 {
-  // Check our cache first
   global $INSTANCE_CACHE;
-  if (array_key_exists($servername, $INSTANCE_CACHE)) {
-    return $INSTANCE_CACHE[$servername];
+
+  $ret = false;
+  $name = (string)$name;
+  if ($name && array_key_exists($name,$INSTANCE_CACHE)) {
+    $ret = $INSTANCE_CACHE[$name]['id'];
   }
 
-  // Then check the database
-  $result = $dbcon->query("SELECT * FROM instance WHERE servername = '$servername';");
-  $row = $result->fetch(PDO::FETCH_ASSOC);
-  if ($row) {
-    return $row;
-  }
-
-  // Save a new instance if necessary
-  $dbcon->exec("INSERT INTO instance (install_class, servername, name) VALUES ('$install_class', '$servername', '$name');");
-  $instance = array(
-    'id' => $dbcon->lastInsertId(),
-    'servername' => $servername,
-    'install_class' => $install_class,
-    "name" => $name
-  );
-
-  $INSTANCE_CACHE[$servername] = $instance;
-  return $instance;
+  return $ret;
 } // get_or_create_instance()
 
 ?>
