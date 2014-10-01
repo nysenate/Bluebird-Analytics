@@ -49,6 +49,7 @@ function create_summary_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
       SELECT
         instance_id,
         remote_ip,
+        trans_ip,
         location_id,
         count(*) as page_views,
         IFNULL(sum(response_code = 503),0) as 503_errors,
