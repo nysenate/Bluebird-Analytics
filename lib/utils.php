@@ -214,7 +214,7 @@ function load_bluebird_instances($config,$force=false) {
   foreach ($bbini as $k=>$v) {
     if (substr($k,0,9)=='instance:') {
       $iname = substr($k,9);
-      $instances[$iname]=0;
+      $instances[$iname]=-1;
     }
   }
   log_(INFO,"Loaded " .count($instances). " instances from $path");

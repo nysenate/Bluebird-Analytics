@@ -262,6 +262,7 @@ function get_instance_id($name)
 {
   global $INSTANCE_CACHE,$dbcon;
 
+  log_(FULLDEBUG,"Searching for instance_id for $name");
   $name = (string)$name;
   $ret = (int)array_value($name, $INSTANCE_CACHE, -1);
   if ($ret < 0) {
@@ -276,6 +277,7 @@ function get_instance_id($name)
       $ret = false;
     }
   }
+  log_(FULLDEBUG,"Final instance_id for $name=$ret");
   $INSTANCE_CACHE[$name] = (int)$ret;
   return $ret;
 } // get_instance_id()

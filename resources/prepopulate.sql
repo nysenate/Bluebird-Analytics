@@ -1,5 +1,5 @@
 
-INSERT INTO apache_cron_runs VALUES (0, '2013-01-01 00:00:00');
+INSERT INTO apache_cron_runs VALUES (0, '1969-12-31 19:00:00');
 
 INSERT INTO location (name, ipv4_start, ipv4_end) VALUES
 ('Not Found', NULL, NULL),
