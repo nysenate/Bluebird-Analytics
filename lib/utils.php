@@ -7,11 +7,6 @@ const ERROR     = 1;
 const WARN      = 2;
 const INFO      = 3;
 const DEBUG     = 4;
-const FULLDEBUG = 5;
-
-/* __print_log indicates if logging is tee'd to stdout as well as error log */
-global $utils__print_log;
-$utils__print_log = FALSE;
 
 
 /**
@@ -25,6 +20,7 @@ function array_value($key, $array, $default_value = null)
 } // array_value()
 
 
+// NOTE: This function exits the entire script intentionally.
 function send_response($code, $message, $data=NULL)
 {
   header("Content-Type: application/json; charset=UTF-8");
@@ -35,7 +31,7 @@ function send_response($code, $message, $data=NULL)
       'data' => $data,
   ));
   exit(0);
-}
+} // send_response()
 
 
 function clean_string($input)
@@ -47,7 +43,7 @@ function convert($size)
 {
   $unit=array('b','kb','mb','gb','tb','pb');
   return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
-}
+} // convert()
 
 
 /**
@@ -69,7 +65,7 @@ function insert_batch($dbcon, $table, $rows)
     $final_values = call_user_func_array('array_merge', $values);
     $stmt->execute($final_values);
   }
-}
+} // insert_batch()
 
 
 function load_config()
@@ -82,54 +78,47 @@ function load_config()
   $config = parse_ini_file($config_file, true);
   if (!$config) {
     log_(ERROR, "Configuration file not found at '$config_file'.");
-    return FALSE;
+    return false;
   }
 
   foreach(array('database','input') as $section) {
     if (!array_key_exists($section, $config)) {
       log_(500,"Invalid config file. '$section' section required");
-      return FALSE;
+      return false;
     }
   }
 
   return $config;
-}
+} // load_config()
 
 
 function log_($log_level, $message)
 {
-  global $g_log_level, $g_log_file, $utils__print_log;
+  global $g_log_level, $g_log_file;
+
+  static $debug_levels = array(
+    FATAL => 'FATAL',
+    ERROR => 'ERROR',
+    WARN => 'WARN',
+    INFO => 'INFO',
+    DEBUG => 'DEBUG'
+  );
 
   //Get the integer level for each and ignore out of scope log messages
-  if ($g_log_level < $log_level) {
-    return;
+  if ($g_log_level >= $log_level) {
+    $lvlstr = 'UNKNOWN';
+    if (isset($debug_levels[$log_level])) {
+      $lvlstr = $debug_levels[$log_level];
+    }
+    $datestr = date('Y-m-d:H:i:s');
+    if ($g_log_file) {
+      fprintf($g_log_file, "%s [%s] %s\n", $datestr, $lvlstr, $message);
+    }
+    else {
+      echo "$datestr [$lvlstr] $message\n";
+    }
   }
-
-  switch ($log_level) {
-    case FATAL: $debug_level = 'FATAL'; break;
-    case ERROR: $debug_level = 'ERROR'; break;
-    case WARN: $debug_level = 'WARN'; break;
-    case INFO: $debug_level = 'INFO'; break;
-    case DEBUG: $debug_level = 'DEBUG'; break;
-    case FULLDEBUG: $debug_level = 'FULL'; break;
-    default: $debug_level = $log_level; break;
-  }
-
-  $date = date('Y-m-d H:i:s');
-  $message = "[stats:$debug_level] $message";
-
-  if ($utils__print_log) {
-    echo "[$date] $message\n";
-  }
-
-  //Log to a debug file, or to Apache if debug file was not opened.
-  if ($g_log_file) {
-    fwrite($g_log_file, "[$date] $message\n");
-  }
-  else {
-    error_log("$message");
-  }
-}
+} // log_()
 
 
 function get_db_connection($dbconfig)
@@ -157,38 +146,18 @@ function get_db_connection($dbconfig)
     log_(FATAL, "PDOException:".$e->getMessage());
     return false;
   }
-}
+} // get_db_connection()
 
 
-function get_log_level($config)
+function get_log_file($filepath)
 {
-  $debug_level = WARN;  // default debug level is WARN
-  if (isset($config['debug_level'])) {
-    $debug_level_val = $config['debug_level'];
-    if (is_numeric($debug_level_val)) {
-      $debug_level = $debug_level_val;
-    }
-    else {
-      error_log("[statserver] $debug_level_val: Invalid debug level");
-    }
-  }
-  return $debug_level;
-}
-
-
-function get_log_file($config)
-{
-  $log_file = false;
-
-  if (isset($config['log_file'])) {
-    $filepath = $config['log_file'];
-    $log_file = fopen($filepath, 'a');
-    if (!$log_file) {
-      error_log("[statserver] $filepath: Unable to open for writing");
-    }
+  $log_file = fopen($filepath, 'a');
+  if (!$log_file) {
+    echo "[bbanalytics] $filepath: Unable to open for writing\n";
   }
   return $log_file;
-}
+} // get_log_file()
+
 
 /**
  * Load all instances from bluebird.cfg
@@ -197,18 +166,22 @@ function get_log_file($config)
  * To force a reload of a previously cached cfg, use the $force parameter
  * Returns an array keyed by server name, with value of array('in_cfg'=>true)
  */
-function load_bluebird_instances($config,$force=false) {
+function load_bluebird_instances($config, $force = false)
+{
   static $bbini = false;
 
-  log_(FULLDEBUG,"inside load_bluebird_instances, config=".var_export($config,1));
+  log_(DEBUG, "inside load_bluebird_instances, config=".var_export($config,1));
   $instances = array();
-  $path = array_value('bb_cfg',$config,'./bluebird.cfg');
+  $path = array_value('bb_cfg', $config, './bluebird.cfg');
+
   log_(DEBUG,"Attempting to load config file $path");
+
   if (($force || !$bbini) && file_exists($path)) {
-    $bbini = parse_ini_file($path,true);
+    $bbini = parse_ini_file($path, true);
   }
+
   if (!$bbini) {
-    log_(FATAL,"Could not find bluebird.cfg ($path).  Check bb_cfg in analytics.ini");
+    log_(FATAL, "Could not find bluebird.cfg ($path). Check bb_cfg in analytics.ini");
     return false;
   }
   foreach ($bbini as $k=>$v) {
@@ -219,5 +192,6 @@ function load_bluebird_instances($config,$force=false) {
   }
   log_(INFO,"Loaded " .count($instances). " instances from $path");
   return $instances;
-}
+} // load_bluebird_instances()
+
 ?>

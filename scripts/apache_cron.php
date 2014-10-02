@@ -1,35 +1,40 @@
 <?php
+
 date_default_timezone_set('America/New_York');
+
 require(realpath(dirname(__FILE__).'/../lib/utils.php'));
 require(realpath(dirname(__FILE__).'/../lib/summarize.php'));
 
 ///////////////////////////////
 // Bootstrap the environment
 ///////////////////////////////
+$g_log_level = WARN;
+$g_log_file = null;
+
 $config = load_config();
 if ($config === false) {
+  log_(FATAL, "Unable to load the Bluebird analytics configuration file");
   exit(1);
 }
 
-global $INSTANCE_CACHE, $dbcon;
+if (isset($config['debug']['level'])) {
+  $g_log_level = $config['debug']['level'];
+}
 
-$g_log_file = get_log_file($config['debug']);
-$g_log_level = get_log_level($config['debug']);
+if (isset($config['debug']['file'])) {
+  $g_log_file = get_log_file($config['debug']['file']);
+}
+
 $dbcon = get_db_connection($config['database']);
 if ($dbcon === false) {
+  log_(FATAL, "Unable to connect to the database");
   exit(1);
 }
-log_(FULLDEBUG,"Loaded Configuration:\n".var_export($config,1));
+log_(DEBUG, "Loaded Configuration:\n".var_export($config,1));
 
-///////////////////////////////
-// Script specific setup
-///////////////////////////////
-
-/****************
- * create the instance cache
- */
-$INSTANCE_CACHE = load_bluebird_instances($config['input']);
-if (!$INSTANCE_CACHE) {
+// create the instance cache
+$g_instance_cache = load_bluebird_instances($config['input']);
+if (!$g_instance_cache) {
   log_(FATAL, 'Could not load BB Config!');
   exit(1);
 }
@@ -41,16 +46,11 @@ try {
   exit(1);
 }
 while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-  if (array_key_exists($row['name'],$INSTANCE_CACHE)) {
-    $INSTANCE_CACHE[$row['name']]=$row['id'];
+  if (array_key_exists($row['name'], $g_instance_cache)) {
+    $g_instance_cache[$row['name']] = $row['id'];
   }
 }
-log_(FULLDEBUG,"Instance List:\n".var_export($INSTANCE_CACHE,1));
-$INSTANCE_TYPE = array(
-  'crm'     => 'prod',
-  'crmtest' => 'test',
-  'crmdev'  => 'dev'
-);
+log_(DEBUG, "Instance List:\n".var_export($g_instance_cache,1));
 
 // Figure out which files to read
 $source_paths = get_source_files($config['input']);
@@ -75,10 +75,10 @@ $final_ctime = $start_ctime = strtotime($row['final_ctime']);
 echo "Last run ended at ".DateTime::createFromFormat('U', $start_ctime)->format(DateTime::ISO8601)." offset $start_offset\n";
 
 
-// Process log files that have been updated since the last run. Use >= here so that we
-// catch files that were rotated immediately after our last run. Otherwise we might apply
-// the byte offset to a new, unrelated file.
-foreach($source_paths as $source_path) {
+// Process log files that have been updated since the last run. Use >= here
+// so that we catch files that were rotated immediately after our last run.
+// Otherwise we might apply the byte offset to a new, unrelated file.
+foreach ($source_paths as $source_path) {
   if (filemtime($source_path) >= $start_ctime) {
     $start = microtime(true);
     echo "Running: $source_path\n";
@@ -90,7 +90,8 @@ foreach($source_paths as $source_path) {
     if ($final_ctime != null) {
       try {
         $dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
-      } catch (Exception $e) {
+      }
+      catch (Exception $e) {
         log_(ERROR,'Could not insert latest cron run: '.$e->getMessage());
       }
     }
@@ -99,9 +100,9 @@ foreach($source_paths as $source_path) {
 
 
 /**
- *  Opens the given log at the given byte offset and inserts the remaining records into the
- *  database. Returns the final log entry time and byte offset so that future runs can avoid
- *  reprocessing the same entries.
+ *  Opens the given log at the given byte offset and inserts the remaining
+ *  records into the database. Returns the final log entry time and byte
+ *  offset so that future runs can avoid reprocessing the same entries.
  */
 function process_apache_log($source_path, $offset, PDO $dbcon)
 {
@@ -127,7 +128,7 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
   $values = array();
   $start_ctime = null;
   $final_ctime = null;
-  while(true) {
+  while (true) {
     $log_entry = stream_get_line($handle, 100000,"\n");
     $entry_parts = explode(' ', $log_entry);
     if (count($entry_parts) == 12) {
@@ -184,16 +185,22 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
  */
 function process_entry($entry_parts, PDO $dbcon)
 {
+  static $instance_types = array(
+    'crm'     => 'prod',
+    'crmtest' => 'test',
+    'crmdev'  => 'dev'
+  );
+
   // Format the datetime by removing the [ ] and replacing the first :
   $datetime = DateTime::createFromFormat('d/M/Y:H:i:s O', substr($entry_parts[0],1).' '.substr($entry_parts[1], 0, 5));
 
   $servername = $entry_parts[2];
   $server_parts = explode('.', $servername);
   $instance_name = $server_parts[0];
-  if (!isset($GLOBALS['INSTANCE_TYPE'][$server_parts[1]])) {
+  if (!isset($instance_types[$server_parts[1]])) {
     return null;
   }
-  $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
+  $instance_type = $instance_types[$server_parts[1]];
   $instance_id = (int)get_instance_id($instance_name);
   $request_parts = parse_url($entry_parts[10]);
   $request_path = $request_parts['path'];
@@ -218,7 +225,7 @@ function process_entry($entry_parts, PDO $dbcon)
     'time' => $datetime->format(DateTime::ISO8601),
     'is_page' => $is_page
   );
-  log_(FULLDEBUG,"Processing entry: ".var_export($ret,1));
+  log_(DEBUG, "Processing entry: ".var_export($ret,1));
   return $ret;
 } // process_entry()
 
@@ -249,7 +256,7 @@ function get_source_files($config)
     $bnum = (int) substr($b, strlen($base_path)+1);
     return $anum - $bnum;
   });
-  log_(DEBUG,"Found source files:\n".var_export($files,1));
+  log_(DEBUG, "Found source files:\n".var_export($files,1));
   return array_reverse($files);
 } // get_source_files()
 
@@ -260,11 +267,11 @@ function get_source_files($config)
  */
 function get_instance_id($name)
 {
-  global $INSTANCE_CACHE,$dbcon;
+  global $g_instance_cache, $dbcon;
 
-  log_(FULLDEBUG,"Searching for instance_id for $name");
+  log_(DEBUG, "Searching for instance_id for $name");
   $name = (string)$name;
-  $ret = (int)array_value($name, $INSTANCE_CACHE, -1);
+  $ret = (int)array_value($name, $g_instance_cache, -1);
   if ($ret < 0) {
     log_(DEBUG, "Found no cache for $name (ret=$ret)");
     try {
@@ -277,8 +284,8 @@ function get_instance_id($name)
       $ret = false;
     }
   }
-  log_(FULLDEBUG,"Final instance_id for $name=$ret");
-  $INSTANCE_CACHE[$name] = (int)$ret;
+  log_(DEBUG, "Final instance_id for $name=$ret");
+  $g_instance_cache[$name] = (int)$ret;
   return $ret;
 } // get_instance_id()
 

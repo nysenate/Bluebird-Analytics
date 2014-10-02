@@ -5,15 +5,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 [debug]
-; debug_level = ERROR | WARN | NOTICE
+; debug_level = ERROR | WARN | NOTICE | DEBUG
 ;   The WARN level will include errors; NOTICE will include errors and warns.
 ;   Leave blank to turn logging off.
 ; log_file = /path/to/desired/log/file
 ;   If this file can't be created, an error is logged to the Apache log.
 ;   Leave it blank if you don't want to log to a separate file.
 ;
-debug_level=WARN
-log_file=/var/log/bbanalytics/analytics.log
+level = WARN
+file = /var/log/bbanalytics/analytics.log
 
 [database]
 ; These parameters configure the mysql connection string:
@@ -27,6 +27,7 @@ name = bbanalytics
 
 [input]
 base_path = /var/log/apache2/access.log
+bb_cfg = /opt/bluebird_prod/bluebird.cfg
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

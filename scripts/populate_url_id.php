@@ -7,12 +7,12 @@ global $g_debug_level, $utils__print_log;
 
 /*
     !!! WARNING !!!
-    Setting $g_debug_level to FULLDEBUG will result in a HUGE log (several
+    Setting $g_debug_level to DEBUG will result in a HUGE log (several
     entries per request row processed).  DON'T DO IT unless you have a really
     good reason, and intend to actively monitor it.
 */
 $g_debug_level = WARN;
-$utils__print_log = FALSE;
+$utils__print_log = false;
 
 /* *****************************
      Bootstrap the environment
@@ -97,24 +97,24 @@ do {
     $match_id = 1;
     // clean the URL
     $tpath = preg_replace($regpatterns, $regreplace, $obj->path);
-    log_(FULLDEBUG, "\nChecking:\n    path={$obj->path}\n   tpath={$tpath}");
+    log_(DEBUG, "\nChecking:\n    path={$obj->path}\n   tpath={$tpath}");
     if (array_key_exists($tpath,$urls)) {
       // found an exact path match, update the row
       $match_id = $urls[$tpath]->id;
-      log_(FULLDEBUG,"\n -> matched to $match_id:".$urls[$tpath]->path);
+      log_(DEBUG,"\n -> matched to $match_id:".$urls[$tpath]->path);
     } elseif (array_key_exists("query:$tpath",$urls)) {
       // found a potential querystring match, process
       $key = "query:$tpath";
       foreach ($urls[$key] as $kobj) {
         if (preg_match("/{$kobj->search}/", $obj->query)) {
           $match_id = $kobj->id;
-          log_(FULLDEBUG,"\n -> query matched to $match_id:".$kobj->search.":".$kobj->path);
+          log_(DEBUG,"\n -> query matched to $match_id:".$kobj->search.":".$kobj->path);
           break;
         }
       }
     } else {
       // no match found, update to '1'
-      log_(FULLDEBUG," -> no match, setting to 1");
+      log_(DEBUG," -> no match, setting to 1");
       $match_id = 1;
     }
     // update the row and carry on
