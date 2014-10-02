@@ -19,9 +19,9 @@ $utils__print_log = FALSE;
  * Check an array for a key.  If the key exists, return its value.
  * Otherwise, return a default value.
  */
-function array_value($array, $key, $default_value = null)
+function array_value($key, $array, $default_value = null)
 {
-  return (is_array($array) && isset($array[$key])) ? $array[$key] : $default_value;
+  return (is_array($array) && array_key_exists($key,$array)) ? $array[$key] : $default_value;
 } // array_value()
 
 
@@ -98,10 +98,10 @@ function load_config()
 
 function log_($log_level, $message)
 {
-  global $g_debug_level, $g_log_file, $utils__print_log;
+  global $g_log_level, $g_log_file, $utils__print_log;
 
   //Get the integer level for each and ignore out of scope log messages
-  if ($g_debug_level < $log_level) {
+  if ($g_log_level < $log_level) {
     return;
   }
 
@@ -111,6 +111,7 @@ function log_($log_level, $message)
     case WARN: $debug_level = 'WARN'; break;
     case INFO: $debug_level = 'INFO'; break;
     case DEBUG: $debug_level = 'DEBUG'; break;
+    case FULLDEBUG: $debug_level = 'FULL'; break;
     default: $debug_level = $log_level; break;
   }
 
@@ -199,8 +200,10 @@ function get_log_file($config)
 function load_bluebird_instances($config,$force=false) {
   static $bbini = false;
 
+  log_(FULLDEBUG,"inside load_bluebird_instances, config=".var_export($config,1));
   $instances = array();
   $path = array_value('bb_cfg',$config,'./bluebird.cfg');
+  log_(DEBUG,"Attempting to load config file $path");
   if (($force || !$bbini) && file_exists($path)) {
     $bbini = parse_ini_file($path,true);
   }
@@ -211,9 +214,10 @@ function load_bluebird_instances($config,$force=false) {
   foreach ($bbini as $k=>$v) {
     if (substr($k,0,9)=='instance:') {
       $iname = substr($k,9);
-      $instances[$iname]=array('in_cfg'=>true);
+      $instances[$iname]=0;
     }
   }
+  log_(INFO,"Loaded " .count($instances). " instances from $path");
   return $instances;
 }
 ?>

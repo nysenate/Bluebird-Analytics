@@ -19,6 +19,7 @@ $dbcon = get_db_connection($config['database']);
 if ($dbcon === false) {
   exit(1);
 }
+log_(FULLDEBUG,"Loaded Configuration:\n".var_export($config,1));
 
 ///////////////////////////////
 // Script specific setup
@@ -27,15 +28,24 @@ if ($dbcon === false) {
 /****************
  * create the instance cache
  */
-$INSTANCE_CACHE = load_bluebird_instances($config);
+$INSTANCE_CACHE = load_bluebird_instances($config['input']);
+if (!$INSTANCE_CACHE) {
+  log_(FATAL, 'Could not load BB Config!');
+  exit(1);
+}
 // match to the IDs in the instance table
-$result = $dbcon->query("SELECT id,name FROM instance");
+try {
+  $result = $dbcon->query("SELECT id,name FROM instance");
+} catch (Exception $e) {
+  log_(FATAL, 'Could not load instance records! '.$e->getMessage());
+  exit(1);
+}
 while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
   if (array_key_exists($row['name'],$INSTANCE_CACHE)) {
-    $INSTANCE_CACHE[$row['name']]['id']=$row['id'];
+    $INSTANCE_CACHE[$row['name']]=$row['id'];
   }
 }
-
+log_(FULLDEBUG,"Instance List:\n".var_export($INSTANCE_CACHE,1));
 $INSTANCE_TYPE = array(
   'crm'     => 'prod',
   'crmtest' => 'test',
@@ -53,7 +63,12 @@ if (empty($source_paths)) {
 // default final values in case there was no new data to run. The schema
 // automatically inserts a default 0/0 entry in this table so it will always
 // have at least one result row.
-$result = $dbcon->query("SELECT * FROM apache_cron_runs ORDER BY final_ctime DESC LIMIT 1");
+try {
+  $result = $dbcon->query("SELECT * FROM apache_cron_runs ORDER BY final_ctime DESC LIMIT 1");
+} catch (Exception $e) {
+  log_(FATAL,'Could not load cron run history! '.$e->getMessage());
+  exit(1);
+}
 $row = $result->fetch(PDO::FETCH_ASSOC);
 $final_offset = $start_offset = $row['final_offset'];
 $final_ctime = $start_ctime = strtotime($row['final_ctime']);
@@ -73,7 +88,11 @@ foreach($source_paths as $source_path) {
 
     // Save the run state so we can easily resume. But only if we actually processed a log!
     if ($final_ctime != null) {
-      $dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
+      try {
+        $dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
+      } catch (Exception $e) {
+        log_(ERROR,'Could not insert latest cron run: '.$e->getMessage());
+      }
     }
   }
 }
@@ -215,7 +234,8 @@ function process_entry($entry_parts, PDO $dbcon)
  */
 function get_source_files($config)
 {
-  if (!isset($config['base_path'])) {
+  $base_path = array_value('base_path',$config,'');
+  if (!$base_path) {
     log_(ERROR, "Section [input] missing keys: base_path");
     return false;
   }
@@ -227,6 +247,7 @@ function get_source_files($config)
     $bnum = (int) substr($b, strlen($base_path)+1);
     return $anum - $bnum;
   });
+  log_(DEBUG,"Found source files:\n".var_export($files,1));
   return array_reverse($files);
 } // get_source_files()
 
@@ -239,17 +260,21 @@ function get_instance_id($name)
 {
   global $INSTANCE_CACHE,$dbcon;
 
-  $ret = false;
   $name = (string)$name;
-  if ($name && array_key_exists($name,$INSTANCE_CACHE)) {
-    $ret = (int)array_value('id', $INSTANCE_CACHE[$name], -1);
-    if ($ret < 0) {
+  $ret = (int)array_value($name, $INSTANCE_CACHE, -1);
+  if ($ret < 0) {
+    log_(DEBUG, "Found no cache for $name (ret=$ret)");
+    try {
       $sth = $dbcon->prepare("INSERT INTO instance (install_class, servername, name) VALUES " .
                             "('prod', :servername, :instname);");
       $sth->execute(array(':servername'=>"{$name}.crm.nysenate.gov", ':instname'=>$name));
-      $ret = $INSTANCE_CACHE[$name]['id'] = $dbcon->lastInsertId();
+      $ret = $dbcon->lastInsertId();
+    } catch (Exception $e) {
+      log_(ERROR,"Could not store instance record for $name: ".$e->getMessage());
+      $ret = false;
     }
   }
+  $INSTANCE_CACHE[$name] = (int)$ret;
   return $ret;
 } // get_instance_id()
 
