@@ -204,7 +204,7 @@ function process_entry($entry_parts, PDO $dbcon)
   // Note that location_id and url_id will be set by the trigger on
   // the REQUEST table.
 
-  return array(
+  $ret = array(
     'id' => NULL,
     'instance_id' => $instance_id,
     'remote_ip' => $entry_parts[3],
@@ -218,6 +218,8 @@ function process_entry($entry_parts, PDO $dbcon)
     'time' => $datetime->format(DateTime::ISO8601),
     'is_page' => $is_page
   );
+  log_(FULLDEBUG,"Processing entry: ".var_export($ret,1));
+  return $ret;
 } // process_entry()
 
 
