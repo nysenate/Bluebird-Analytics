@@ -12,8 +12,9 @@ if ($config === false) {
   exit(1);
 }
 
-$g_log_file = get_log_file($config['debug']);
-$g_log_level = get_log_level($config['debug']);
+$g_log_file = get_log_file($config['debug']['file']);
+$g_log_level = $config['debug']['level'];
+
 $dbcon = get_db_connection($config['database']);
 if ($dbcon === false) {
   echo "Unable to connect to database, check configuration\n";

@@ -1,34 +1,57 @@
 <?php
+
 date_default_timezone_set('America/New_York');
+
 require(realpath(dirname(__FILE__).'/../lib/utils.php'));
 require(realpath(dirname(__FILE__).'/../lib/summarize.php'));
 
 ///////////////////////////////
 // Bootstrap the environment
 ///////////////////////////////
+$g_log_level = WARN;
+$g_log_file = null;
+
 $config = load_config();
 if ($config === false) {
+  log_(FATAL, "Unable to load the Bluebird analytics configuration file");
   exit(1);
 }
 
-$g_log_file = get_log_file($config['debug']);
-$g_log_level = get_log_level($config['debug']);
+if (isset($config['debug']['level'])) {
+  $g_log_level = $config['debug']['level'];
+}
+
+if (isset($config['debug']['file'])) {
+  $g_log_file = get_log_file($config['debug']['file']);
+}
+
 $dbcon = get_db_connection($config['database']);
 if ($dbcon === false) {
+  log_(FATAL, "Unable to connect to the database");
   exit(1);
 }
+log_(DEBUG, "Loaded Configuration:\n".var_export($config,1));
 
-///////////////////////////////
-// Script specific setup
-///////////////////////////////
-global $INSTANCE_CACHE;
-$INSTANCE_CACHE = array();
-
-$INSTANCE_TYPE = array(
-  'crm'     => 'prod',
-  'crmtest' => 'test',
-  'crmdev'  => 'dev'
-);
+// create the instance cache
+$g_instance_cache = load_bluebird_instances($config['input']);
+if (!$g_instance_cache) {
+  log_(FATAL, 'Could not load BB Config!');
+  exit(1);
+}
+// match to the IDs in the instance table
+try {
+  $result = $dbcon->query("SELECT id,name FROM instance");
+}
+catch (Exception $e) {
+  log_(FATAL, 'Could not load instance records! '.$e->getMessage());
+  exit(1);
+}
+while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+  if (array_key_exists($row['name'], $g_instance_cache)) {
+    $g_instance_cache[$row['name']] = $row['id'];
+  }
+}
+log_(DEBUG, "Instance List:\n".var_export($g_instance_cache,1));
 
 // Figure out which files to read
 $source_paths = get_source_files($config['input']);
@@ -41,36 +64,48 @@ if (empty($source_paths)) {
 // default final values in case there was no new data to run. The schema
 // automatically inserts a default 0/0 entry in this table so it will always
 // have at least one result row.
-$result = $dbcon->query("SELECT * FROM apache_cron_runs ORDER BY final_ctime DESC LIMIT 1");
+try {
+  $result = $dbcon->query("SELECT * FROM apache_cron_runs ORDER BY final_ctime DESC LIMIT 1");
+}
+catch (Exception $e) {
+  log_(FATAL,'Could not load cron run history! '.$e->getMessage());
+  exit(1);
+}
+
 $row = $result->fetch(PDO::FETCH_ASSOC);
 $final_offset = $start_offset = $row['final_offset'];
 $final_ctime = $start_ctime = strtotime($row['final_ctime']);
-echo "Last run ended at ".DateTime::createFromFormat('U', $start_ctime)->format(DateTime::ISO8601)." offset $start_offset\n";
+log_(INFO, "Last run ended at ".date('Y-m-d H:i:s', $start_ctime)."; offset=$start_offset");
 
 
-// Process log files that have been updated since the last run. Use >= here so that we
-// catch files that were rotated immediately after our last run. Otherwise we might apply
-// the byte offset to a new, unrelated file.
-foreach($source_paths as $source_path) {
+// Process log files that have been updated since the last run. Use >= here
+// so that we catch files that were rotated immediately after our last run.
+// Otherwise we might apply the byte offset to a new, unrelated file.
+foreach ($source_paths as $source_path) {
   if (filemtime($source_path) >= $start_ctime) {
     $start = microtime(true);
-    echo "Running: $source_path\n";
+    log_(INFO, "Running: $source_path");
     list($final_offset, $final_ctime) = process_apache_log($source_path, $start_offset, $dbcon);
-    echo "Inserting Requests took: ".(microtime(true)-$start)."s\n";
+    log_(INFO, "Inserting Requests took: ".round(microtime(true)-$start,3)."s");
     $start_offset = 0;
 
     // Save the run state so we can easily resume. But only if we actually processed a log!
     if ($final_ctime != null) {
-      $dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
+      try {
+        $dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
+      }
+      catch (Exception $e) {
+        log_(ERROR,'Could not insert latest cron run: '.$e->getMessage());
+      }
     }
   }
 }
 
 
 /**
- *  Opens the given log at the given byte offset and inserts the remaining records into the
- *  database. Returns the final log entry time and byte offset so that future runs can avoid
- *  reprocessing the same entries.
+ *  Opens the given log at the given byte offset and inserts the remaining
+ *  records into the database. Returns the final log entry time and byte
+ *  offset so that future runs can avoid reprocessing the same entries.
  */
 function process_apache_log($source_path, $offset, PDO $dbcon)
 {
@@ -81,7 +116,7 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
   }
 
   // Starting from where we left off and process new entries.
-  echo "Reading '$source_path' [size:".filesize($source_path)."] from offset '$offset'\n";
+  log_(INFO, "Reading '$source_path' [size:".filesize($source_path)."] from offset '$offset'");
   fseek($handle, min($offset, filesize($source_path)));
 
   // Increase the insert time by deferring indexing and foreign key checks.
@@ -96,14 +131,15 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
   $values = array();
   $start_ctime = null;
   $final_ctime = null;
-  while(true) {
-    $log_entry = stream_get_line($handle, 100000,"\n");
+  while (true) {
+    $log_entry = stream_get_line($handle, 100000, "\n");
     $entry_parts = explode(' ', $log_entry);
     if (count($entry_parts) == 12) {
       $new_entry = process_entry($entry_parts, $dbcon);
       if ($new_entry == null) {
         // There was invalid log line content
-      } elseif (!$new_entry['is_page']) {
+      }
+      elseif (!$new_entry['is_page']) {
         // Not a page load we are concerned with.
       }
       else {
@@ -134,7 +170,7 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
   }
 
   // Update all the summaries affected by this time range.
-  echo "Generating summaries for requests from ".date("Y-m-d H:i:s", $start_ctime)." to ".date("Y-m-d H:i:s", $final_ctime)."\n";
+  log_(INFO, "Generating summaries for requests from ".date("Y-m-d H:i:s", $start_ctime)." to ".date("Y-m-d H:i:s", $final_ctime));
   summarize($dbcon, $start_ctime, $final_ctime);
 
   // Re-enable the foreign_key_checks and commit our work.
@@ -153,17 +189,23 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
  */
 function process_entry($entry_parts, PDO $dbcon)
 {
+  static $instance_types = array(
+    'crm'     => 'prod',
+    'crmtest' => 'test',
+    'crmdev'  => 'dev'
+  );
+
   // Format the datetime by removing the [ ] and replacing the first :
   $datetime = DateTime::createFromFormat('d/M/Y:H:i:s O', substr($entry_parts[0],1).' '.substr($entry_parts[1], 0, 5));
 
   $servername = $entry_parts[2];
   $server_parts = explode('.', $servername);
   $instance_name = $server_parts[0];
-  if (!isset($GLOBALS['INSTANCE_TYPE'][$server_parts[1]])) {
+  if (!isset($instance_types[$server_parts[1]])) {
     return null;
   }
-  $instance_type = $GLOBALS['INSTANCE_TYPE'][$server_parts[1]];
-  $instance = get_or_create_instance($dbcon, $servername, $instance_type, $instance_name);
+  $instance_type = $instance_types[$server_parts[1]];
+  $instance_id = (int)get_instance_id($instance_name);
   $request_parts = parse_url($entry_parts[10]);
   $request_path = $request_parts['path'];
 
@@ -173,9 +215,9 @@ function process_entry($entry_parts, PDO $dbcon)
   // Note that location_id and url_id will be set by the trigger on
   // the REQUEST table.
 
-  return array(
+  $ret = array(
     'id' => NULL,
-    'instance_id' => $instance['id'],
+    'instance_id' => $instance_id,
     'remote_ip' => $entry_parts[3],
     'response_code' => $entry_parts[5],
     'response_time' => $entry_parts[4],
@@ -187,6 +229,8 @@ function process_entry($entry_parts, PDO $dbcon)
     'time' => $datetime->format(DateTime::ISO8601),
     'is_page' => $is_page
   );
+  log_(DEBUG, "Processing entry: ".var_export($ret,1));
+  return $ret;
 } // process_entry()
 
 
@@ -203,7 +247,8 @@ function process_entry($entry_parts, PDO $dbcon)
  */
 function get_source_files($config)
 {
-  if (!isset($config['base_path'])) {
+  $base_path = array_value('base_path',$config,'');
+  if (!$base_path) {
     log_(ERROR, "Section [input] missing keys: base_path");
     return false;
   }
@@ -215,6 +260,7 @@ function get_source_files($config)
     $bnum = (int) substr($b, strlen($base_path)+1);
     return $anum - $bnum;
   });
+  log_(DEBUG, "Found source files:\n".var_export($files,1));
   return array_reverse($files);
 } // get_source_files()
 
@@ -223,32 +269,31 @@ function get_source_files($config)
  *  Uses the given parameters to fetch an existing instance. If one cannot be
  *  found, it creates a new one and returns that instead.
  */
-function get_or_create_instance(PDO $dbcon, $servername, $install_class, $name)
+function get_instance_id($name)
 {
-  // Check our cache first
-  global $INSTANCE_CACHE;
-  if (array_key_exists($servername, $INSTANCE_CACHE)) {
-    return $INSTANCE_CACHE[$servername];
+  global $g_instance_cache, $dbcon;
+
+  log_(DEBUG, "Searching for instance_id for $name");
+  $name = (string)$name;
+  // the default 0 value points to the "Invalid CRM" entry.
+  // otherwise, $ret= (integer id from database) | (-1 valid instance not in database)
+  $ret = (int)array_value($name, $g_instance_cache, 0);
+  if ($ret < 0) {
+    log_(DEBUG, "Found no cache for $name (ret=$ret)");
+    try {
+      $sth = $dbcon->prepare("INSERT INTO instance (install_class, servername, name) VALUES " .
+                            "('prod', :servername, :instname);");
+      $sth->execute(array(':servername'=>"{$name}.crm.nysenate.gov", ':instname'=>$name));
+      $ret = $dbcon->lastInsertId();
+    }
+    catch (Exception $e) {
+      log_(ERROR,"Could not store instance record for $name: ".$e->getMessage());
+      $ret = false;
+    }
   }
-
-  // Then check the database
-  $result = $dbcon->query("SELECT * FROM instance WHERE servername = '$servername';");
-  $row = $result->fetch(PDO::FETCH_ASSOC);
-  if ($row) {
-    return $row;
-  }
-
-  // Save a new instance if necessary
-  $dbcon->exec("INSERT INTO instance (install_class, servername, name) VALUES ('$install_class', '$servername', '$name');");
-  $instance = array(
-    'id' => $dbcon->lastInsertId(),
-    'servername' => $servername,
-    'install_class' => $install_class,
-    "name" => $name
-  );
-
-  $INSTANCE_CACHE[$servername] = $instance;
-  return $instance;
-} // get_or_create_instance()
+  log_(DEBUG, "Final instance_id for $name=$ret");
+  $g_instance_cache[$name] = (int)$ret;
+  return $ret;
+} // get_instance_id()
 
 ?>

@@ -43,7 +43,6 @@ CREATE TABLE IF NOT EXISTS request (
   CONSTRAINT request_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-
 CREATE TABLE IF NOT EXISTS summary_1d (
   time datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -196,7 +195,7 @@ CREATE TABLE IF NOT EXISTS url (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
-CREATE ALGORITHM=UNDEFINED DEFINER='crmadmin'@'crmas%.nysenate.gov'
+CREATE ALGORITHM=UNDEFINED DEFINER=CURRENT_USER
 SQL SECURITY DEFINER VIEW all_requests AS
 select cast(a.time as date) AS date,
   date_format(a.time,'%a') AS weekday,
