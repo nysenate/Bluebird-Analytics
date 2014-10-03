@@ -41,7 +41,8 @@ if (!$g_instance_cache) {
 // match to the IDs in the instance table
 try {
   $result = $dbcon->query("SELECT id,name FROM instance");
-} catch (Exception $e) {
+}
+catch (Exception $e) {
   log_(FATAL, 'Could not load instance records! '.$e->getMessage());
   exit(1);
 }
@@ -274,7 +275,9 @@ function get_instance_id($name)
 
   log_(DEBUG, "Searching for instance_id for $name");
   $name = (string)$name;
-  $ret = (int)array_value($name, $g_instance_cache, -1);
+  // the default 0 value points to the "Invalid CRM" entry.
+  // otherwise, $ret= (integer id from database) | (-1 valid instance not in database)
+  $ret = (int)array_value($name, $g_instance_cache, 0);
   if ($ret < 0) {
     log_(DEBUG, "Found no cache for $name (ret=$ret)");
     try {
@@ -282,7 +285,8 @@ function get_instance_id($name)
                             "('prod', :servername, :instname);");
       $sth->execute(array(':servername'=>"{$name}.crm.nysenate.gov", ':instname'=>$name));
       $ret = $dbcon->lastInsertId();
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       log_(ERROR,"Could not store instance record for $name: ".$e->getMessage());
       $ret = false;
     }
