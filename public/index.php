@@ -7,16 +7,26 @@ require_once('../lib/utils.php');
 date_default_timezone_set('America/New_York');
 error_reporting(-1);
 ini_set('display_errors', 'On');
+
 ///////////////////////////////
 // Bootstrap the environment
 ///////////////////////////////
+$g_log_level = WARN;
+$g_log_file = null;
+
 $config = load_config();
 if ($config === false) {
   die("Unable to load the configuration.");
 }
 
-$g_log_file = get_log_file($config['debug']['file']);
-$g_log_level = (int)$config['debug']['level'];
+if (isset($config['debug']['level'])) {
+  $g_log_level = (int)$config['debug']['level'];
+}
+
+if (isset($config['debug']['file'])) {
+  $g_log_file = get_log_file($config['debug']['file']);
+}
+
 $dbcon = get_db_connection($config['database']);
 if ($dbcon === false) {
   die("Unable to connect to the database.");
