@@ -15,8 +15,8 @@ if ($config === false) {
   die("Unable to load the configuration.");
 }
 
-$g_log_file = get_log_file($config['debug']['log_file']);
-$g_log_level = (int)$config['debug']['debug_level'];
+$g_log_file = get_log_file($config['debug']['file']);
+$g_log_level = (int)$config['debug']['level'];
 $dbcon = get_db_connection($config['database']);
 if ($dbcon === false) {
   die("Unable to connect to the database.");

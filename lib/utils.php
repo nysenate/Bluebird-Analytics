@@ -1,7 +1,7 @@
 <?php
 
 // Define these constants prior to calling parse_ini_file().  That way, the
-// function will translate the debug_level string into an integer value.
+// function will translate the [debug]->level string into an integer value.
 const FATAL     = 0;
 const ERROR     = 1;
 const WARN      = 2;
