@@ -194,4 +194,15 @@ function load_bluebird_instances($config, $force = false)
   return $instances;
 } // load_bluebird_instances()
 
+function fetch_last_update_time($dbcon) {
+  $query = "SELECT MAX(final_ctime) AS last_update FROM apache_cron_runs";
+  try {
+    $last_update = $dbcon->query($query)->fetch()['last_update'];
+  }
+  catch (Exception $e) {
+    $last_update = 'Unknown<br />(ERR: '.$e->getCode().')';
+  }
+  if (!$last_update) { $last_update = "Unknown<br />(No Data Returned)"; }
+  return $last_update;
+}
 ?>
