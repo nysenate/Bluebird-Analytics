@@ -106,8 +106,12 @@
 
         <div class="row">
           <hr/>
-          <div class="col-lg-12 footer-credits">
+          <div class="col-lg-6 footer-credits">
             <i class="fa fa-flask"></i> <span class='app-name'> <?php echo $product['name'];?></span> Version  <span class='app-version'><?php echo $product['version'];?></span>
+          </div>
+          <div class="col-lg-6 footer-credits last-update">
+            <span class="last-update-label">Logs last imported on</span>
+            <span class="last-update-value"><?php echo $product['last_update'];?></span>
           </div>
         </div><!-- /.row -->
       </div><!-- /#page-wrapper -->

@@ -66,7 +66,8 @@ if (!empty($req[1])) {
 $product = array(
   'name' => 'Bluebird Analytics',
   'version' => '1.0',
-  'release' => 'alpha'
+  'release' => 'alpha',
+  'last_update' => fetch_last_update_time($dbcon),
 );
 
 $release_notes = '

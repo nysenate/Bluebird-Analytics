@@ -339,3 +339,7 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
     animation-timing-function: linear;
 }
 */
+
+.last-update {
+  text-align:right;
+}
