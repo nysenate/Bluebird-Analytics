@@ -77,30 +77,49 @@ $release_notes = '
     Feel free to poke around but remember this is still an '. $product['release'].' release.
   </div>';
 
-
-$navigation['dashboard']['overview'] = array('link'=>'/dashboard', 'content'=>'dashboard.php', 'view'=>'dashboard','name'=>'Dashboard','icon'=>'fa-inbox','about'=>'Statistics Overview');
-
-// $navigation['performance']['overview'] = array('link'=>'/#', 'content'=>'#','view'=>'#','name'=>'Performance','icon'=>'fa-tachometer','about'=>'App & DB Reporting');
-
-$navigation['performance']['overview'] = array('link'=>'/performance', 'content'=>'performance.php', 'view'=>'performance','name'=>'Performance','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboard2'] = array('link'=>'/performance/dashboard2', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboard3'] = array('link'=>'/performance/dashboard3', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboar3d'] = array('link'=>'/performance/dashboar3d', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
-// $navigation['performance']['dashboard4'] = array('link'=>'/performance/dashboard4', 'content'=>'performance.php', 'view'=>'dashboard','name'=>'Overview','icon'=>'fa-inbox','about'=>'Statistics Overview');
-
-$navigation['users']['overview'] =  array('link'=>'#', 'content'=>'none','view'=>'noe','name'=>'Users','icon'=>'fa-users','about'=>'#');
-
-$navigation['users']['list'] =  array('link'=>'/users/list', 'content'=>'users.php','view'=>'users','name'=>'User Overview','icon'=>'fa-users','about'=>'User Overview List');
-$navigation['users']['details'] = array('link'=>'/users/details', 'content'=>'userdetails.php', 'view'=>'userdetails','name'=>'User Details','icon'=>'fa-sitemap','about'=>'User Details');
-
-// $navigation['offices']['overview'] =  array('link'=>'/offices', 'content'=>'offices.php','view'=>'offices','name'=>'Offices','icon'=>'fa-building','about'=>'Offices');
-
-$navigation['datatable']['overview'] =  array('link'=>'/datatable', 'content'=>'datatable.php','view'=>'datatable','name'=>'Datatable','icon'=>'fa-list','about'=>'Datatable');
-
-
-// $navigation['users']['overview'] = array('link'=>'/users', 'content'=>'users.php','view'=>'users','name'=>'Users','icon'=>'fa-users','about'=>'User Overview');
-
-// $navigation['actions']['overview'] = array('link'=>'/actions', 'content'=>'actions.php','view'=>'actions','name'=>'BB Actions','icon'=>'fa-edit','about'=>'Bluebird User Actions');
+/* TODO: This should be database driven.  this is unmanageable */
+$navigation['dashboard']['overview']   = array('link'=>'/dashboard',
+                                               'content'=>'dashboard.php',
+                                               'view'=>'dashboard',
+                                               'name'=>'Dashboard',
+                                               'icon'=>'fa-inbox',
+                                               'about'=>'Statistics Overview'
+                                               );
+$navigation['performance']['overview'] = array('link'=>'/performance',
+                                               'content'=>'performance.php',
+                                               'view'=>'performance',
+                                               'name'=>'Performance',
+                                               'icon'=>'fa-inbox',
+                                               'about'=>'Statistics Overview'
+                                               );
+$navigation['users']['overview']       = array('link'=>'#',
+                                               'content'=>'none',
+                                               'view'=>'none',
+                                               'name'=>'Users',
+                                               'icon'=>'fa-users',
+                                               'about'=>'#'
+                                               );
+$navigation['users']['list']           = array('link'=>'/users/list',
+                                               'content'=>'users.php',
+                                               'view'=>'users',
+                                               'name'=>'User Overview',
+                                               'icon'=>'fa-users',
+                                               'about'=>'User Overview List'
+                                               );
+$navigation['users']['details']        = array('link'=>'/users/details',
+                                               'content'=>'userdetails.php',
+                                               'view'=>'userdetails',
+                                               'name'=>'User Details',
+                                               'icon'=>'fa-sitemap',
+                                               'about'=>'User Details'
+                                               );
+$navigation['datatable']['overview']   = array('link'=>'/datatable',
+                                               'content'=>'datatable.php',
+                                               'view'=>'datatable',
+                                               'name'=>'Datatable',
+                                               'icon'=>'fa-list',
+                                               'about'=>'Datatable'
+                                               );
 
 if (!isset($navigation[$request])) {
   die("Navigation failure: Request key [$request] invalid");
@@ -120,7 +139,7 @@ $scripts = array(
     array('src'=>'/static/vendor/opensans-v6/css/opensans.css'),
     array('src'=>'/static/vendor/ubuntu-v4/css/ubuntu.css'),
     array('src'=>'/static/vendor/morris-0.4.3/morris.min.css'),
-    array('src'=>'/static/vendor/jquery.datatables-1.10.0/css/jquery.dataTables.css'),
+    array('src'=>'/static/vendor/jquery.datatables-1.10.3/css/jquery.dataTables.css'),
     array('src'=>'/static/vendor/lou-multi-select-0.9.11/css/multi-select.css'),
     array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker-bs3.css'),
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.css'),
@@ -130,21 +149,25 @@ $scripts = array(
     array('src'=>'/static/vendor/jquery-2.1.1.min.js'),
     array('src'=>'/static/vendor/bootstrap-3.1.0/bootstrap.min.js'),
     array('src'=>'/static/vendor/raphael-2.1.2.min.js'),
-    array('src'=>'/static/vendor/morris-0.4.3/morris.min.js'),
-    array('src'=>'/static/vendor/jquery.datatables-1.10.0/js/jquery.dataTables.min.js'),
-    // array('src'=>'/static/vendor/jquery.datatables-1.10.0/js/jquery.dataTables.plugins.js'),
+    array('src'=>'/static/vendor/morris-0.4.3/morris.js'),
+    array('src'=>'/static/vendor/jquery.datatables-1.10.3/js/jquery.dataTables.min.js'),
     array('src'=>'/static/vendor/lou-multi-select-0.9.11/js/jquery.multi-select.js'),
     array('src'=>'/static/vendor/jquery.cookie-1.4.1.js'),
     array('src'=>'/static/vendor/moment-2.5.1.min.js'),
     array('src'=>'/static/vendor/jquery.tablesorter.min.js'),
     array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker.js'),
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.js'),
+    array('src'=>'/static/js/utility.js'),
+    array('src'=>'/static/js/hashstorage.js'),
+    array('src'=>'/static/js/analytics.widgets.js'),
     array('src'=>'/static/js/app.js'),
   )
 );
 
-$instances = array('123click','3rdparty','3rdpartystatewide','adams','addabbo','alesi','avella','ball','bonacic','boyle','breslin','carlucci','defrancisco','demcomms','demo','diaz','dilan','espaillat','example','farley','felder','flanagan','fuschillo','gallivan','gianaris','gipson','golden','griffo','grisanti','hannon','hassellthompson','hoylman','huntley','kennedy','klein','krueger','lanza','larkin','latimer','lavalle','libous','little','marcellino','marchione','martins','maziarz','montgomery','neison','nozzolio','obrien','omara','parker','peralta','perkins','ranzenhofer','ritchie','rivera','robach','ruralresources','saland','sampson','sanders','savino','sd83','sd95','sd98','sd99','serrano','seward','skelos','smith','squadron','stavisky','stewartcousins','template','tkaczyk','training1','training2','training3','training4','valesky','young','zeldin');
+/* default to prod install class - analytics is currently using only prod logs */
+$sql = "SELECT DISTINCT name FROM instance WHERE install_class='prod' ORDER BY name";
+$instances = $dbcon->query($sql)->fetchAll(PDO::FETCH_COLUMN);
 
-require_once('../lib/template_helpers.php');
-include('layout.php');
+require_once '../lib/template_helpers.php';
+include 'layout.php';
 ?>

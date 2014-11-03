@@ -100,10 +100,10 @@ h1 .fa-spin {
 /* Nav Announcements */
 
 .announcement-heading {
-  font-size: 40px;
+  font-size: 20px;
   margin: 0;
   font-family: 'Ubuntu',sans-serif;
-  font-weight: lighter;
+  font-weight: bold;
 
 }
 
@@ -342,4 +342,16 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 
 .last-update {
   text-align:right;
+}
+
+#overview {
+  overflow:hidden;
+}
+
+.chart-widget-panel-target {
+  height: 250px;
+}
+
+#chart-wrapper .fa-bar-chart-o:before {
+  padding-right:.5em;
 }

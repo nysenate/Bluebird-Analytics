@@ -1,35 +1,168 @@
-!function ($) {
-
-  // a big configuration object for the sites dynamically loaded areas
-  // pages have three kinds of AJAX rendered views (summary, list, graph)
-  // we map the JSON keys to the HTML objects class to populate the data
-  var config = {
-    dashboard: {
-      summary : {
-        page_views : "page_views",
-        unique_pages : "_distinct_pages",
-        unique_users : "unique_ips",
-        unique_instances : "active_instances",
-        uptime : "",
-      },
-      chart : {
-        element: 'overview',
-        ykeys: ['page_views'],
-        labels: ['Page Views'],
-      },
-      list : {
-        //top 10 active instances, users
-        top_instances: {
-          element: '#top_instances',
-          headers: ['Server Name', 'Active Users', 'Total Requests']
-        },
-
-        top_users: {
-          element: '#top_users',
-          headers: ['User IP', 'Instance', 'Total Requests']
-        }
-      },
+/* ****** Global variables ****** */
+// default list options
+var report_list_default_count = 10;
+var report_list_default_page  = 1;
+// a collection of all AJAX objects used by the app
+var jqxhr = [];
+// HashStorage mechanism, see hashstorage.js
+var HashStorage = NYSS.HashStorageModule;
+// line colors for charts.  Order of appearance is important
+var chart_colors = {
+                     solidblue:   '#2222aa',
+                     solidred:    '#aa2222',
+                     solidgreen:  '#22aa22',
+                     slateblue:   '#53777A',
+                     lightred:    '#C02942',
+                     lightorange: '#D95B43',
+                     deeppurple:  '#542437',
+                     firered:     '#DF151A',
+                   }
+// extend chart_colors for easy reference
+Object.defineProperty(chart_colors, 'getColorValues', {
+  writable:true,
+  value: function _wrapHTML(h) {
+    var ret=[]; for (c in this) { ret.push(this[c]); } return ret;
+  }
+});
+// a configuration object for hierarchal widgets
+var report_config = {
+  dashboard: [
+    { report_name:  'page_views',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          linkTarget:   '/datatable',
+          linkText:     'Browse Content',
+          valueCaption: 'Pages Served',
+          wrapperID:    'page_views'
+      }
     },
+    { report_name:  'active_users',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'remote_ip', mod:'countd', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          linkTarget:   '/users/list',
+          linkText:     'User Overview',
+          valueCaption: 'Active Users',
+          wrapperID:    'unique_users'
+      }
+    },
+    { report_name:  'active_instances',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'instance_id', mod:'countd', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-users fa-3x',
+          linkTarget:   '/users/list',
+          linkText:     'Office Overview',
+          valueCaption: 'Active Offices',
+          wrapperID:    'unique_instances'
+      }
+    },
+    { report_name:  'uptime',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent' } ],
+      props:{
+          headerIcon:   'fa fa-users fa-3x',
+          linkTarget:   '/performance',
+          linkText:     'Performance Overview',
+          valueCaption: 'Uptime',
+          wrapperID:    'uptime'
+      }
+    },
+    { report_name: 'view_history',
+      report_type: 'chart',
+      target_table: 'summary',
+      datapoints: [ { field:'page_views', mod:'sum' } ],
+      props:{ ykeys:['page_views'], labels:['Page Views'], xkey:'timerange' }
+    },
+    { report_name:  'top_active_instances',
+      report_type:  'list',
+      target_table: 'summary',
+      datapoints: [ { field:'instance_name', header:'Server Name',    mod:'group'  },
+                    { field:'remote_ip',     header:'Active Users',   mod:'countd', fmt:'intcomma' },
+                    { field:'page_views',    header:'Total Requests', mod:'sum',    fmt:'intcomma' } ],
+      props: { titleText:'Most Active Instances', widgetID:'top_instances' }
+    },
+    { report_name:  'top_active_users',
+      report_type:  'list',
+      target_table: 'summary',
+      datapoints: [ { field:'remote_ip',     header:'User IP',        mod:'group'  },
+                    { field:'instance_name', header:'Instance',       mod:'group'  },
+                    { field:'page_views',    header:'Total Requests', mod:'sum', fmt:'intcomma' } ],
+      props: { titleText:'Most Active Instances', widgetID:'top_instances' }
+    }
+  ]
+};
+
+
+/* ****** Extensions for Array.prototype ****** */
+// Array method to count the number of AJAX requests still pending
+Object.defineProperty(Array.prototype,'countActiveAJAX',{
+  get: function() {
+    var size = 0, key;
+    for (key in this) {
+      if (this.hasOwnProperty(key) && this[key].hasOwnProperty('readyState') && this[key].readyState!=4) size++;
+    }
+    return size;
+  }
+});
+
+
+/* ****** Extensions to moment.js ****** */
+// quick-reference for date formats
+moment.NYSS_df = { data:'YYYY-MM-DD HH:mm', display:'MMMM Do YYYY, h:mm a' };
+
+/* Add granularity function to the moment prototype.
+   end_moment: another moment object.
+   If end_moment is not a moment object, it will be set to moment() (i.e., current time).
+   The difference in seconds is compared to the scaleBreaks array to find the best range.
+   Returns an object {scale:(string), diff:(seconds)} */
+moment.fn.getScale = function(end_moment) {
+  /* configurable ranges.  array should *ALWAYS* be sorted numerically */
+  var scaleBreaks = [
+                     {scale:'minute',   diff:12*60*60},     /* 12 hours */
+                     {scale:'15minute', diff:7*24*60*60},   /* 7 days */
+                     {scale:'hour',     diff:14*24*60*60},  /* 14 days */
+                     {scale:'day',      diff:200*24*60*60}, /* 200 days */
+                     {scale:'month',    diff:0}             /* default */
+                    ]
+                    .sort(function (a, b) { return a.diff - b.diff; });
+  /* make sure the parameter is a moment object, default to current time */
+  if (!(
+        typeof end_moment=='object'
+        && end_moment.hasOwnProperty('_isAMomentObject')
+        && end_moment._isAMomentObject
+        )) {
+    end_moment = moment();
+  }
+  /* get the difference in seconds */
+  var diff = Math.abs(end_moment.unix() - this.unix());
+  /* find the nearest match */
+  var ret = scaleBreaks.filter( function(i){ return diff < i.diff } ).shift();
+  /* if no match, look for the default */
+  if (!(ret)) { ret = scaleBreaks.filter( function(i){ return i.diff==0; } ).shift(); }
+  /* if no default, use the largest range */
+  if (!(ret)) { ret = scaleBreaks[scaleBreaks.length - 1]; }
+  return ret;
+};
+
+
+/* ****** Application logic ****** */
+(function($,undefined) {
+
+  /* Set up some initial variables */
+  var view = $('body').data('view');
+  // a big configuration object for the sites dynamically loaded areas
+  // pages have three kinds of AJAX rendered views (summary, list, chart)
+  // we map the JSON keys to the HTML objects class to populate the data
+  /* TODO: deprecated in favor of global var report_config */
+  var config = {
     performance: {
       summary : {
         'app_errors': '500_errors',
@@ -96,181 +229,87 @@
     behavior: {}
   };
 
+  /* Function to handle UX concerns when an AJAX request is started */
+  function hook_StartAjax() {
+    if ($('.jumbotron h1 .fa-cog').length < 1) {
+      $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
+    }
+  }
+
+  /* Function to handle UX concerns when an AJAX request has ended */
+  function hook_EndAjax() {
+    if (jqxhr.countActiveAJAX < 1) {
+      $('.jumbotron h1 .fa-spin').fadeOut(1000);
+    }
+  }
+
   $(document).ready(function() {
-
-    // var msg = "      _   ,\n -====;o`\/ }\n       \-'\-'----.   New York State Senate\n        \\ |-..-'`  Bluebird Analytics \n        /\/\ \n        `--`\n ";
-    // console.log(msg);
-
-    function get_granularity(start_moment, end_moment) {
-      var difference = end_moment.unix() - start_moment.unix();
-      var granularity;
-      var minute = 60;
-      var hour = 60*60;
-      var day = 24*60*60;
-      switch (true) {
-        case (difference < 12*hour):
-          granularity = 'minute';
-          break;
-        case (difference < 7*day):
-          granularity = '15minute';
-          break;
-        case (difference < 14*day):
-          granularity = 'hour';
-          break;
-        case (difference < 200*day):
-          granularity = 'day';
-          break;
-        default:
-          granularity = 'month';
-          break
-      }
-      console.log("Date range in seconds: "+difference);
-      console.log("Chosen granularity: "+granularity);
-      return granularity;
-    };
-
-    var graph = '';
-    var jqxhr = [];
-    var count = 0;
-    var view = $('body').data('view');
-    var version = $('.app-version').text();
-    // we have a persistent green block for release notes that can be dismissed
-    if ($.cookie('application_version') == version ) {
+    /* UI/UX for pseudo-persistent version notes element */
+    if ($.cookie('application_version') == $('.app-version').text() ) {
       $('.cookie').hide();
     };
+    /* Enable closing/dismissing the version notes element */
     $('.cookie .close').click(function() {
-      $.cookie('application_version', version, { expires: 365, path: '/' });
+      $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
     });
-
-
-    ///////////////////////////////////////////////////////
-    // HashStorageModule
-    ///////////////////////////
-    var HashStorageModule = function() {
-      this.data = {}
-      if (window.location.hash) {
-        values = window.location.hash.substr(1).split('&');
-        for (key in values) {
-          parts = values[key].split('=', 2)
-          this.data[parts[0]] = parts[1];
-        }
-        console.log("Data stored in url hash: ",this.data);
-      }
-      return this;
-    };
-
-    HashStorageModule.prototype.update = function(new_data) {
-      this.data = $.extend(this.data, new_data);
-      values = []
-      for (key in this.data) {
-        values.push(key+'='+this.data[key])
-      }
-      window.location.hash = values.join('&');
-    };
-
-    HashStorageModule.prototype.has = function(keys) {
-      for (index in keys) {
-        key = keys[index];
-        if (!(key in this.data)) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    HashStorage = new HashStorageModule();
 
 
     ///////////////////////////////////////////////
     // BBDateRangePicker Plugin
     ////////////////////////////////
-    var data_df = 'YYYY-MM-DD HH:mm';
-    var display_df = 'MMMM Do YYYY, h:mm a';
     $.fn.bbdaterangepicker = function(user_options) {
       var options = $.extend({}, user_options);
 
       // We automatically bind update to 'this' to avoid context errors
       var update = function(chosenLabel, new_start_moment, new_end_moment) {
-        console.log("Checking values \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
-        console.log("URL values \""+chosenLabel+"\" : "+new_start_moment.format(data_df) + ' - ' + new_end_moment.format(data_df));
-        if (chosenLabel === "Custom Range") {
-          new_start_moment =  new_start_moment;
-          new_end_moment = new_end_moment;
-          console.log("Custom Range, Not Updating anything");
-        } else {
-          if(chosenLabel === "Last Hour"){
-            new_start_moment =  moment().subtract('hours', 1);
-            new_end_moment = moment();
-          } else if(chosenLabel === "Today"){
-            new_start_moment =  moment().startOf('day');
-            new_end_moment = moment();
-          } else if(chosenLabel === "Yesterday"){
-            new_start_moment = moment().subtract('days', 1).startOf('day');
-            new_end_moment = moment().subtract('days', 1).endOf('day');
-          } else if(chosenLabel === "Last 7 Days"){
-            new_start_moment = moment().subtract('days', 6).startOf('day');
-            new_end_moment = moment();
-          } else if(chosenLabel === "Last 30 Days"){
-            new_start_moment = moment().subtract('days', 29).startOf('day');
-            new_end_moment = moment();
-          };
-          console.log("Updated values  \""+chosenLabel+"\" : "+new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
+        // if no custom range, set the start/end
+        if (chosenLabel !== "Custom Range") {
+          new_end_moment = moment();
+          switch (chosenLabel) {
+            case "Last Hour": new_start_moment = moment().subtract('hours', 1); break;
+            case "Today":     new_start_moment = moment().startOf('day'); break;
+            case "Last 7 Days": new_start_moment = moment().subtract('days', 6).startOf('day'); break;
+            case "Last 30 Days": new_start_moment = moment().subtract('days', 29).startOf('day');break;
+            /* default to "Yesterday" */
+            default:
+              new_start_moment = moment().subtract('days', 1).startOf('day');
+              new_end_moment = moment().subtract('days', 1).endOf('day');
+              chosenLabel = "Yesterday";
+              break;
+          }
         }
-
+        // set the properties
         this.start_moment = new_start_moment;
-        this.end_moment = new_end_moment
-        this.chosenLabel = chosenLabel
-
-        this.granularity = get_granularity(this.start_moment, this.end_moment);
-        this.find('span').html(new_start_moment.format(display_df) + ' - ' + new_end_moment.format(display_df));
-
+        this.end_moment = new_end_moment;
+        this.chosenLabel = chosenLabel;
+        this.granularity = this.start_moment.getScale(this.end_moment).scale;
+        this.find('span').html(
+            new_start_moment.format(moment.NYSS_df.display) +
+            ' - ' + new_end_moment.format(moment.NYSS_df.display)
+            );
         // Save these new values to the hash and cookie
         HashStorage.update({
-          'data-start': new_start_moment.format(data_df),
-          'data-end': new_end_moment.format(data_df),
+          'data-start': new_start_moment.format(moment.NYSS_df.data),
+          'data-end': new_end_moment.format(moment.NYSS_df.data),
           'data-type': chosenLabel
         });
-
-        $.cookie('data-start',new_start_moment.format(data_df),{expires:1,path:'/'});
-        $.cookie('data-end',new_end_moment.format(data_df),{expires:1,path:'/'});
+        $.cookie('data-start',new_start_moment.format(moment.NYSS_df.data),{expires:1,path:'/'});
+        $.cookie('data-end',new_end_moment.format(moment.NYSS_df.data),{expires:1,path:'/'});
         $.cookie('data-type',chosenLabel,{expires:1,path:'/'});
-
       }.bind(this);
 
       // // Initialize the date range
       if (HashStorage.has(['data-start', 'data-end', 'data-type'])) {
-        // console.log('setting from hash',HashStorage.data['data-start'], HashStorage.data['data-end'], HashStorage.data['data-type']);
         update(HashStorage.data['data-type'], moment(HashStorage.data['data-start']), moment(HashStorage.data['data-end']));
       }
       else if ($.cookie('data-start') !== undefined) {
         update($.cookie('data-type'), moment($.cookie('data-start')), moment($.cookie('data-end')));
-        // console.log('setting from cookie',$.cookie('data-start'), $.cookie('data-end'),$.cookie('data-type'));
       }
       else {
         update("Last Hour", moment().subtract('hours', 1), moment(), 'Relative');
-        // console.log('setting from blank', "Last Hour", moment().subtract('hours', 1)._d, moment()._d);
       }
 
-      // Initialize the date picker
-      // this.daterangepicker({
-      //     ranges: {
-      //        'Last Hour': [ moment().subtract('hours', 1), moment()],
-      //        'Today': [moment().startOf('day'), moment()],
-      //        'Yesterday': [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-      //        'Last 7 Days': [moment().subtract('days', 6).startOf('day'), moment()],
-      //        'Last 30 Days': [moment().subtract('days', 29).startOf('day'), moment()],
-      //     },
-      //     timePicker: true,
-      //     dateLimit: { days: 360 },
-      //     minDate: '04/10/2013',
-      //     maxDate: moment().endOf('day'),
-      //     timePickerIncrement: 5,
-      //     startDate: this.start_moment,
-      //     endDate: this.end_moment,
-      //     parentEl: ".navbar"
-      // });
-      $('#reportrange').daterangepicker(
-      {
+      $('#reportrange').daterangepicker({
           ranges: {
             'Last Hour': [ moment().subtract('hours', 1), moment()],
             'Today': [moment().startOf('day'), moment()],
@@ -297,7 +336,6 @@
       return this;
     }
 
-
     //////////////////////////////////////////////////////
     // InstancePicker Plugin
     ///////////////////////////////
@@ -311,7 +349,7 @@
           this.val(new_instance);
         }
         this.instance_name = new_instance;
-        // $.cookie('data-instance', new_instance);
+        $.cookie('data-instance', new_instance);
         HashStorage.update({'data-instance': new_instance});
       }.bind(this);
 
@@ -319,10 +357,10 @@
       if(HashStorage.has(['data-instance'])) {
         update(HashStorage.data['data-instance']);
       }
-      // else if ($.cookie('data-instance') != undefined) {
-      //   console.log('Cookie val: '+$.cookie('data-instance'));
-      //   update($.cookie('data-instance'));
-      // }
+      else if ($.cookie('data-instance') != undefined) {
+        console.log('Cookie val: '+$.cookie('data-instance'));
+        update($.cookie('data-instance'));
+      }
       else {
         update(this.val());
       }
@@ -335,6 +373,9 @@
       return this;
     };
 
+    //////////////////////////////////////////////////////
+    // ChartPicker Plugin
+    ///////////////////////////////
     $.fn.chartpicker = function(user_options) {
       var options = $.extend({}, user_options);
 
@@ -345,7 +386,7 @@
           this.val(new_instance);
         }
         this.instance_name = new_instance;
-        // $.cookie('data-instance', new_instance);
+        $.cookie('data-instance', new_instance);
         HashStorage.update({'data-instance': new_instance});
       }.bind(this);
 
@@ -369,16 +410,12 @@
       return this;
     };
 
-
-
     var DateRange = $('#reportrange').bbdaterangepicker();
     var Instance = $('#instance-picker').instancepicker();
     var Performance = $('#performance-picker').chartpicker();
 
-
     // for each of the configuration parameters execute an AJAX call
     // on callback place data in correct container
-    // use a count to see if we have processed view types
     $.fn.Render = function() {
       if (view == 'datatable') {
         $(".dataTable").each(function() {
@@ -386,209 +423,138 @@
         });
         return;
       }
-
-      // don't duplicate previous requests
-      $('.jumbotron h1 .fa').remove();
-      $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
-      $.each(config[view], function( index, settings ) {
-        var type = index
-          $.each(jqxhr, function( key, value ) {
-            jqxhr[value].abort();
-            console.log(jqxhr[value]);
-          });
-
-        jqxhr[index] = $.ajax({
-          url: $("body").data("context-path")+"/api/get_"+type,
-          timeout: 100000,
-          data: {
-            view: view,
-            filter: $("body").data("filter"),
-            start_datetime: DateRange.start_moment.format(data_df),
-            end_datetime: DateRange.end_moment.format(data_df),
+      // abort any existing AJAX calls
+      $.each(jqxhr, function( key, value ) {
+        jqxhr[key].abort();
+      });
+      // set up an AJAX request for each report configured in the current view
+      var current_requests = {summary:[],list:[],chart:[]};
+      // sort the reports by type
+      $.each(report_config[view], function( report_key, report_def ) {
+        current_requests[report_def.report_type].push(report_def);
+      });
+      // one request per type
+      $.each(current_requests, function(report_type, reports) {
+        if (reports.length) {
+          // set the request data
+          var this_request_data = {
+            reports: reports,
+            filter:  $('body').data('filter'),
+            starttime: DateRange.start_moment.format(moment.NYSS_df.data),
+            endtime:   DateRange.end_moment.format(moment.NYSS_df.data),
             granularity: DateRange.granularity,
-            install_class: 'prod',
-            instance_name: Instance.instance_name,
-            list_size: 10,
-            list_offset: 0
-          }
-        })
-        .done(function(response) {
-          if(type === "summary"){
-            // loop through the selector mapping for this section
-            // match data keys to div id's
-            $.each(settings, function( key, value ) {
-
-              // some custom formatting
-              switch(key)
-              {
-              case 'response_time':
-              case 'avg_response_time':
-                output = parseFloat(response.data[value]).toFixed(2)+"s";
-                // console.log(parseInt(output));
-                if(parseInt(output) > 1 ) {
-                  $('#'+key).parent().parent().parent().parent().removeClass('panel-info').addClass('panel-danger');
-                }else{
-                  $('#'+key).parent().parent().parent().parent().removeClass('panel-danger').addClass('panel-info');
-                };
-                break;
-              case 'uptime':
-                output = (response.data['503_errors']+response.data['500_errors'])/response.data['page_views'];
-                output = !isNaN(output) ? parseFloat((100-output)).toFixed(2)+"%" : "N/A";
-                if(parseInt(output) != 100 && isNaN(output)) {
-                  $('#'+key).parent().parent().parent().parent().removeClass('panel-info').addClass('panel-danger');
-                }else{
-                  $('#'+key).parent().parent().parent().parent().removeClass('panel-danger').addClass('panel-info');
-                  output = "100%";
-                };
-                break;
-              case 'app_errors':
-              case 'db_errors':
-                if(parseInt(response.data[value]) != 0) { $('#'+key).parent().parent().parent().parent().removeClass('panel-info').addClass('panel-danger')};
-                output = response.data[value];
-                break;
-              default:
-                output = response.data[value];
-              }
-
-              $('#'+key).html(output);
-            });
-            $('.summary').slideDown();
-          }else if (type === "chart") {
-            // add data to chart
-            $('.chart').slideDown();
-            if($('#'+settings['element']+" svg").length) {
-              // update existing chart
-              graph.setData(response.data);
-            }else{
-              // parse data in morris
-              graph = Morris.Line({
-                element: settings['element'],
-                data: response.data,
-                xkey: 'chart_time',
-                ykeys: settings['ykeys'],
-                labels: settings['labels'],
-                pointSize: 3,
-                // C02942 - lt red
-                // D95B43 - lt orange
-                // 53777A - slate blue
-                // 542437 - deep purple
-                // DF151A - fire truck red
-                lineColors: ["#C02942", "#D95B43","#53777A", "#542437","#DF151A"],
-                parseTime: true,
-                // goals: [5.0,10.0,50.0,100.0],
-                // goalLineColors: ["#EA7E58","#D13A43", "#A51D35","#931A21"],
-                // goalStrokeWidth:2,
-                continuousLine: false,
-                // axes: false,
-                // ymin: 0,
-                grid: true,
-                ymax: 'auto 100',
-                hideHover: true,
-                hoverCallback: function (index, options, content) {
-                  switch (DateRange.granularity) {
-                    case 'minute':
-                    case '15minute':
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
-                      break;
-                    case 'hour':
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l, h A');
-                      break;
-                    case 'day':
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l');
-                      break;
-                    case 'month':
-                        var time = moment(options.data[index]["chart_time"]).format('MMMM YYYY');
-                      break;
-                    default:
-                        var time = moment(options.data[index]["chart_time"]).format('ddd l, hh:mm A');
-                      break
-                  }
-                  var html = " <div class='morris-hover-row-label'> "+time+"</div>";
-                  $.each(options.data[index], function( key, values ) {
-                    if($.inArray(key, options.ykeys)!==-1){
-                      var id = $.inArray(key, options.ykeys);
-                      html += " <div class='morris-hover-point' style='color: "+options.lineColors[id]+"'> "+options.labels[id]+": "+values+"</div> ";
-                    }
-                  });
-                  return html;
-                },
-                smooth: true
-              });
-
-            }
-
-          } else if (type === "list") {
-            $.each(settings, function( table, table_data ) {
-              var call = table;
-              var table_id = table_data['element'];
-              var response_data = response['data'][table];
-              var table = $(table_data['element']);
-              var thead = "<thead><tr>";
-              for (var header in table_data['headers']) {
-                thead +="<th>"+table_data['headers'][header]+'</th>';
-              }
-              table.html(thead+"</tr></thead>");
-              var tbody = "<tbody>";
-              for (var row in response_data) {
-                var row_data = response_data[row]
-                tbody += "<tr>";
-                if (call == 'user_overview') {
-                  key = row_data['remote_ip']+","+row_data['location_id']+","+row_data['instance_id'];
-                  delete row_data["location_id"];
-                  delete row_data["instance_id"];
-                  for (var col in row_data) {
-                    tbody += "<td><a class='userdetails' href='/users/details?filter=["+key+"]'>"+row_data[col]+"</a></td>";
-                  }
-                  tbody +="</a>";
-                }else{
-                  for (var col in row_data) {
-                    // if row isn't a number, link it to the
-                    if (isNaN(row_data[col])) {
-                      tbody += "<td>"+toTitleCase(row_data[col])+"</td>";
-                    }else{
-                      tbody += "<td>"+(row_data[col])+"</td>";
-                    }
-                  }
-                };
-
-                tbody += "</tr>";
-              }
-              table.append(tbody+"</tbody>");
-              $(table).tablesorter();
-            });
-            $('.table-list').slideDown();
-          }
-        })
-        .fail(function() {
-          console.log('error -- view: '+view+" | type: "+type);
-          $('.jumbotron h1 .fa-cog').remove();
-          if ($('.jumbotron h1 .fa').length == 0) {
-            $('.jumbotron h1').append('<i class="fa fa-warning danger"></i>');
+            instance: Instance.instance_name,
+            listcount: report_list_default_count,
+            listpage: report_list_default_page
           };
-        })
-        .always(function() {
-          count++;
-          if(count >= Object.keys(config[view]).length){
-            $('.jumbotron h1 .fa-spin').fadeOut(1000);
-          }
-        });
+          // execute the request
+          jqxhr[report_type] = $.ajax({
+            url:        $('body').data('context-path')+'/api/'+report_type,
+            timeout:    15000,
+            type:       'POST',
+            beforeSend: hook_StartAjax,
+            data:       this_request_data
+          })
+          // set the "done" action
+          .done(function(response) {
+            // parse the response
+            response = JSON.parse(response);
+            // the widget type is in req
+            var reqname = response.req;
+            // instantiate Analytics<View>Widget, note first letter is capitalized
+            var widgetName = 'Analytics'+reqname.capitalize()+'Widget';
+            // get all configured reports for this widget type
+            var targetWidgets = report_config[view].filter(function(e){return e.report_type==reqname;});
+            // clear the wrapper element
+            $('#'+reqname+'-wrapper').empty();
+            // render each widget
+            $.each(targetWidgets, function(widgetIndex,widgetConfig){
+              switch(reqname){
+                case 'summary':
+                  widgetConfig.props.widgetID = 'summary-widget-'+widgetConfig.report_name;
+                  widgetConfig.props.values = {};
+                  $.each(widgetConfig.datapoints, function(datafield,datavalue) {
+                    widgetConfig.props.values[datavalue.field] = response.data[datavalue.field];
+                  });
+                  var oneWidget = new window.NYSS[widgetName](widgetConfig.props).RenderBox();
+                  break;
+                case 'chart':
+                  widgetConfig.props.widgetID = 'chart-widget-'+widgetConfig.report_name;
+                  widgetConfig.props.values = response.data;
+                  widgetConfig.props.lineColors = chart_colors.getColorValues();
+                  var oneWidget = new window.NYSS[widgetName](widgetConfig.props).RenderBox();
+                  break;
+                case 'list':
+                  widgetConfig.props.values = response.data[widgetConfig.report_name];
+                  widgetConfig.props.headers = widgetConfig.datapoints.map(function(e,i){return e.header;})
+                  var oneWidget = new window.NYSS[widgetName](widgetConfig.props).RenderBox();
+                  $('#list-wrapper').find('.table-list').slideDown();
+                  break;
+              }
+            });
+
+            if(report_type === "listasdf") {
+              $.each(settings, function( table, table_data ) {
+                var call = table;
+                var table_id = table_data['element'];
+                var response_data = response['data'][table];
+                var table = $(table_data['element']);
+                var thead = "<thead><tr>";
+                for (var header in table_data['headers']) {
+                  thead +="<th>"+table_data['headers'][header]+'</th>';
+                }
+                table.html(thead+"</tr></thead>");
+                var tbody = "<tbody>";
+                for (var row in response_data) {
+                  var row_data = response_data[row]
+                  tbody += "<tr>";
+                  if (call == 'user_overview') {
+                    key = row_data['remote_ip']+","+row_data['location_id']+","+row_data['instance_id'];
+                    delete row_data["location_id"];
+                    delete row_data["instance_id"];
+                    for (var col in row_data) {
+                      tbody += "<td><a class='userdetails' href='/users/details?filter=["+key+"]'>"+row_data[col]+"</a></td>";
+                    }
+                    tbody +="</a>";
+                  }else{
+                    for (var col in row_data) {
+                      // if row isn't a number, link it to the
+                      if (isNaN(row_data[col])) {
+                        tbody += "<td>"+row_data[col].capitalize()+"</td>";
+                      }else{
+                        tbody += "<td>"+(row_data[col])+"</td>";
+                      }
+                    }
+                  };
+
+                  tbody += "</tr>";
+                }
+                table.append(tbody+"</tbody>");
+                $(table).tablesorter();
+              });
+              $('.table-list').slideDown();
+            }
+          })
+          // set the "fail" action
+          .fail(function() {
+            console.log('error -- view: '+view+" | type: "+report_type);
+            if ($('.jumbotron h1 .fa').length == 0) {
+              $('.jumbotron h1').append('<i class="fa fa-warning danger"></i>');
+            };
+          })
+          // set the "always" action
+          .always(function() {
+            hook_EndAjax();
+          });
+        }
       });
     };
 
-
-    function toTitleCase(str)
-    {
-      // dont mess with urls
-      if (str.charAt(0) != "/") {
-        return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-      } else{
-        return str;
-      }
-    }
-
+    // render the current page
     $('#page-wrapper').Render();
 
 
+    // TODO: optimize/refactor all below
     ////////////////////////////////
     // Data tables code starts here
     ////////////////////////////////
@@ -640,8 +606,8 @@
         fnServerParams: function ( aoData ) {
           aoData.push(
             { name: "view", value: "datatable"},
-            { name: "start_datetime", value: DateRange.start_moment.format(data_df)},
-            { name: "end_datetime", value: DateRange.end_moment.format(data_df)},
+            { name: "start_datetime", value: DateRange.start_moment.format(moment.NYSS_df.data)},
+            { name: "end_datetime", value: DateRange.end_moment.format(moment.NYSS_df.data)},
             { name: "granularity", value: DateRange.granularity},
             { name: "install_class", value: "prod"},
             { name: "instance_name", value: Instance.instance_name},
@@ -720,4 +686,4 @@
 
   });
 
-}(jQuery)
+})(jQuery);

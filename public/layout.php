@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-
     <title><?php echo $navigation[$request][$sub]['name'] ?> - <?php echo $product['name'];?></title>
-
     <!-- dynamically load in style sheets -->
-    <?php
-    foreach ($scripts['css'] as $key => $value) {
-      echo '<link href="'.url_for($value['src']).'" rel="stylesheet" >'."\n\t";
-    }
-
-    ?>
+<?php
+foreach ($scripts['css'] as $key => $value) {
+  echo '    <link href="'.url_for($value['src']).'" rel="stylesheet" />'."\n";
+}
+?>
   </head>
 
   <body data-context-path="<?php echo $_SERVER['CONTEXT_PREFIX'] ?>" data-view="<?php echo $navigation[$request][$sub]['view'] ?>" class="<?php echo $navigation[$request][$sub]['name'] ?>" data-filter="<?php if(isset($_GET['filter'])){ echo $_GET['filter'];} ?>">
@@ -93,7 +90,6 @@
             <?php echo $release_notes; ?>
           </div>
         </div><!-- /.row -->
-
         <?php
           if (!empty($layout_content)) {
             include($navigation[$request][$sub]['content']);
@@ -118,10 +114,10 @@
     </div><!-- /#wrapper -->
 
     <!-- dynamically load in JavaScript -->
-    <?php
-      foreach ($scripts['js'] as $key => $value) {
-        echo '<script src="'.url_for($value['src']).'"></script>'."\n\t";
-      }
-    ?>
+<?php
+  foreach ($scripts['js'] as $key => $value) {
+    echo '    <script src="'.url_for($value['src']).'"></script>'."\n";
+  }
+?>
   </body>
 </html>

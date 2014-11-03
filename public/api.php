@@ -1,50 +1,62 @@
 <?php
-header('Content-type: application/json');
 date_default_timezone_set('America/New_York');
-require(realpath(dirname(__FILE__).'/../lib/utils.php'));
-// error_reporting(-1);
-// ini_set('display_errors', 'On');
+set_time_limit(60);
 
-///////////////////////////////
-// Bootstrap the environment
-///////////////////////////////
-$g_log_level = WARN;
-$g_log_file = null;
+// add the library directory to the search path
+set_include_path(get_include_path() . PATH_SEPARATOR . '../lib');
 
-$config = load_config();
-if ($config === false) {
-  send_response(500, "An internal error has occurred.");
+require_once 'utils.php';
+require_once 'AJAXSession.php';
+
+// session contains: configuration, cleaned request, PDO connection, response, logger
+$session = AJAXSession::getInstance();
+$response = &$session->response;
+
+// check for parameters required in all requests.  Fail is any are not found.
+$fail = false;
+$required = array('req', 'instance', 'starttime', 'endtime', 'granularity');
+foreach($required as $k) {
+  if (!($session->req($k))) {
+    $response->addError(AJAX_ERR_FATAL,"Required parameter '$k' is missing.");
+    $fail = true;
+  }
+}
+if (!count($session->reports)) {
+  $response->addError(AJAX_ERR_FATAL,"No report definitions requested.");
+  $fail = true;
+}
+if ($fail) { $response->send(400); }
+
+// verify the controller is available
+$request = $session->req('req');
+$controllerName = "AJAXController".ucfirst($request);
+if (!(
+      (include "{$controllerName}.php")
+      && class_exists($controllerName)
+      && $controller=new $controllerName
+      )) {
+  $response->sendFatal("Could not instantiate handler for request '$request'",400);
 }
 
-if (isset($config['debug']['level'])) {
-  $g_log_level = (int)$config['debug']['level'];
-}
+// run the action and return the response
+$response->data=$controller->route();
+$session->log("DATA=\n".var_export($response->data,1),LOG_LEVEL_DEBUG);
+$response->send();
 
-if (isset($config['debug']['file'])) {
-  $g_log_file = get_log_file($config['debug']['file']);
-}
-
-$dbcon = get_db_connection($config['database']);
-if ($dbcon === false) {
-  send_response(500, "An internal error has occurred.");
-}
-
-$GLOBALS['DATA_PARAMS'] = array('instance_name', 'install_class', 'view', 'start_datetime', 'end_datetime');
-
-// Default view is the dashboard overview
-if (!isset($_REQUEST['req'])) {
-  die("Please check your .htaccess file to confirm that rewrite rules are working.");
-}
-
-$request = $_REQUEST['req'];
-switch($request) {
+/**************************************************************
+END REFACTOR
+OBSOLETE CODE BELOW
+**************************************************************/
+switch ($request) {
     case 'save_query': save_query($_REQUEST, $dbcon); break;
     case 'delete_query': delete_query($_REQUEST, $dbcon); break;
-    case 'get_list': get_list($_REQUEST, $dbcon); break;
-    case 'get_summary': get_summary($_REQUEST, $dbcon); break;
-    case 'get_chart': get_chart($_REQUEST, $dbcon); break;
-    case 'get_datatable': get_datatable($_REQUEST, $dbcon); break;
-    default: send_response(400, "Unknown request '$request'");
+    case 'list': get_list($_REQUEST, $dbcon); break;
+    case 'summary': get_summary($_REQUEST, $dbcon); break;
+    case 'chart': get_chart($_REQUEST, $dbcon); break;
+    case 'datatable': get_datatable($_REQUEST, $dbcon); break;
+    default:
+      $response->addError(AJAX_ERR_FATAL, "Unknown request '".$session->fetchReq('req')."'");
+      $response->send(400);
 }
 
 function save_query($args, $dbcon)
@@ -662,25 +674,6 @@ function get_datatable($args, $dbcon)
     "aaData"               => $data,
   );
   echo json_encode( $output );
-}
-
-function get_table_suffix($args)
-{
-  if (!isset($args['granularity'])) {
-    send_response(400, "A 'granularity' parameter is required for all list queries.");
-  }
-
-  $granularity = clean_string($args['granularity']);
-  switch ($granularity) {
-    case 'minute': $table_suffix = "1m"; break;
-    case '15minute': $table_suffix = "15m"; break;
-    case 'hour': $table_suffix = "1h"; break;
-    case 'day': $table_suffix = "1d"; break;
-    case 'month': $table_suffix = "1d"; break;
-    default: send_response(400, "Granularity '$granularity' must be one of 'minute', '15minute', 'hour', 'day', 'month'.");
-  }
-
-  return $table_suffix;
 }
 
 
