@@ -92,6 +92,16 @@ abstract class AJAXController {
     }
   }
 
+  protected function _addFieldFormat($f, $fmt) {
+    $ret=$f;
+    switch($fmt) {
+      case 'int':      $ret = "ROUND($ret,0)"; break;
+      case 'intcomma': $ret = "FORMAT($ret,0)"; break;
+      case 'percent':  $ret = "CONCAT(FORMAT($ret,4),'%')"; break;
+    }
+    return $ret;
+  }
+
   protected function _buildGroupBy($reportname) {
     $flds = '';
     if ($this->allows_groups) {
@@ -119,6 +129,7 @@ abstract class AJAXController {
     // verify field name and modifier
     $fld = array_value('field',$field);
     $mod = array_value('mod',$field);
+    $fmt = array_value('fmt',$field);
     // the default "found" table alias is 'dt'
     $found_table='';
     // verify table exists
@@ -160,6 +171,7 @@ abstract class AJAXController {
           }
           break;
       }
+      if ($fmt) { $agg = $this->_addFieldFormat($agg, $fmt); }
     }
     $this->session->log("Aggregate for $fld,$mod = $agg",LOG_LEVEL_DEBUG);
     if ($agg) { $ret = "$agg as $fld"; }
@@ -196,7 +208,7 @@ abstract class AJAXController {
     $reps = $this->session->reports;
     $this->group_fields=array();
     if ($this->allows_groups) {
-      $this->session->log(get_called_class()." allows groups, parsing reps=".var_export($reps,1));
+      $this->session->log(get_called_class()." allows groups, parsing reps=".var_export($reps,1),LOG_LEVEL_DEBUG);
       foreach ($reps as $k=>$report) {
         $report_name = $report['report_name'];
         $table = $report['target_table'];

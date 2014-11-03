@@ -57,6 +57,7 @@ class AJAXControllerSummary extends AJAXController {
   }
 
   public function get() {
+    $this->session->log("Received data:\n".var_export($this->reports,1),LOG_LEVEL_DEBUG);
     // iterate through the tables to build each query and get results
     $result = array();
     foreach ($this->reports as $table => $tfields) {
@@ -72,6 +73,8 @@ class AJAXControllerSummary extends AJAXController {
     return $result;
   }
 
+/* This is obsolete code from the original api.php
+   Keep this until all reports are re-created using new structures */
   function someotherfnuction() {
     switch ($view) {
       case 'dashboard':
