@@ -39,6 +39,30 @@ var report_config = {
           wrapperID:    'page_views'
       }
     },
+    { report_name:  'page_views3',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          linkTarget:   '/datatable',
+          linkText:     'Browse Content',
+          valueCaption: 'Pages Served',
+          wrapperID:    'page_views3'
+      }
+    },
+    { report_name:  'page_views2',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          linkTarget:   '/datatable',
+          linkText:     'Browse Content',
+          valueCaption: 'Pages Served',
+          wrapperID:    'page_views2'
+      }
+    },
     { report_name:  'active_users',
       report_type:  'summary',
       target_table: 'summary',
@@ -492,48 +516,6 @@ moment.fn.getScale = function(end_moment) {
                   break;
               }
             });
-
-            if(report_type === "listasdf") {
-              $.each(settings, function( table, table_data ) {
-                var call = table;
-                var table_id = table_data['element'];
-                var response_data = response['data'][table];
-                var table = $(table_data['element']);
-                var thead = "<thead><tr>";
-                for (var header in table_data['headers']) {
-                  thead +="<th>"+table_data['headers'][header]+'</th>';
-                }
-                table.html(thead+"</tr></thead>");
-                var tbody = "<tbody>";
-                for (var row in response_data) {
-                  var row_data = response_data[row]
-                  tbody += "<tr>";
-                  if (call == 'user_overview') {
-                    key = row_data['remote_ip']+","+row_data['location_id']+","+row_data['instance_id'];
-                    delete row_data["location_id"];
-                    delete row_data["instance_id"];
-                    for (var col in row_data) {
-                      tbody += "<td><a class='userdetails' href='/users/details?filter=["+key+"]'>"+row_data[col]+"</a></td>";
-                    }
-                    tbody +="</a>";
-                  }else{
-                    for (var col in row_data) {
-                      // if row isn't a number, link it to the
-                      if (isNaN(row_data[col])) {
-                        tbody += "<td>"+row_data[col].capitalize()+"</td>";
-                      }else{
-                        tbody += "<td>"+(row_data[col])+"</td>";
-                      }
-                    }
-                  };
-
-                  tbody += "</tr>";
-                }
-                table.append(tbody+"</tbody>");
-                $(table).tablesorter();
-              });
-              $('.table-list').slideDown();
-            }
           })
           // set the "fail" action
           .fail(function() {
