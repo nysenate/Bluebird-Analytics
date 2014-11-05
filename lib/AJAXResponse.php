@@ -145,7 +145,7 @@ class AJAXResponse {
   }
 
   public function sendFatal($msg,$status=500) {
-    $x = AJAXLogger::getInstance();
+    $x = BB_Logger::getInstance();
     $x->log("Dumping\n".$x->getBackTrace(),LOG_LEVEL_ERROR);
     $this->data = NULL;
     $this->sendMessage($msg,AJAX_ERR_FATAL,$status);

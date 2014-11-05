@@ -1,73 +1,35 @@
 <?php
-/**
- * started with a MIT template offered graciously by startbootstrap.com/sb-admin
- * This is our header stuff that gets included in every page
- */
-require_once('../lib/utils.php');
+// TODO create a generic data model class for Regular/AJAX session
+
+// configure some internal PHP settings
 date_default_timezone_set('America/New_York');
+set_include_path(get_include_path() . PATH_SEPARATOR . '../lib');
+
+// for development only
 error_reporting(-1);
 ini_set('display_errors', 'On');
 
-///////////////////////////////
-// Bootstrap the environment
-///////////////////////////////
-$g_log_level = WARN;
-$g_log_file = null;
+require_once 'utils.php';
+require_once 'BB_Session.php';
+require_once 'BB_Menu.php';
 
-$config = load_config();
-if ($config === false) {
-  die("Unable to load the configuration.");
+// bootstrap the environment
+$session = BB_Session::getInstance();
+
+$navmenu = new BB_Menu(1);
+$request = $_GET['req'];
+$activemenu = $navmenu->findActive(array('target'=>"/{$request}"));
+if (!$activemenu) {
+  http_response_code(404);
+  die("Navigation failure: Request key [$request] invalid");
 }
-
-if (isset($config['debug']['level'])) {
-  $g_log_level = (int)$config['debug']['level'];
-}
-
-if (isset($config['debug']['file'])) {
-  $g_log_file = get_log_file($config['debug']['file']);
-}
-
-$dbcon = get_db_connection($config['database']);
-if ($dbcon === false) {
-  die("Unable to connect to the database.");
-}
-
-///////////////////////////////
-// Validate $_GET parameters
-///////////////////////////////
-if (!isset($_GET['req'])) {
-  die("Please check your .htaccess file to confirm that rewrite rules are working.");
-}
-
-// Default view is the dashboard overview
-$request = 'dashboard';
-$sub = 'overview';
-$req = explode('/', $_GET['req'], 2);
-
-// our url rewriting wasn't allowing me to access GET vars
-// so here's a hack
-$uri = parse_url($_SERVER['REQUEST_URI']);
-if (isset($uri['query'])) {
-  parse_str($uri['query'], $tmp);
-  foreach ($tmp as $key => $value) {
-    $_GET[$key]=$value;
-  }
-}
-unset($tmp,$uri);
-
-
-if (!empty($req[0])) {
-  $request = $req[0];
-}
-if (!empty($req[1])) {
-  $sub = $req[1];
-}
+$navmenu->addClassToTree($activemenu->id,'active open');
 
 $product = array(
   'name' => 'Bluebird Analytics',
   'version' => '1.0',
   'release' => 'alpha',
-  'last_update' => fetch_last_update_time($dbcon),
+  'last_update' => fetch_last_update_time($session->db),
 );
 
 $release_notes = '
@@ -76,61 +38,6 @@ $release_notes = '
     Welcome to the <a class="alert-link" href="https://github.com/nysenate/Bluebird-CRM">'. $product['name'].'</a> '. $product['version']." ".$product['release'].'<br/>
     Feel free to poke around but remember this is still an '. $product['release'].' release.
   </div>';
-
-/* TODO: This should be database driven.  this is unmanageable */
-$navigation['dashboard']['overview']   = array('link'=>'/dashboard',
-                                               'content'=>'dashboard.php',
-                                               'view'=>'dashboard',
-                                               'name'=>'Dashboard',
-                                               'icon'=>'fa-inbox',
-                                               'about'=>'Statistics Overview'
-                                               );
-$navigation['performance']['overview'] = array('link'=>'/performance',
-                                               'content'=>'performance.php',
-                                               'view'=>'performance',
-                                               'name'=>'Performance',
-                                               'icon'=>'fa-inbox',
-                                               'about'=>'Statistics Overview'
-                                               );
-$navigation['users']['overview']       = array('link'=>'#',
-                                               'content'=>'none',
-                                               'view'=>'none',
-                                               'name'=>'Users',
-                                               'icon'=>'fa-users',
-                                               'about'=>'#'
-                                               );
-$navigation['users']['list']           = array('link'=>'/users/list',
-                                               'content'=>'users.php',
-                                               'view'=>'users',
-                                               'name'=>'User Overview',
-                                               'icon'=>'fa-users',
-                                               'about'=>'User Overview List'
-                                               );
-$navigation['users']['details']        = array('link'=>'/users/details',
-                                               'content'=>'userdetails.php',
-                                               'view'=>'userdetails',
-                                               'name'=>'User Details',
-                                               'icon'=>'fa-sitemap',
-                                               'about'=>'User Details'
-                                               );
-$navigation['datatable']['overview']   = array('link'=>'/datatable',
-                                               'content'=>'datatable.php',
-                                               'view'=>'datatable',
-                                               'name'=>'Datatable',
-                                               'icon'=>'fa-list',
-                                               'about'=>'Datatable'
-                                               );
-
-if (!isset($navigation[$request])) {
-  die("Navigation failure: Request key [$request] invalid");
-}
-else if (!isset($navigation[$request][$sub])) {
-  die("Navigation failure: Sub-request key [$sub] invalid");
-}
-
-$navigation[$request]['overview']['class'] = 'active open';
-$navigation[$request][$sub]['class'] = 'active';
-$layout_content = $navigation[$request][$sub]['content'];
 
 $scripts = array(
   'css' => array(
@@ -166,8 +73,7 @@ $scripts = array(
 
 /* default to prod install class - analytics is currently using only prod logs */
 $sql = "SELECT DISTINCT name FROM instance WHERE install_class='prod' ORDER BY name";
-$instances = $dbcon->query($sql)->fetchAll(PDO::FETCH_COLUMN);
+$instances = $session->db->query($sql)->fetchAll(PDO::FETCH_COLUMN);
 
-require_once '../lib/template_helpers.php';
-include 'layout.php';
+require_once 'layout.php';
 ?>

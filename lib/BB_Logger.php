@@ -1,6 +1,6 @@
 <?php
 /*
-  AJAX Logger class for BlueBird analytics
+  Logger class for BlueBird analytics
   Provides a logging interface, including tee to file/stdout and severity gradiations
 */
 
@@ -16,7 +16,7 @@ const LOG_MODE_FILE   = 0;
 const LOG_MODE_STDOUT = 1;
 const LOG_MODE_TEE    = 2;
 
-class AJAXLogger {
+class BB_Logger {
   private static $instance = NULL;
 
   private   $_logfile     = NULL;
@@ -98,7 +98,7 @@ class AJAXLogger {
 
   public static function getInstance($lvl=LOG_LEVEL_ERROR, $fn='', $loc = NULL, $mode=LOG_MODE_FILE) {
     if (!static::$instance) {
-      static::$instance = new AJAXLogger($lvl, $fn, $loc, $mode);
+      static::$instance = new static($lvl, $fn, $loc, $mode);
     }
     return static::$instance;
   }

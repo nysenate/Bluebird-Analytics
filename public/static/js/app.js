@@ -39,30 +39,6 @@ var report_config = {
           wrapperID:    'page_views'
       }
     },
-    { report_name:  'page_views3',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          linkTarget:   '/datatable',
-          linkText:     'Browse Content',
-          valueCaption: 'Pages Served',
-          wrapperID:    'page_views3'
-      }
-    },
-    { report_name:  'page_views2',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          linkTarget:   '/datatable',
-          linkText:     'Browse Content',
-          valueCaption: 'Pages Served',
-          wrapperID:    'page_views2'
-      }
-    },
     { report_name:  'active_users',
       report_type:  'summary',
       target_table: 'summary',
