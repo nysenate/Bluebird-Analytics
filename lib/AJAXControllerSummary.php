@@ -66,7 +66,8 @@ class AJAXControllerSummary extends AJAXController {
       // create the common where and join clauses
       $where = "WHERE ".implode(' AND ',$this->clauses);
       $join = $this->getJoinClause();
-      $query = "SELECT $fields FROM {$table}_{$this->suffix} $join $where";
+      $ttable = $this->getTableName($table);
+      $query = "SELECT $fields FROM {$ttable} $join $where";
       $this->session->log("Final query: $query",LOG_LEVEL_DEBUG);
       $result += $this->getSingleRow($query, $this->bind_params);
     }

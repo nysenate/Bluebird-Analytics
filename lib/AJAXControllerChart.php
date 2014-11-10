@@ -25,7 +25,8 @@ class AJAXControllerChart extends AJAXController {
       $this->session->log("built group: ".var_export($group,1),LOG_LEVEL_DEBUG);
       $join = $this->getJoinClause();
       $this->session->log("built join: ".var_export($join,1),LOG_LEVEL_DEBUG);
-      $query = "SELECT $fields FROM {$onereport['target_table']}_{$this->suffix} $join $where $group";
+      $ttable = $this->getTableName($onereport['target_table']);
+      $query = "SELECT $fields FROM {$ttable} $join $where $group";
       $this->session->log("Final query: $query",LOG_LEVEL_DEBUG);
       $result += $this->getAllRows($query, $this->bind_params);
     }

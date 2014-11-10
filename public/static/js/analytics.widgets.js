@@ -160,14 +160,19 @@ var NYSS = NYSS || {};
         if (d.hasOwnProperty('wrapperSize')) { e.find('.summary-widget-panel-wrapper').addClass(this.data.wrapperSize); }
         if (d.hasOwnProperty('widgetID')) { e.find('.summary-widget-panel-wrapper').attr('id',this.data.widgetID); }
         if (d.hasOwnProperty('headerIcon')) { e.find('.summary-widget-datapoint-icon').addClass(this.data.headerIcon); }
-        if (d.hasOwnProperty('linkIcon')) { e.find('.summary-widget-link-icon').addClass(this.data.linkIcon); }
-        if (d.hasOwnProperty('linkTarget')) { e.find('.summary-widget-link').attr('href',this.data.linkTarget); }
-        if (d.hasOwnProperty('linkText')) { e.find('.summary-widget-link-text').html(this.data.linkText); }
         if (d.hasOwnProperty('valueCaption')) { e.find('.summary-widget-datapoint-text').html(this.data.valueCaption); }
         if (d.hasOwnProperty('values')) {
           vh = '';
           $.each(this.data.values, function(k,v){ vh += v; });
           e.find('.summary-widget-datapoint-value').html(vh);
+        }
+        if (d.hasOwnProperty('linkIcon') && d.hasOwnProperty('linkTarget') && d.hasOwnProperty('linkText') &&
+            d.linkIcon && d.linkTarget && d.linkText) {
+          e.find('.summary-widget-link-icon').addClass(this.data.linkIcon);
+          e.find('.summary-widget-link').attr('href',this.data.linkTarget);
+          e.find('.summary-widget-link-text').html(this.data.linkText);
+        } else {
+          e.find('.summary-widget-panel-footer-wrapper').remove();
         }
         return e;
       }
@@ -270,8 +275,14 @@ var NYSS = NYSS || {};
           this.PlaceBox(this._unwrapHTML(e.html()));
           // the element MUST be visible for auto-height/width to be set properly
           $(this.get('baseTarget') + ' .chart').slideDown();
-          // draw the graph
-          var thisgraph = new Morris.Line(this.graphData);
+          if (!this.graphData.data.length) {
+            // render "no data" notification
+            var t = '<div class="chart-widget-no-data">No data available for this time period.</div>';
+            $(this.get('baseTarget') + ' #' + this.data.widgetID).append(t);
+          } else {
+            // draw the graph
+            var thisgraph = new Morris.Line(this.graphData);
+          }
         }
         return e;
       }
@@ -358,11 +369,17 @@ var NYSS = NYSS || {};
         var tHead = "<thead>"+_createTableRow(this.data.headers,true)+"</thead>";
         var tBody = '';
         var b = this.data.headers;
-        this.data.values.forEach(function(v,k){
-          tp = [];
-          for (one in v) { tp.push(v[one]); }
-          tBody += _createTableRow(tp);
-        });
+        if (this.data.values.length) {
+          this.data.values.forEach(function(v,k){
+            tp = [];
+            for (one in v) { tp.push(v[one]); }
+            tBody += _createTableRow(tp);
+          });
+        } else {
+          tBody = '<tr><td class="list-widget-no-data" colspan="'+
+                  this.data.headers.length+
+                  '">No data available for this time period</td></tr>';
+        }
         tBody = "<tbody>"+tBody+"</tbody>";
         tHTML = tHead+tBody;
 
@@ -377,7 +394,10 @@ var NYSS = NYSS || {};
         if (d.hasOwnProperty('headerIcon')) { e.find('.list-widget-panel-icon').addClass(this.data.headerIcon); }
         if (d.hasOwnProperty('headerText')) { e.find('.list-widget-panel-title').html(this.data.headerText); }
         if (d.hasOwnProperty('linkIcon')) { e.find('.list-widget-panel-icon').addClass(this.data.linkIcon); }
-        if (d.hasOwnProperty('linkText')) { e.find('.list-widget-link').html(_createLink(this.data.linkIcon,this.data.linkText)); }
+
+        if (d.hasOwnProperty('linkText') && (d.linkText && d.linkIcon)) {
+          e.find('.list-widget-link').html(_createLink(this.data.linkIcon,this.data.linkText));
+        }
 
         e.find('table.list-widget-panel-target').html(tHTML).slideDown();
         return e;

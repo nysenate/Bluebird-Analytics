@@ -355,3 +355,39 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 #chart-wrapper .fa-bar-chart-o:before {
   padding-right:.5em;
 }
+
+.chart-widget-no-data {
+  padding-top: 3em;
+  text-align: center;
+  font-size: 2em;
+  font-weight: bold;
+  color:#aaaaaa;
+}
+
+.list-widget-no-data {
+  text-align:center;
+  font-weight:bold;
+  font-size:1.5em;
+  color:#aaaaaa;
+}
+
+.jumbotron .fa-cog-caption-container {
+  position:relative;
+}
+
+.jumbotron .fa-cog-caption {
+  font-size: .35em;
+  vertical-align: middle;
+  left: 0;
+  position: absolute;
+  line-height: 40px;
+  width: 72px;
+  text-align: center;
+  font-weight: normal;
+  color: #3C565E; /*#4444ff;*/
+}
+
+.jumbotron-status-icons {
+  position:relative;
+  margin-left:1em;
+}

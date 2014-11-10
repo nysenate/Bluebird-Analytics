@@ -66,7 +66,7 @@ var report_config = {
     { report_name:  'uptime',
       report_type:  'summary',
       target_table: 'summary',
-      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent' } ],
+      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent|2' } ],
       props:{
           headerIcon:   'fa fa-users fa-3x',
           linkTarget:   '/performance',
@@ -96,8 +96,70 @@ var report_config = {
                     { field:'instance_name', header:'Instance',       mod:'group'  },
                     { field:'page_views',    header:'Total Requests', mod:'sum', fmt:'intcomma' } ],
       props: { titleText:'Most Active Instances', widgetID:'top_instances' }
-    }
-  ]
+    },
+  ],
+  performance: [
+    {
+      report_name:  'uptime',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Uptime',
+          wrapperID:    'uptime'
+      }
+    },
+    { report_name:  'http_500',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'http_500', mod:'sum', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Application (500) Errors',
+          wrapperID:    'http_500'
+      }
+    },
+    { report_name:  'http_503',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'http_503', mod:'sum', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Database (503) Errors',
+          wrapperID:    'http_503'
+      }
+    },
+    { report_name:  'response_time',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'avg_resp_time', mod:'calc', fmt:'microsec|2' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Average Response Time',
+          wrapperID:    'avg_response_time'
+      }
+    },
+    { report_name: 'view_history',
+      report_type: 'chart',
+      target_table: 'summary',
+      datapoints: [ { field:'http_500',      mod:'sum',  fmt:'intcomma'},
+                    { field:'http_503',      mod:'sum',  fmt:'intcomma'},
+                    { field:'page_views',    mod:'sum',  fmt:'intperk'},
+                    { field:'avg_resp_time', mod:'calc', fmt:'microsec'} ],
+      props:{ ykeys:['http_500','http_503','avg_resp_time','page_views'],
+              labels:['App Errors','Database Errors','Response Time','Page Views (x1000)'],
+              xkey:'timerange' }
+    },
+    { report_name:  'top_queries',
+      report_type:  'list',
+      target_table: 'request',
+      datapoints: [ { field:'path',          header:'Path',     mod:'group'  },
+                    { field:'resp_code',     header:'Views',    mod:'count'  },
+                    { field:'avg_resp_time', header:'Avg Time', mod:'calc', fmt:'microsec' } ],
+      props: { titleText:'Top Queries', widgetID:'top_queries' }
+    },
+  ],
 };
 
 
@@ -230,17 +292,23 @@ moment.fn.getScale = function(end_moment) {
   };
 
   /* Function to handle UX concerns when an AJAX request is started */
-  function hook_StartAjax() {
-    if ($('.jumbotron h1 .fa-cog').length < 1) {
-      $('.jumbotron h1').append('<i class="fa fa-cog fa-spin"></i>');
-    }
+  function hook_StartAjax(ajax, settings) {
+    //if ($('.jumbotron-status-icons .fa-cog').length < 1) {
+    jqtype = settings.url.replace('/api/','');
+    t='<span class="fa-cog-caption-container fa-cog-caption-' + jqtype + '">' +
+      '<i class="fa fa-cog fa-spin"></i>' +
+      '<span class="fa-cog-caption">' + jqtype.capitalize() + '</span>';
+    $('.jumbotron .jumbotron-status-icons').append(t);
+    //}
   }
 
   /* Function to handle UX concerns when an AJAX request has ended */
-  function hook_EndAjax() {
-    if (jqxhr.countActiveAJAX < 1) {
-      $('.jumbotron h1 .fa-spin').fadeOut(1000);
-    }
+  function hook_EndAjax(reqtype) {
+    jqtype = '.jumbotron .jumbotron-status-icons .fa-cog-caption-'+reqtype.toLowerCase()
+    $(jqtype).fadeOut(1000,function(){$(jqtype).remove()});
+    /*if (jqxhr.countActiveAJAX < 1) {
+      $('.jumbotron h1 .fa-cog').fadeOut(1000,function(){$('.jumbotron h1 .fa-cog').remove()});
+    }*/
   }
 
   $(document).ready(function() {
@@ -450,10 +518,10 @@ moment.fn.getScale = function(end_moment) {
           // execute the request
           jqxhr[report_type] = $.ajax({
             url:        $('body').data('context-path')+'/api/'+report_type,
-            timeout:    15000,
+            timeout:    60000,
             type:       'POST',
             beforeSend: hook_StartAjax,
-            data:       this_request_data
+            data:       this_request_data,
           })
           // set the "done" action
           .done(function(response) {
@@ -501,8 +569,12 @@ moment.fn.getScale = function(end_moment) {
             };
           })
           // set the "always" action
-          .always(function() {
-            hook_EndAjax();
+          .always(function(response) {
+            // parse the response
+            response = JSON.parse(response);
+            // the widget type is in req
+            var reqname = response.req;
+            hook_EndAjax(reqname);
           });
         }
       });

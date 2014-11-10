@@ -15,7 +15,8 @@ abstract class AJAXController {
   // an array of all fields that can be used as a pre-calculated field
   // i.e., not subject to an aggregate modifier or grouping
   protected static $calcfields = array(
-      'summary' => array('uptime'),
+      'summary' => array('uptime','avg_resp_time'),
+      'request' => array('avg_resp_time'),
   );
 
   // all possible datapoints to be requested
@@ -31,12 +32,13 @@ abstract class AJAXController {
           'page_views'    => 'dt.page_views',
           'resp_time'     => 'dt.response_time',
           'uptime'        => 'IFNULL((1-((SUM(dt.500_errors)+SUM(dt.503_errors))/SUM(dt.page_views)))*100,0)',
+          'avg_resp_time' => 'IFNULL(SUM(dt.response_time),0)/IFNULL(SUM(dt.page_views),1)',
           ),
       /* data points in the uniques tables */
       'uniques' => array(
           'timerange'     => 'dt.ts',
           'instance_id'   => 'dt.instance_id',
-          'remote_ip'     => 'dt.trans_ip',
+          'remote_ip'     => 'INET_NTOA(dt.trans_ip)',
           'path'          => 'dt.path',
           ),
       /* data points in the request table */
@@ -51,6 +53,7 @@ abstract class AJAXController {
           'method'        => 'dt.method',
           'path'          => 'dt.path',
           'query'         => 'dt.query',
+          'avg_resp_time' => 'IFNULL(SUM(dt.response_time),0)/IFNULL(COUNT(dt.response_time),1)',
           ),
       );
   protected static $optionpoints = array(
@@ -94,10 +97,23 @@ abstract class AJAXController {
 
   protected function _addFieldFormat($f, $fmt) {
     $ret=$f;
+    // get precision, if provided
+    $p = $has_p = 0;
+    if (preg_match('/(.+)\|([0-9]+)$/',$fmt,$p)) {
+      $has_p = true;
+      $fmt = $p[1];
+      $p = $p[2];
+    }
     switch($fmt) {
-      case 'int':      $ret = "ROUND($ret,0)"; break;
-      case 'intcomma': $ret = "FORMAT($ret,0)"; break;
-      case 'percent':  $ret = "CONCAT(FORMAT($ret,4),'%')"; break;
+      case 'int':        $ret = "ROUND(IFNULL($ret,0),0)"; break;
+      case 'intperk':    $ret = "ROUND(IFNULL($ret,0)/1000,0)"; break;
+      case 'intcomma':   $ret = "FORMAT(IFNULL($ret,0),0)"; break;
+      case 'floatcomma': $ret = "FORMAT(IFNULL($ret,0),".($has_p ? $p : 4).")"; break;
+      case 'percent':    $ret = "CONCAT(FORMAT(IFNULL($ret,0),".($has_p ? $p : 2)."),'%')"; break;
+      case 'microsec':   $ret = "CONCAT(FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2)."),'s')"; break;
+      default:
+        $this->session->log("Invalid format '$fmt'",LOG_LEVEL_WARN);
+        $this->session->addError("Invalid format '$fmt' ignored",LOG_LEVEL_WARN);
     }
     return $ret;
   }
@@ -164,7 +180,7 @@ abstract class AJAXController {
         case 'countd':$agg = "COUNT(DISTINCT {$found_table}{$sqlfld})"; break;
         case 'sum':   $agg = "SUM({$found_table}{$sqlfld})"; break;
         case 'avg':   $agg = "AVG({$found_table}{$sqlfld})"; break;
-        case 'none':
+        case 'none':  $agg = $sqlfld; break;
         case 'calc':
           if (in_array($fld, array_value($table,static::$calcfields,array()))) {
             $agg = $sqlfld;
@@ -412,6 +428,11 @@ abstract class AJAXController {
 
   public function getSingleRow($query, $params) {
     return $this->getData($query, $params);
+  }
+
+  public function getTableName($table) {
+    $ret = $table=='request' ? $table : "{$table}_{$this->suffix}";
+    return $ret;
   }
 
   public function getTableSuffix($gran) {

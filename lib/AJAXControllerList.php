@@ -34,7 +34,8 @@ class AJAXControllerList extends AJAXController {
       $this->session->log("built join: ".var_export($join,1),LOG_LEVEL_DEBUG);
       $limit = $this->_buildLimit();
       $this->session->log("built limit: ".var_export($limit,1),LOG_LEVEL_DEBUG);
-      $query = "SELECT $fields FROM {$onereport['target_table']}_{$this->suffix} $join $where $group $limit";
+      $ttable = $this->getTableName($onereport['target_table']);
+      $query = "SELECT $fields FROM {$ttable} $join $where $group $limit";
       $this->session->log("Final query: $query",LOG_LEVEL_DEBUG);
       $result[$reportname] = $this->getAllRows($query, $this->bind_params);
     }

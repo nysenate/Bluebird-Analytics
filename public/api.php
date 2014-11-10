@@ -12,7 +12,8 @@ require_once 'AJAXSession.php';
 $session = AJAXSession::getInstance();
 $response = &$session->response;
 
-// check for parameters required in all requests.  Fail is any are not found.
+// check for parameters required in all requests.  Fail if any are not found.
+// TODO this should be consolidated into AJAXSession
 $fail = false;
 $required = array('req', 'instance', 'starttime', 'endtime', 'granularity');
 foreach($required as $k) {

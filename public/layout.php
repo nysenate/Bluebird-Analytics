@@ -66,7 +66,7 @@ foreach ($scripts['css'] as $key => $value) {
         <div class="row">
           <div class="col-lg-12">
             <div class="jumbotron jumbotron-ad hidden-print">
-                <h1><?php echo $activemenu->content_title; ?></h1>
+                <h1><?php echo $activemenu->content_title; ?><span class="jumbotron-status-icons"></span></h1>
             </div>
 
             <?php echo $release_notes; ?>
