@@ -40,7 +40,11 @@ if (!(
 }
 
 // run the action and return the response
-$response->data=$controller->route();
+try {
+  $response->data=$controller->route();
+} catch (Exception $e) {
+  $response->sendDBException($e);
+}
 $session->log("DATA=\n".var_export($response->data,1),LOG_LEVEL_DEBUG);
 $response->send();
 

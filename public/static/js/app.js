@@ -294,16 +294,29 @@ moment.fn.getScale = function(end_moment) {
   /* Function to handle UX concerns when an AJAX request is started */
   function hook_StartAjax(ajax, settings) {
     jqtype = settings.url.replace('/api/','');
-    t='<span class="fa-cog-caption-container fa-cog-caption-' + jqtype + '">' +
+    t='<span class="fa-icon-caption-container fa-icon-caption-' + jqtype + '">' +
       '<i class="fa fa-cog fa-spin"></i>' +
-      '<span class="fa-cog-caption">' + jqtype.capitalize() + '</span>';
+      '<span class="fa-icon-caption">' + jqtype.capitalize() + '</span></span>';
     $('.jumbotron .jumbotron-status-icons').append(t);
   }
 
   /* Function to handle UX concerns when an AJAX request has ended */
-  function hook_EndAjax(reqtype) {
-    jqtype = '.jumbotron .jumbotron-status-icons .fa-cog-caption-'+reqtype.toLowerCase()
-    $(jqtype).fadeOut(1000,function(){$(jqtype).remove()});
+  function hook_EndAjax(response) {
+    var status_home = '.jumbotron .jumbotron-status-icons';
+    var reqtype = response.req.toLowerCase();
+    var ajaxicon = status_home + ' .fa-icon-caption-' + reqtype;
+    $(ajaxicon).fadeOut(1000,function(){$(ajaxicon).remove()});
+    if (response.errors.length) {
+      var thiserr = 'fa-icon-error-' + reqtype;
+      var erricon = status_home + ' .' + thiserr;
+      $(erricon).fadeOut(1000,function(){$(erricon).remove()});
+      var ne = $('<span class="fa-icon-caption-container ' + thiserr + '">' +
+               '<i class="fa fa-warning danger"></i></span>');
+      var em = '';
+      for (x in response.errors) { em += '<span class="fa-icon-error-message">' + response.errors[x].msg + '</span>'; }
+      ne.append('<span class="fa-icon-error-caption"><span class="fa-icon-caption-close-button"></span>'+em+'</span>');
+      $(status_home).append(ne);
+    }
   }
 
   $(document).ready(function() {
@@ -556,20 +569,19 @@ moment.fn.getScale = function(end_moment) {
               }
             });
           })
-          // set the "fail" action
+/*          // set the "fail" action
           .fail(function() {
             console.log('error -- view: '+view+" | type: "+report_type);
             if ($('.jumbotron h1 .fa').length == 0) {
               $('.jumbotron h1').append('<i class="fa fa-warning danger"></i>');
             };
-          })
+          }) */
           // set the "always" action
           .always(function(response) {
             // parse the response
-            response = JSON.parse(response);
-            // the widget type is in req
-            var reqname = response.req;
-            hook_EndAjax(reqname);
+            var retstr = (typeof(response)=='object') ? response.responseText : response;
+            var resp = JSON.parse(retstr);
+            hook_EndAjax(resp);
           });
         }
       });
@@ -708,6 +720,12 @@ moment.fn.getScale = function(end_moment) {
       var option = $(this).find('option:selected');
       loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
+
+    $('.jumbotron').on('click','.fa-icon-caption-close-button',function(){
+      $(this).closest('.fa-icon-caption-container').fadeOut(300,function(){
+        $(this).closest('.fa-icon-caption-container').remove();
+      });
+    });
 
   });
 

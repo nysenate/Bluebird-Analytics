@@ -8,31 +8,6 @@
 require_once 'BB_Session.php';
 require_once 'AJAXResponse.php';
 
-/*  EXAMPLE INCOMING REQUEST
-array (
-  'req' => 'summary',
-  'filter' => '',
-  'starttime' => '2014-03-06 15:41',
-  'endtime' => '2014-05-23 16:41',
-  'granularity' => 'day',
-  'instance' => 'ALL',
-  'reports' => array (
-    0 => array (
-      'report_name' => 'page_views',
-      'report_type' => 'summary',
-      'target_table' => 'summary',
-      'datapoints' => array ( 0 => array ('field' => 'page_views','mod' => 'sum', ), ),
-      'props' => array (
-        'headerIcon' => 'fa fa-files-o fa-3x',
-        'linkTarget' => '/datatable',
-        'linkText' => 'Browse Content',
-        'valueCaption' => 'Pages Served',
-        'wrapperID' => 'page_views',
-      ),
-    ),
-  ),
-)
-*/
 class AJAXSession extends BB_Session {
   protected static $instance = NULL;
 

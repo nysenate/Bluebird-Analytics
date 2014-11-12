@@ -371,11 +371,11 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   color:#aaaaaa;
 }
 
-.jumbotron .fa-cog-caption-container {
+.jumbotron .fa-icon-caption-container {
   position:relative;
 }
 
-.jumbotron .fa-cog-caption {
+.jumbotron .fa-icon-caption {
   font-size: .35em;
   vertical-align: middle;
   left: 0;
@@ -391,4 +391,44 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 .jumbotron-status-icons {
   position:relative;
   margin-left:1em;
+}
+
+.jumbotron .fa-icon-error-caption {
+  display: none;
+  position: absolute;
+  font-size: 14px;
+  width: 300px;
+  border: 2px solid #3C565E;
+  border-radius: 1em;
+  padding: 2em 1em 0;
+  text-align: justify;
+  left: 0;
+  top: 3em;
+  background-color: #ffffff;
+}
+
+.jumbotron .fa-icon-caption-container:hover .fa-icon-error-caption {
+  display:block;
+}
+
+.fa-icon-error-caption .fa-icon-error-message {
+  display:block;
+  margin-bottom:1.5em;
+}
+
+.fa-icon-caption-close-button:before {
+  content: 'X';
+  font-size: 10px;
+  background-color: #ff0000;
+  color: #ffffff;
+  font-weight: bold;
+  padding: .3em .4em;
+  position: absolute;
+  right: 1em;
+  text-shadow: none;
+  border-radius: .3em;
+  top: 1em;
+  vertical-align: middle;
+  line-height: 1em;
+  height: 1.5em;
 }

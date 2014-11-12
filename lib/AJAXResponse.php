@@ -144,6 +144,17 @@ class AJAXResponse {
     if ($with_die) { die(); }
   }
 
+  public function sendDBException($e) {
+    $x = BB_Logger::getInstance();
+    $x->log("Dumping exception:\n".var_export($e,1),LOG_LEVEL_FATAL);
+    if ($e instanceof PDOException) {
+      $msg = "SQLSTATE:{$e->errorInfo[0]}, ERROR:{$e->errorInfo[1]}, MSG:{$e->errorInfo[2]}";
+      $this->sendMessage($msg,AJAX_ERR_FATAL,500);
+    } else {
+      $this->sendFatal($e->getMessage());
+    }
+  }
+
   public function sendFatal($msg,$status=500) {
     $x = BB_Logger::getInstance();
     $x->log("Dumping\n".$x->getBackTrace(),LOG_LEVEL_ERROR);
