@@ -16,8 +16,9 @@ require_once 'BB_Menu.php';
 // bootstrap the environment
 $session = BB_Session::getInstance();
 
+// menu 1 is the main navigation
 $navmenu = new BB_Menu(1);
-$request = $_GET['req'];
+$request = array_value('req',$_GET,'dashboard');
 $activemenu = $navmenu->findActive(array('target'=>"/{$request}"));
 if (!$activemenu) {
   http_response_code(404);

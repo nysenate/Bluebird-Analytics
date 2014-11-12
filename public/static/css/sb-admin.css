@@ -385,6 +385,7 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   text-align: center;
   font-weight: normal;
   color: #3C565E; /*#4444ff;*/
+  background-color:transparent;
 }
 
 .jumbotron-status-icons {

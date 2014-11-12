@@ -293,22 +293,17 @@ moment.fn.getScale = function(end_moment) {
 
   /* Function to handle UX concerns when an AJAX request is started */
   function hook_StartAjax(ajax, settings) {
-    //if ($('.jumbotron-status-icons .fa-cog').length < 1) {
     jqtype = settings.url.replace('/api/','');
     t='<span class="fa-cog-caption-container fa-cog-caption-' + jqtype + '">' +
       '<i class="fa fa-cog fa-spin"></i>' +
       '<span class="fa-cog-caption">' + jqtype.capitalize() + '</span>';
     $('.jumbotron .jumbotron-status-icons').append(t);
-    //}
   }
 
   /* Function to handle UX concerns when an AJAX request has ended */
   function hook_EndAjax(reqtype) {
     jqtype = '.jumbotron .jumbotron-status-icons .fa-cog-caption-'+reqtype.toLowerCase()
     $(jqtype).fadeOut(1000,function(){$(jqtype).remove()});
-    /*if (jqxhr.countActiveAJAX < 1) {
-      $('.jumbotron h1 .fa-cog').fadeOut(1000,function(){$('.jumbotron h1 .fa-cog').remove()});
-    }*/
   }
 
   $(document).ready(function() {

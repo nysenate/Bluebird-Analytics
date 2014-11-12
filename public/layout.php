@@ -72,15 +72,14 @@ foreach ($scripts['css'] as $key => $value) {
             <?php echo $release_notes; ?>
           </div>
         </div><!-- /.row -->
-        <?php
-          if (!empty($layout_content) && 0==1) {
-            /*include $navigation[$request][$sub]['content'];*/
-          }
-          else { ?>
-            <div class="row" id="summary-wrapper"></div>
-            <div class="row" id="chart-wrapper"></div>
-            <div class="row" id="list-wrapper"></div>
-          <?php } ?>
+        <div class="row" id="summary-wrapper"></div>
+        <div class="row" id="chart-wrapper"></div>
+        <div class="row" id="list-wrapper"></div><?php
+        if (file_exists("static/layouts/$request.php")) {
+          echo "\n<!-- adding additional layout for '$request' -->\n";
+          include_once "static/layouts/$request.php";
+          echo "\n<!--    end additional layout for '$request' -->\n";
+        } ?>
         <div class="row">
           <hr/>
           <div class="col-lg-6 footer-credits">
