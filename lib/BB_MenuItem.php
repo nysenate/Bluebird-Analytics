@@ -7,6 +7,7 @@ class BB_MenuItem {
   protected $_db = NULL;
   protected $_data = array();
   protected $_classes = array();
+  protected $_context = '';
 
   public function __construct($d = array(), $load = false) {
     $this->_db = BB_Session::getInstance()->db;
@@ -16,6 +17,7 @@ class BB_MenuItem {
     if ($d) {
       $this->loadFromArray($d);
     }
+    if (!$this->_context) { $this->_context = $_SERVER['CONTEXT_PREFIX']; }
   }
 
   public function __get($n) {
@@ -92,9 +94,14 @@ class BB_MenuItem {
   public function render($is_parent = false) {
     $is_link = ($this->is_link && $this->target);
     if ($is_parent) { $this->_classes[] = 'dropdown'; }
+    if ($is_link) {
+      $target = ($this->_context ? $this->_context : '') . $this->target;
+    } else {
+      $target = '#';
+    }
     $ret = '<li' . (count($this->_classes) ? ' class="'.implode(' ',$this->_classes).'"' : '') . '>' .
             '<a' . ($is_parent ? ' data-toggle="dropdown" class="dropdown-toggle"' : '') .
-            ' href="' . ($is_link ? $this->target : '#') . '">' .
+            ' href="' . $target . '">' .
             ($this->icon_name ? '<i class="fa '.$this->icon_name.'"></i>' : '') . $this->menu_title .
             ($is_parent ? '<b class="caret"></b>' : '') .
             '</a></li>';
