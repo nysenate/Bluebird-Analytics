@@ -1,6 +1,8 @@
 
+TRUNCATE TABLE apache_cron_runs;
 INSERT INTO apache_cron_runs VALUES (0, '1969-12-31 19:00:00');
 
+TRUNCATE TABLE location;
 INSERT INTO location (name, ipv4_start, ipv4_end) VALUES
 ('Not Found', NULL, NULL),
 ('LOB Fl B3', INET_ATON('10.11.3.26'), INET_ATON('10.11.3.254')),
@@ -72,6 +74,7 @@ INSERT INTO location (name, ipv4_start, ipv4_end) VALUES
 ('AVAYA', INET_ATON('10.1.8.1'), INET_ATON('10.1.8.254'));
 
 
+TRUNCATE TABLE url;
 INSERT INTO url (name, match_full, action, path, search) VALUES
 ('Not Found', 0, 'read', NULL, NULL),
 ('Contact Add', 0, 'read', '/civicrm/contact', NULL),
@@ -440,3 +443,17 @@ INSERT INTO url (name, match_full, action, path, search) VALUES
 ('Contact Create', 1, 'create', '/civicrm/contact/add', 'Individual'),
 ('Contact Create Household', 1, 'create', '/civicrm/contact/add', 'Household'),
 ('Contact Create Organization', 1, 'create', '/civicrm/contact/add', 'Organization');
+
+
+TRUNCATE TABLE menu;
+INSERT INTO menu VALUES (1,'Navigation');
+
+TRUNCATE TABLE menuitem;
+INSERT INTO menuitem VALUES
+  (1,1,'Dashboard','Statistics Overview','dashboard','fa-inbox',1,'/dashboard',0,1,1),
+  (2,1,'Performance','Statistics Overview','performance','fa-inbox',1,'/performance',0,2,1),
+  (3,1,'Users','User Overview','users','fa-users',1,'',0,3,1),
+  (4,1,'Users','User Overview','users','fa-users',1,'/users/list',3,1,1),
+  (5,1,'User Details','User Details','userdetails','fa-sitemap',1,'/users/details',3,2,1),
+  (6,1,'Custom Query','Custom Queries','datatable','fa-list',1,'/datatable',0,4,1);
+

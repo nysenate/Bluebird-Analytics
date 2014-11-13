@@ -1,10 +1,12 @@
 
-CREATE TABLE IF NOT EXISTS apache_cron_runs (
+DROP TABLE IF EXISTS apache_cron_runs;
+CREATE TABLE apache_cron_runs (
   final_offset int(10) unsigned NOT NULL,
   final_ctime datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS datatable (
+DROP TABLE IF EXISTS datatable;
+CREATE TABLE datatable (
   id int(10) unsigned PRIMARY KEY AUTO_INCREMENT,
   name varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   dimensions varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -12,7 +14,8 @@ CREATE TABLE IF NOT EXISTS datatable (
   UNIQUE KEY name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS instance (
+DROP TABLE IF EXISTS instance;
+CREATE TABLE instance (
   id int(10) unsigned PRIMARY KEY AUTO_INCREMENT,
   name varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   servername varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -20,7 +23,8 @@ CREATE TABLE IF NOT EXISTS instance (
   UNIQUE KEY servername (servername)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS request (
+DROP TABLE IF EXISTS request;
+CREATE TABLE request (
   id int(10) unsigned PRIMARY KEY AUTO_INCREMENT,
   instance_id int(10) unsigned DEFAULT NULL,
   remote_ip varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -34,8 +38,8 @@ CREATE TABLE IF NOT EXISTS request (
   method enum('GET','POST','HEAD','OPTION') COLLATE utf8_unicode_ci DEFAULT NULL,
   path varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   query varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  time datetime NOT NULL,
-  KEY time (time),
+  ts datetime NOT NULL,
+  KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY request__trans_ip (trans_ip),
   KEY request__location_id (location_id),
@@ -43,8 +47,9 @@ CREATE TABLE IF NOT EXISTS request (
   CONSTRAINT request_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS summary_1d (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS summary_1d;
+CREATE TABLE summary_1d (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
@@ -53,15 +58,17 @@ CREATE TABLE IF NOT EXISTS summary_1d (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, remote_ip),
+  KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_1d__trans_ip (trans_ip),
   KEY summary_1d__location_id (location_id),
   CONSTRAINT summary_1d_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS summary_1h (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS summary_1h;
+CREATE TABLE summary_1h (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
@@ -70,15 +77,17 @@ CREATE TABLE IF NOT EXISTS summary_1h (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, remote_ip),
+  KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_1h__trans_ip (trans_ip),
   KEY summary_1h__location_id (location_id),
   CONSTRAINT summary_1h_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS summary_1m (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS summary_1m;
+CREATE TABLE summary_1m (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
@@ -87,15 +96,17 @@ CREATE TABLE IF NOT EXISTS summary_1m (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, remote_ip),
+  KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_1m__trans_ip (trans_ip),
   KEY summary_1m__location_id (location_id),
   CONSTRAINT summary_1m_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS summary_15m (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS summary_15m;
+CREATE TABLE summary_15m (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
@@ -104,7 +115,8 @@ CREATE TABLE IF NOT EXISTS summary_15m (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, remote_ip),
+  KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_15m__trans_ip (trans_ip),
   KEY summary_15m__location_id (location_id),
@@ -112,15 +124,17 @@ CREATE TABLE IF NOT EXISTS summary_15m (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
-CREATE TABLE IF NOT EXISTS uniques_1d (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS uniques_1d;
+CREATE TABLE uniques_1d (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),
   KEY uniques_1d__trans_ip (trans_ip),
@@ -128,15 +142,17 @@ CREATE TABLE IF NOT EXISTS uniques_1d (
   CONSTRAINT uniques_1d_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS uniques_1h (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS uniques_1h;
+CREATE TABLE uniques_1h (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),
   KEY uniques_1h__trans_ip (trans_ip),
@@ -144,15 +160,17 @@ CREATE TABLE IF NOT EXISTS uniques_1h (
   CONSTRAINT uniques_1h_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS uniques_1m (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS uniques_1m;
+CREATE TABLE uniques_1m (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),
   KEY uniques_1m__trans_ip (trans_ip),
@@ -160,15 +178,17 @@ CREATE TABLE IF NOT EXISTS uniques_1m (
   CONSTRAINT uniques_1m_ibfk_1 FOREIGN KEY (instance_id) REFERENCES instance (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS uniques_15m (
-  time datetime DEFAULT NULL,
+DROP TABLE IF EXISTS uniques_15m;
+CREATE TABLE uniques_15m (
+  ts datetime DEFAULT NULL,
   remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (time, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),
   KEY uniques_15m__trans_ip (trans_ip),
@@ -177,7 +197,8 @@ CREATE TABLE IF NOT EXISTS uniques_15m (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
-CREATE TABLE IF NOT EXISTS location (
+DROP TABLE IF EXISTS location;
+CREATE TABLE location (
   id int(10) unsigned PRIMARY KEY AUTO_INCREMENT,
   name varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   ipv4_start int(10) unsigned DEFAULT NULL,
@@ -185,7 +206,8 @@ CREATE TABLE IF NOT EXISTS location (
   KEY location__ipv4_range (ipv4_start, ipv4_end)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS url (
+DROP TABLE IF EXISTS url;
+CREATE TABLE url (
   id int(10) unsigned PRIMARY KEY AUTO_INCREMENT,
   name varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   match_full bit(1) DEFAULT NULL,
@@ -195,13 +217,26 @@ CREATE TABLE IF NOT EXISTS url (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
-CREATE ALGORITHM=UNDEFINED DEFINER=CURRENT_USER
-SQL SECURITY DEFINER VIEW all_requests AS
-select cast(a.time as date) AS date,
-  date_format(a.time,'%a') AS weekday,
-  count(0) AS total_requests,
-  sum(if((a.response_code >= 400),1,0)) AS total_bad_requests,
-  sum(if((a.response_code < 400),1,0)) AS total_good_requests
-from request a where a.instance_id not in (
-  select id from instance where install_class<>'prod') group by date;
+DROP TABLE IF EXISTS menu;
+CREATE TABLE menu (
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  menu_name varchar(50) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+DROP TABLE IF EXISTS menuitem;
+CREATE TABLE menuitem (
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  menu_id int(10) unsigned NOT NULL,
+  menu_title varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+  content_title varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  data_name varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  icon_name varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'fa-arrow-right',
+  is_link tinyint(3) unsigned NOT NULL DEFAULT '1',
+  target varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  parent_id int(10) unsigned NOT NULL DEFAULT '0',
+  weight int(10) unsigned NOT NULL DEFAULT '0',
+  active tinyint(3) unsigned NOT NULL DEFAULT '1',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
