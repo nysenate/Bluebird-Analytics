@@ -144,10 +144,10 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
       }
       else {
         if ($start_ctime == null) {
-          $start_ctime = strtotime($new_entry['time']);
+          $start_ctime = strtotime($new_entry['ts']);
         }
         unset($new_entry['is_page']);
-        $final_ctime = strtotime($new_entry['time']);
+        $final_ctime = strtotime($new_entry['ts']);
         $values[] = $new_entry;
       }
     }

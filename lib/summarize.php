@@ -61,7 +61,7 @@ function create_summary_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
   ");
   $rows = array();
   while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-    $row['time'] = $mysql_date;
+    $row['ts'] = $mysql_date;
     $rows[] = $row;
   }
   $result->closeCursor();
@@ -83,7 +83,7 @@ function create_uniques_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
     ");
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-      $row['time'] = $mysql_date;
+      $row['ts'] = $mysql_date;
       $row['type'] = $stat;
       $rows[] = $row;
     }
