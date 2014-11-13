@@ -40,7 +40,7 @@ UNLOCK TABLES;
 ALTER TABLE request
   CHANGE `time` ts DATETIME NOT NULL,
   DROP INDEX `time`,
-  ADD INDEX `timerange (`ts`);
+  ADD INDEX timerange (`ts`);
 
 ALTER TABLE summary_15m
   CHANGE `time` ts DATETIME DEFAULT NULL,
