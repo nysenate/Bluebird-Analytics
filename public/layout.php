@@ -1,23 +1,27 @@
-<!DOCTYPE html>
+<?php
+function url_for($path) {
+  return $_SERVER['CONTEXT_PREFIX'].$path;
+}
+?><!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-
-    <title><?php echo $navigation[$request][$sub]['name'] ?> - <?php echo $product['name'];?></title>
-
+    <title><?php echo $activemenu->menu_title; ?> - <?php echo $product['name'];?></title>
     <!-- dynamically load in style sheets -->
-    <?php
-    foreach ($scripts['css'] as $key => $value) {
-      echo '<link href="'.url_for($value['src']).'" rel="stylesheet" >'."\n\t";
-    }
-
-    ?>
+<?php
+foreach ($scripts['css'] as $key => $value) {
+  echo '    <link href="'.url_for($value['src']).'" rel="stylesheet" />'."\n";
+}
+?>
   </head>
-
-  <body data-context-path="<?php echo $_SERVER['CONTEXT_PREFIX'] ?>" data-view="<?php echo $navigation[$request][$sub]['view'] ?>" class="<?php echo $navigation[$request][$sub]['name'] ?>" data-filter="<?php if(isset($_GET['filter'])){ echo $_GET['filter'];} ?>">
+  <body class="<?php
+        echo $activemenu->content_title; ?>" data-context-path="<?php
+        echo $_SERVER['CONTEXT_PREFIX'] ?>" data-view="<?php
+        echo $activemenu->data_name ?>" data-filter="<?php
+        if(isset($_GET['filter'])){ echo $_GET['filter'];} ?>">
     <div id="wrapper">
       <!-- Sidebar -->
       <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -31,34 +35,9 @@
           </button>
           <a class="navbar-brand" href="/"><?php echo $product['name'];?></a>
         </div>
-
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse navbar-ex1-collapse">
-          <ul class="nav navbar-nav side-nav">
-
-            <?php
-            foreach ($navigation as $key => $value) {
-              // var_dump($value['class']);
-              $class = (isset($value['overview']['class'])) ? $value['overview']['class'] : '' ;
-              if (count($navigation[$key]) === 1) {
-                echo '<li class="'.$class.'"> <a href="'.url_for($value['overview']['link']).'"> <i class="fa '.$value['overview']['icon'].'"></i> '.$value['overview']['name'].' </a>';
-              }else{
-                echo ' <li class="dropdown '.$class.'"> <a data-toggle="dropdown" class="dropdown-toggle" href="'.$value['overview']['link'].'"> <i class="fa '.$value['overview']['icon'].'"></i> '.$value['overview']['name'].'<b class="caret"></b> </a> <ul class="dropdown-menu">';
-                foreach ($navigation[$key] as $child => $dropdown) {
-                  if ($child !== 'overview') {
-                    $class = (isset($dropdown['class'])) ? $dropdown['class'] : '' ;
-
-                    echo '<li class="'.$class.'"> <a  href="'.url_for($dropdown['link']).'"> <i class="fa '.$dropdown['icon'].'"></i> '.$dropdown['name'].' </a> </li>';
-                  }
-                }
-                echo '</ul>';
-              }
-              echo ' </li>';
-            }
-            // exit();
-            ?>
-          </ul>
-
+          <?php echo $navmenu->render(); ?>
           <ul class="nav navbar-nav navbar-right navbar-user">
             <li class="instance-choice">
               <select id="instance-picker" class="selectpicker" data-live-search="true" data-size="5" data-style="btn-inverse">
@@ -87,23 +66,20 @@
         <div class="row">
           <div class="col-lg-12">
             <div class="jumbotron jumbotron-ad hidden-print">
-                <h1><?php echo $navigation[$request][$sub]['about'] ?></h1>
+                <h1><?php echo $activemenu->content_title; ?><span class="jumbotron-status-icons"></span></h1>
             </div>
 
             <?php echo $release_notes; ?>
           </div>
         </div><!-- /.row -->
-
-        <?php
-          if (!empty($layout_content)) {
-            include($navigation[$request][$sub]['content']);
-          }
-          else {
-            include('404.html');
-          }
-
-        ?>
-
+        <div class="row" id="summary-wrapper"></div>
+        <div class="row" id="chart-wrapper"></div>
+        <div class="row" id="list-wrapper"></div><?php
+        if (file_exists("static/layouts/$request.php")) {
+          echo "\n<!-- adding additional layout for '$request' -->\n";
+          include_once "static/layouts/$request.php";
+          echo "\n<!--    end additional layout for '$request' -->\n";
+        } ?>
         <div class="row">
           <hr/>
           <div class="col-lg-6 footer-credits">
@@ -118,10 +94,10 @@
     </div><!-- /#wrapper -->
 
     <!-- dynamically load in JavaScript -->
-    <?php
-      foreach ($scripts['js'] as $key => $value) {
-        echo '<script src="'.url_for($value['src']).'"></script>'."\n\t";
-      }
-    ?>
+<?php
+  foreach ($scripts['js'] as $key => $value) {
+    echo '    <script src="'.url_for($value['src']).'"></script>'."\n";
+  }
+?>
   </body>
 </html>

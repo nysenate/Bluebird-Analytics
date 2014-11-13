@@ -211,4 +211,26 @@ function fetch_last_update_time($dbcon)
   return $last_update;
 } // fetch_last_update_time()
 
+function deprecate_to($rep = '') {
+  $backTrace = debug_backtrace();
+  $old=array_shift($backTrace);
+  $isold = false;
+  if (count($backTrace)) {
+    $ref = array_shift($backTrace);
+  } else {
+    $ref = $old;
+    $isold = true;
+  }
+  $ret = '';
+  if ($isold) {
+    $ret.="deprecate() called from top level: {$ref['file']}:{$ref['line']}";
+  } else {
+    $ret.="({$ref['file']}:{$ref['line']}) function " .
+          (array_key_exists('class',$ref) ? $ref['class'] : '') .
+          (array_key_exists('type',$ref) ? $ref['type'] : '') .
+          "{$ref['function']} is deprecated" .
+          ($rep ? ", use $rep instead" : '');
+  }
+  error_log($ret);
+}
 ?>

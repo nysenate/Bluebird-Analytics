@@ -144,10 +144,10 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
       }
       else {
         if ($start_ctime == null) {
-          $start_ctime = strtotime($new_entry['time']);
+          $start_ctime = strtotime($new_entry['ts']);
         }
         unset($new_entry['is_page']);
-        $final_ctime = strtotime($new_entry['time']);
+        $final_ctime = strtotime($new_entry['ts']);
         $values[] = $new_entry;
       }
     }
@@ -226,7 +226,7 @@ function process_entry($entry_parts, PDO $dbcon)
     'method' => trim($entry_parts[9], '"'),
     'path' => $request_path,
     'query' => isset($request_parts['query']) ? $request_parts['query'] : '',
-    'time' => $datetime->format(DateTime::ISO8601),
+    'ts' => $datetime->format(DateTime::ISO8601),
     'is_page' => $is_page
   );
   log_(DEBUG, "Processing entry: ".var_export($ret,1));

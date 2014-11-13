@@ -56,16 +56,16 @@ function create_summary_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
         IFNULL(sum(response_code = 500),0) as 500_errors,
         IFNULL(sum(response_time), 0) as response_time
       FROM request
-      WHERE time BETWEEN FROM_UNIXTIME($start_range) AND FROM_UNIXTIME($end_range)
+      WHERE ts BETWEEN FROM_UNIXTIME($start_range) AND FROM_UNIXTIME($end_range)
       GROUP BY instance_id, remote_ip
   ");
   $rows = array();
   while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-    $row['time'] = $mysql_date;
+    $row['ts'] = $mysql_date;
     $rows[] = $row;
   }
   $result->closeCursor();
-  $result = $dbcon->prepare("DELETE FROM summary_$table_suffix WHERE time=?");
+  $result = $dbcon->prepare("DELETE FROM summary_$table_suffix WHERE ts=?");
   $result->execute(array($mysql_date));
   insert_batch($dbcon, "summary_$table_suffix", $rows);
 }
@@ -78,18 +78,18 @@ function create_uniques_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
     $result = $dbcon->query("
       SELECT instance_id, remote_ip,trans_ip,location_id, $stat as value
       FROM request
-      WHERE time BETWEEN FROM_UNIXTIME($start_range) AND FROM_UNIXTIME($end_range)
+      WHERE ts BETWEEN FROM_UNIXTIME($start_range) AND FROM_UNIXTIME($end_range)
       GROUP BY instance_id, remote_ip, $stat
     ");
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-      $row['time'] = $mysql_date;
+      $row['ts'] = $mysql_date;
       $row['type'] = $stat;
       $rows[] = $row;
     }
     $result->closeCursor();
   }
-  $result = $dbcon->prepare("DELETE FROM uniques_$table_suffix WHERE time=?");
+  $result = $dbcon->prepare("DELETE FROM uniques_$table_suffix WHERE ts=?");
   $result->execute(array($mysql_date));
   insert_batch($dbcon, "uniques_$table_suffix", $rows);
 }

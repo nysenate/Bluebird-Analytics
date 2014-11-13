@@ -5,10 +5,14 @@ Options +FollowSymLinks -MultiViews
 RewriteEngine On
 
 # Some subpaths should not be redirected
-RewriteRule ^static - [L,NC]
+RewriteRule ^/?static - [L,NC]
+
+# For the API
+RewriteRule ^/?api$ /api.php [QSA,END,NC]
 
 # Use request path as a GET argument to the index script
-RewriteRule ^api/(.+)$ %{CONTEXT_PREFIX}/api.php?req=$1 [QSA,END,NC]
+RewriteRule ^/?api/(.+)$ %{CONTEXT_PREFIX}/api.php?req=$1 [QSA,END,NC]
 
 # Use request path as a GET argument to the index script
-RewriteRule ^(index\.php|(.+))$ %{CONTEXT_PREFIX}/index.php?req=$2 [END,NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^/?(index\.php|(.+))$ %{CONTEXT_PREFIX}/index.php?req=$2 [END,NC]
