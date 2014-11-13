@@ -1,4 +1,4 @@
-DROP VIEW all_requests;
+DROP VIEW IF EXISTS all_requests;
 
 DROP TABLE IF EXISTS `menu`;
 CREATE TABLE `menu` (
@@ -73,6 +73,8 @@ ALTER TABLE uniques_1h
 ALTER TABLE uniques_1m
   CHANGE `time` ts DATETIME DEFAULT NULL,
   ADD INDEX timerange (`ts`);
+
+DROP PROCEDURE IF EXISTS nyss_debug_log;
 
 DELIMITER ;;
 CREATE DEFINER=CURRENT_USER PROCEDURE `nyss_debug_log`(IN msg TEXT)

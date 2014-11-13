@@ -293,7 +293,7 @@ moment.fn.getScale = function(end_moment) {
 
   /* Function to handle UX concerns when an AJAX request is started */
   function hook_StartAjax(ajax, settings) {
-    jqtype = settings.url.replace('/api/','');
+    jqtype = settings.url.replace(/^.*api\//,'');
     t='<span class="fa-icon-caption-container fa-icon-caption-' + jqtype + '">' +
       '<i class="fa fa-cog fa-spin"></i>' +
       '<span class="fa-icon-caption">' + jqtype.capitalize() + '</span></span>';
