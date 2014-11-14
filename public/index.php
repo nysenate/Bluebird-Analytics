@@ -28,7 +28,7 @@ $navmenu->addClassToTree($activemenu->id,'active open');
 
 $product = array(
   'name' => 'Bluebird Analytics',
-  'version' => '1.0',
+  'version' => '1.1.1',
   'release' => 'alpha',
   'last_update' => fetch_last_update_time($session->db),
 );
