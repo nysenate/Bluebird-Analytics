@@ -1,4 +1,8 @@
 /* Utility functions */
+
+/* Add Array.unique() function to javascript arrays
+   Returns a new array including only unique values found in the original
+   */
 Object.defineProperty(Array.prototype,'unique',
     {
       writable: true,
@@ -15,6 +19,12 @@ Object.defineProperty(Array.prototype,'unique',
       }
     });
 
+/* Add String.capitalize() function to javascript strings
+   Parameters:
+      first_only: indicates if the capitalization should be only the first word (true),
+                  or all words (false).  Defaults to false.
+   Returns a new string with capitalized replacements
+   */
 Object.defineProperty(String.prototype,'capitalize',
     {
       writable:true,

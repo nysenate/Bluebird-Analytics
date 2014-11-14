@@ -87,7 +87,7 @@ var report_config = {
       datapoints: [ { field:'instance_name', header:'Server Name',    mod:'group'  },
                     { field:'remote_ip',     header:'Active Users',   mod:'countd', fmt:'intcomma' },
                     { field:'page_views',    header:'Total Requests', mod:'sum',    fmt:'intcomma' } ],
-      props: { titleText:'Most Active Instances', widgetID:'top_instances' }
+      props: { titleText:'Most Active Instances', widgetID:'top_instances' },
     },
     { report_name:  'top_active_users',
       report_type:  'list',
@@ -160,6 +160,84 @@ var report_config = {
       props: { titleText:'Top Queries', widgetID:'top_queries' }
     },
   ],
+  users: [
+    {
+      report_name:  'user_list',
+      report_type:  'list',
+      target_table: 'summary',
+      datapoints: [ { field:'location_name', mod:'group', header:'Office Location' },
+                    { field:'server_name', mod:'group', header:'Server'},
+                    { field:'remote_ip', mod:'group', header:'Remote IP'},
+                    { field:'page_views',    mod:'sum',  fmt:'int', header:'Total Views' }  ],
+      props: { titleText:'Most Active Instances', widgetID:'active_instances' },
+      sortorder: { page_views:'DESC' }
+    },
+  ],
+  userdetails: [
+    {
+      report_name:  'page_views',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Pages Served',
+          wrapperID:    'page_views'
+      }
+    },
+    {
+      report_name:  'unique_pages',
+      report_type:  'summary',
+      target_table: 'uniques',
+      datapoints:   [ { field:'path', mod:'countd', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Unique URLs',
+          wrapperID:    'unique_pages'
+      }
+    },
+    {
+      report_name:  'avg_response',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'avg_resp_time', mod:'calc', fmt:'microsec' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Avg Resp Time',
+          wrapperID:    'avg_resp_time'
+      }
+    },
+    {
+      report_name:  'num_instances',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'instance_id', mod:'countd', fmt:'intcomma' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Active Instances',
+          wrapperID:    'num_instances'
+      }
+    },
+    {
+      report_name:  'uptime',
+      report_type:  'summary',
+      target_table: 'summary',
+      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent' } ],
+      props:{
+          headerIcon:   'fa fa-files-o fa-3x',
+          valueCaption: 'Successful Requests',
+          wrapperID:    'uptime'
+      }
+    },
+    { report_name:  'user_details',
+      report_type:  'list',
+      target_table: 'request',
+      datapoints: [ { field:'path',          header:'Path',     mod:'group'  },
+                    { field:'resp_code',     header:'Views',    mod:'count'  },
+                    { field:'avg_resp_time', header:'Avg Time', mod:'calc', fmt:'microsec' } ],
+      props: { titleText:'Top Queries', widgetID:'top_queries' }
+    },
+  ]
 };
 
 
@@ -220,76 +298,6 @@ moment.fn.getScale = function(end_moment) {
 
   /* Set up some initial variables */
   var view = $('body').data('view');
-  // a big configuration object for the sites dynamically loaded areas
-  // pages have three kinds of AJAX rendered views (summary, list, chart)
-  // we map the JSON keys to the HTML objects class to populate the data
-  /* TODO: deprecated in favor of global var report_config */
-  var config = {
-    performance: {
-      summary : {
-        'app_errors': '500_errors',
-        'db_errors': '503_errors',
-        response_time : 'avg_response_time',
-        uptime : "",
-      },
-      chart : {
-        element: 'overview',
-        ykeys: ['500_errors','503_errors','avg_response_time','page_view'],
-        labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)'],
-      },
-      list : {
-        slow_queries: {
-          element: '#slow_queries',
-          headers: ["Path", "Total Views", "Average Response Time"]
-        }
-      },
-    },
-    offices: {
-      summary : {
-        'app_errors': '500_errors',
-        'db_errors': '503_errors',
-        response_time : 'avg_response_time',
-        uptime : "",
-      },
-      chart : {
-        element: 'overview',
-        ykeys: ['500_errors','503_errors','avg_response_time','page_view'],
-        labels: ['App Errors','Database Errors','Response Time','Page Views (x1000)'],
-      },
-      list : {
-        slow_queries: {
-          element: '#slow_queries',
-          headers: ["Path", "Total Views", "Average Response Time"]
-        }
-      },
-    },
-    users: {
-      list : {
-        user_overview: {
-          element: '#user-overview',
-          headers: ["Total Views", "Office Location", "Server", "Remote IP"]
-        }
-      }
-    },
-    userdetails: {
-
-      summary : {
-        page_views : "page_views",
-        distinct_pages : "distinct_pages",
-        avg_response_time : "avg_response_time",
-        active_instances : "active_instances",
-        uptime : "uptime",
-      },
-      list : {
-        user_detail: {
-          element: '#user-detail',
-          headers: ["Action", "Url Path", "Time","Request TIme", "Time Between Requests"]
-        }
-      }
-    },
-    datatable: {},
-    behavior: {}
-  };
 
   /* Function to handle UX concerns when an AJAX request is started */
   function hook_StartAjax(ajax, settings) {
@@ -569,13 +577,6 @@ moment.fn.getScale = function(end_moment) {
               }
             });
           })
-/*          // set the "fail" action
-          .fail(function() {
-            console.log('error -- view: '+view+" | type: "+report_type);
-            if ($('.jumbotron h1 .fa').length == 0) {
-              $('.jumbotron h1').append('<i class="fa fa-warning danger"></i>');
-            };
-          }) */
           // set the "always" action
           .always(function(response) {
             // parse the response
@@ -589,6 +590,13 @@ moment.fn.getScale = function(end_moment) {
 
     // render the current page
     $('#page-wrapper').Render();
+
+    // add the "close message" action to icon container buttons
+    $('.jumbotron').on('click','.fa-icon-caption-close-button',function(){
+      $(this).closest('.fa-icon-caption-container').fadeOut(300,function(){
+        $(this).closest('.fa-icon-caption-container').remove();
+      });
+    });
 
 
     // TODO: optimize/refactor all below
@@ -720,12 +728,6 @@ moment.fn.getScale = function(end_moment) {
       var option = $(this).find('option:selected');
       loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
-
-    $('.jumbotron').on('click','.fa-icon-caption-close-button',function(){
-      $(this).closest('.fa-icon-caption-container').fadeOut(300,function(){
-        $(this).closest('.fa-icon-caption-container').remove();
-      });
-    });
 
   });
 

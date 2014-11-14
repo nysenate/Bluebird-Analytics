@@ -39,7 +39,7 @@ abstract class AJAXController {
           'timerange'     => 'dt.ts',
           'instance_id'   => 'dt.instance_id',
           'remote_ip'     => 'INET_NTOA(dt.trans_ip)',
-          'path'          => 'dt.path',
+          'path'          => 'dt.value',
           ),
       /* data points in the request table */
       'request' => array(
@@ -300,7 +300,10 @@ abstract class AJAXController {
         continue;
       }
       $this->session->log("Adding new list of fields for $repname=\n".var_export($fields,1),LOG_LEVEL_DEBUG);
-      $tables[$repname] = array('target_table'=>$reptable, 'fields'=>$fields);
+      $tables[$repname] = array('target_table'=>$reptable,
+                                'fields'=>$fields,
+                                'sortorder'=>array_value('sortorder',$val,array())
+                               );
     }
     $this->session->log("Final parsed reports=\n".var_export($tables,1),LOG_LEVEL_DEBUG);
     return $tables;
@@ -422,6 +425,9 @@ abstract class AJAXController {
     $join = "dt " . $this->getIndexClause();
     if ($this->force_instance_index || $this->join_instance_table) {
       $join .= " INNER JOIN instance ON dt.instance_id=instance.id";
+    }
+    if ($this->join_location_table) {
+      $join .= " INNER JOIN location ON dt.location_id=location.id";
     }
     return $join;
   }
