@@ -67,7 +67,8 @@ $scripts = array(
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.js'),
     array('src'=>'/static/js/utility.js'),
     array('src'=>'/static/js/hashstorage.js'),
-    array('src'=>'/static/js/analytics.widgets.js'),
+    array('src'=>'/static/js/analytics.reports.js'),
+    array('src'=>'/static/js/NYSS.MessageBox.js'),
     array('src'=>'/static/js/app.js'),
   )
 );

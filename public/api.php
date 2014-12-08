@@ -15,9 +15,13 @@ $response = &$session->response;
 // check for parameters required in all requests.  Fail if any are not found.
 // TODO this should be consolidated into AJAXSession
 $fail = false;
-$required = array('req', 'instance', 'starttime', 'endtime', 'granularity');
+$request = $session->req('req');
+if (!$request) {
+  $fail = true;
+}
+$required = array('instance', 'starttime', 'endtime', 'granularity');
 foreach($required as $k) {
-  if (!($session->req($k))) {
+  if (!($session->req('filters')[$k])) {
     $response->addError(AJAX_ERR_FATAL,"Required parameter '$k' is missing.");
     $fail = true;
   }
@@ -29,7 +33,6 @@ if (!count($session->reports)) {
 if ($fail) { $response->send(400); }
 
 // verify the controller is available
-$request = $session->req('req');
 $controllerName = "AJAXController".ucfirst($request);
 if (!(
       (include "{$controllerName}.php")

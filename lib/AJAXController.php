@@ -332,7 +332,8 @@ abstract class AJAXController {
   public function validate() {
     $ret = true;
     // verify the granularity
-    $this->suffix = $this->getTableSuffix($this->session->req('granularity'));
+    $granularity = $this->session->req('filters')['granularity'];
+    $this->suffix = $this->getTableSuffix($granularity);
     if (!$this->suffix) {
       $this->addError(AJAX_ERR_FATAL,"Invalid granularity '$granularity' received",400);
       $ret = false;
@@ -368,11 +369,12 @@ abstract class AJAXController {
   }
 
   protected function getCommonClauses() {
+    $filters = $this->session->req('filters');
     // initialize the starting values
     $vals = array(
-                'starttime' => $this->session->req('starttime'),
-                'endtime'   => $this->session->req('endtime'),
-                'instance'  => $this->session->req('instance'),
+                'starttime' => array_value('starttime',$filters,NULL),
+                'endtime'   => array_value('endtime',$filters,NULL),
+                'instance'  => array_value('instance',$filters,'ALL'),
                 );
 
     // analyze the need for indexes

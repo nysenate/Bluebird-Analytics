@@ -1,30 +1,27 @@
 /* ****** Global variables ****** */
-// default list options
-var report_list_default_count = 10;
-var report_list_default_page  = 1;
 // a collection of all AJAX objects used by the app
 var jqxhr = [];
 // HashStorage mechanism, see hashstorage.js
 var HashStorage = NYSS.HashStorageModule;
 // line colors for charts.  Order of appearance is important
 var chart_colors = {
-                     solidblue:   '#2222aa',
-                     solidred:    '#aa2222',
-                     solidgreen:  '#22aa22',
-                     slateblue:   '#53777A',
-                     lightred:    '#C02942',
-                     lightorange: '#D95B43',
-                     deeppurple:  '#542437',
-                     firered:     '#DF151A',
+                     solidblue:   '#2222AA', solidred:    '#AA2222', solidgreen:  '#22AA22',
+                     slateblue:   '#53777A', lightred:    '#C02942', lightorange: '#D95B43',
+                     deeppurple:  '#542437', firered:     '#DF151A',
                    }
 // extend chart_colors for easy reference
-Object.defineProperty(chart_colors, 'getColorValues', {
+Object.defineProperty(chart_colors, 'getColors', {
   writable:true,
-  value: function _wrapHTML(h) {
-    var ret=[]; for (c in this) { ret.push(this[c]); } return ret;
+  value: function getColors(colornames) {
+    var ret=[];
+    if (!colornames) { colornames = function(t){var r=[];for (c in t) {r.push(c);} return r;}(this); }
+    for (x in colornames) {
+      ret.push(this[colornames[x]]);
+    }
+    return ret;
   }
 });
-// a configuration object for hierarchal widgets
+
 var report_config = {
   dashboard: [
     { report_name:  'page_views',
@@ -36,6 +33,7 @@ var report_config = {
           linkTarget:   '/datatable',
           linkText:     'Browse Content',
           valueCaption: 'Pages Served',
+          wrapperSize:  'col-lg-3',
           wrapperID:    'page_views'
       }
     },
@@ -48,6 +46,7 @@ var report_config = {
           linkTarget:   '/users/list',
           linkText:     'User Overview',
           valueCaption: 'Active Users',
+          wrapperSize:  'col-lg-3',
           wrapperID:    'unique_users'
       }
     },
@@ -60,6 +59,7 @@ var report_config = {
           linkTarget:   '/users/list',
           linkText:     'Office Overview',
           valueCaption: 'Active Offices',
+          wrapperSize:  'col-lg-3',
           wrapperID:    'unique_instances'
       }
     },
@@ -72,6 +72,7 @@ var report_config = {
           linkTarget:   '/performance',
           linkText:     'Performance Overview',
           valueCaption: 'Uptime',
+          wrapperSize:  'col-lg-3',
           wrapperID:    'uptime'
       }
     },
@@ -79,7 +80,12 @@ var report_config = {
       report_type: 'chart',
       target_table: 'summary',
       datapoints: [ { field:'page_views', mod:'sum' } ],
-      props:{ ykeys:['page_views'], labels:['Page Views'], xkey:'timerange' }
+      props:{
+              wrapperSize:  'col-lg-12',
+              headerIcon:   'fa fa-bar-chart-o',
+              valueCaption: 'Page Views',
+              graphData:    { ykeys:['page_views'], labels:['Page Views'], xkey:'timerange', }
+            }
     },
     { report_name:  'top_active_instances',
       report_type:  'list',
@@ -95,7 +101,7 @@ var report_config = {
       datapoints: [ { field:'remote_ip',     header:'User IP',        mod:'group'  },
                     { field:'instance_name', header:'Instance',       mod:'group'  },
                     { field:'page_views',    header:'Total Requests', mod:'sum', fmt:'intcomma' } ],
-      props: { titleText:'Most Active Instances', widgetID:'top_instances' }
+      props: { titleText:'Most Active Users', widgetID:'top_users' }
     },
   ],
   performance: [
@@ -147,9 +153,14 @@ var report_config = {
                     { field:'http_503',      mod:'sum',  fmt:'intcomma'},
                     { field:'page_views',    mod:'sum',  fmt:'intperk'},
                     { field:'avg_resp_time', mod:'calc', fmt:'microsec'} ],
-      props:{ ykeys:['http_500','http_503','avg_resp_time','page_views'],
-              labels:['App Errors','Database Errors','Response Time','Page Views (x1000)'],
-              xkey:'timerange' }
+      props:{
+              wrapperSize: 'col-lg-12',
+              headerIcon: 'fa fa-bar-chart-o',
+              valueCaption: 'Performance Stats',
+              graphData: { ykeys:['http_500','http_503','avg_resp_time','page_views'],
+                           labels:['App Errors','Database Errors','Response Time','Page Views (x1000)'],
+                           xkey:'timerange' }
+            }
     },
     { report_name:  'top_queries',
       report_type:  'list',
@@ -296,46 +307,9 @@ moment.fn.getScale = function(end_moment) {
 /* ****** Application logic ****** */
 (function($,undefined) {
 
-  /* Set up some initial variables */
-  var view = $('body').data('view');
-
-  /* Function to handle UX concerns when an AJAX request is started */
-  function hook_StartAjax(ajax, settings) {
-    jqtype = settings.url.replace(/^.*api\//,'');
-    t='<span class="fa-icon-caption-container fa-icon-caption-' + jqtype + '">' +
-      '<i class="fa fa-cog fa-spin"></i>' +
-      '<span class="fa-icon-caption">' + jqtype.capitalize() + '</span></span>';
-    $('.jumbotron .jumbotron-status-icons').append(t);
-  }
-
-  /* Function to handle UX concerns when an AJAX request has ended */
-  function hook_EndAjax(response) {
-    var status_home = '.jumbotron .jumbotron-status-icons';
-    var reqtype = response.req.toLowerCase();
-    var ajaxicon = status_home + ' .fa-icon-caption-' + reqtype;
-    $(ajaxicon).fadeOut(1000,function(){$(ajaxicon).remove()});
-    if (response.errors.length) {
-      var thiserr = 'fa-icon-error-' + reqtype;
-      var erricon = status_home + ' .' + thiserr;
-      $(erricon).fadeOut(1000,function(){$(erricon).remove()});
-      var ne = $('<span class="fa-icon-caption-container ' + thiserr + '">' +
-               '<i class="fa fa-warning danger"></i></span>');
-      var em = '';
-      for (x in response.errors) { em += '<span class="fa-icon-error-message">' + response.errors[x].msg + '</span>'; }
-      ne.append('<span class="fa-icon-error-caption"><span class="fa-icon-caption-close-button"></span>'+em+'</span>');
-      $(status_home).append(ne);
-    }
-  }
-
   $(document).ready(function() {
-    /* UI/UX for pseudo-persistent version notes element */
-    if ($.cookie('application_version') == $('.app-version').text() ) {
-      $('.cookie').hide();
-    };
-    /* Enable closing/dismissing the version notes element */
-    $('.cookie .close').click(function() {
-      $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
-    });
+    /* Set up some initial variables */
+    var view = $('body').data('view');
 
 
     ///////////////////////////////////////////////
@@ -501,102 +475,36 @@ moment.fn.getScale = function(end_moment) {
     // for each of the configuration parameters execute an AJAX call
     // on callback place data in correct container
     $.fn.Render = function() {
-      if (view == 'datatable') {
-        $(".dataTable").each(function() {
-          $(this).dataTable().fnDraw();
-        });
-        return;
-      }
-      // abort any existing AJAX calls
-      $.each(jqxhr, function( key, value ) {
-        jqxhr[key].abort();
-      });
+
+      // compile the filters being used for current reports
+      page_filters = {
+                      starttime:   DateRange.start_moment.format(moment.NYSS_df.data),
+                      endtime:     DateRange.end_moment.format(moment.NYSS_df.data),
+                      granularity: DateRange.granularity,
+                      instance:    Instance.instance_name,
+                      /*listcount:   10,
+                      listpage:    1,*/
+                      custom:      [],
+                     };
+
       // set up an AJAX request for each report configured in the current view
       var current_requests = {summary:[],list:[],chart:[]};
-      // sort the reports by type
+      // sort the reports by type and add filters to each definition
       $.each(report_config[view], function( report_key, report_def ) {
         current_requests[report_def.report_type].push(report_def);
       });
+      // call each report
       // one request per type
       $.each(current_requests, function(report_type, reports) {
-        if (reports.length) {
-          // set the request data
-          var this_request_data = {
-            reports: reports,
-            filter:  $('body').data('filter'),
-            starttime: DateRange.start_moment.format(moment.NYSS_df.data),
-            endtime:   DateRange.end_moment.format(moment.NYSS_df.data),
-            granularity: DateRange.granularity,
-            instance: Instance.instance_name,
-            listcount: report_list_default_count,
-            listpage: report_list_default_page
-          };
-          // execute the request
-          jqxhr[report_type] = $.ajax({
-            url:        $('body').data('context-path')+'/api/'+report_type,
-            timeout:    60000,
-            type:       'POST',
-            beforeSend: hook_StartAjax,
-            data:       this_request_data,
-          })
-          // set the "done" action
-          .done(function(response) {
-            // parse the response
-            response = JSON.parse(response);
-            // the widget type is in req
-            var reqname = response.req;
-            // instantiate Analytics<View>Widget, note first letter is capitalized
-            var widgetName = 'Analytics'+reqname.capitalize()+'Widget';
-            // get all configured reports for this widget type
-            var targetWidgets = report_config[view].filter(function(e){return e.report_type==reqname;});
-            // clear the wrapper element
-            $('#'+reqname+'-wrapper').empty();
-            // render each widget
-            $.each(targetWidgets, function(widgetIndex,widgetConfig){
-              switch(reqname){
-                case 'summary':
-                  widgetConfig.props.widgetID = 'summary-widget-'+widgetConfig.report_name;
-                  widgetConfig.props.values = {};
-                  $.each(widgetConfig.datapoints, function(datafield,datavalue) {
-                    widgetConfig.props.values[datavalue.field] = response.data[datavalue.field];
-                  });
-                  var oneWidget = new window.NYSS[widgetName](widgetConfig.props).RenderBox();
-                  break;
-                case 'chart':
-                  widgetConfig.props.widgetID = 'chart-widget-'+widgetConfig.report_name;
-                  widgetConfig.props.values = response.data;
-                  widgetConfig.props.lineColors = chart_colors.getColorValues();
-                  var oneWidget = new window.NYSS[widgetName](widgetConfig.props).RenderBox();
-                  break;
-                case 'list':
-                  widgetConfig.props.values = response.data[widgetConfig.report_name];
-                  widgetConfig.props.headers = widgetConfig.datapoints.map(function(e,i){return e.header;})
-                  var oneWidget = new window.NYSS[widgetName](widgetConfig.props).RenderBox();
-                  $('#list-wrapper').find('.table-list').slideDown();
-                  break;
-              }
-            });
-          })
-          // set the "always" action
-          .always(function(response) {
-            // parse the response
-            var retstr = (typeof(response)=='object') ? response.responseText : response;
-            var resp = JSON.parse(retstr);
-            hook_EndAjax(resp);
-          });
+        thisWidget = report_type.capitalize()+'ReportWidget';
+        if (NYSS[thisWidget] && reports.length) {
+          var target_elem = '#'+report_type+'-wrapper';
+          var rep = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:page_filters});
+          rep.render();
         }
       });
+
     };
-
-    // render the current page
-    $('#page-wrapper').Render();
-
-    // add the "close message" action to icon container buttons
-    $('.jumbotron').on('click','.fa-icon-caption-close-button',function(){
-      $(this).closest('.fa-icon-caption-container').fadeOut(300,function(){
-        $(this).closest('.fa-icon-caption-container').remove();
-      });
-    });
 
 
     // TODO: optimize/refactor all below
@@ -728,6 +636,18 @@ moment.fn.getScale = function(end_moment) {
       var option = $(this).find('option:selected');
       loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
+
+    /* UI/UX for pseudo-persistent version notes element */
+    if ($.cookie('application_version') == $('.app-version').text() ) {
+      $('.cookie').hide();
+    };
+    /* Enable closing/dismissing the version notes element */
+    $('.cookie .close').click(function() {
+      $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
+    });
+
+    // render the current page
+    $('#page-wrapper').Render();
 
   });
 
