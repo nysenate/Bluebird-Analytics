@@ -98,7 +98,7 @@ var report_config = {
     { report_name:  'top_active_users',
       report_type:  'list',
       target_table: 'summary',
-      datapoints: [ { field:'remote_ip',     header:'User IP',        mod:'group'  },
+      datapoints: [ { field:'location_name', header:'Location',       mod:'group'  },
                     { field:'instance_name', header:'Instance',       mod:'group'  },
                     { field:'page_views',    header:'Total Requests', mod:'sum', fmt:'intcomma' } ],
       props: { titleText:'Most Active Users', widgetID:'top_users' }

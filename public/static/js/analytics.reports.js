@@ -213,8 +213,8 @@ var NYSS = NYSS || {};
                   columns:v.datapoints.map(function(a,b,c){return {title:a.header, data:a.field} }),
                   data:onereport,
                   searching:false,
-                  paging:false,
-                  lengthChange:false,
+                  paging:true,
+                  lengthChange:true,
                   autoWidth:true,
                  }
       $(thisobj.target_wrapper).find('#ListReport-'+v.report_name+'_wrapper').remove();

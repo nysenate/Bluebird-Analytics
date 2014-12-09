@@ -6,12 +6,16 @@ require_once 'AJAXController.php';
 
 class AJAXControllerList extends AJAXController {
   protected function _buildLimit() {
-    $page = (int)$this->session->req('listpage',1);
-    $count = (int)$this->session->req('listcount',10);
-    if ($page < 1) { $page = 1; }
-    if ($count < 1) { $count = 10; }
-    $offset = ($page - 1) * $count;
-    return "LIMIT $offset,$count";
+    $page = (int)$this->session->req('listpage',0);
+    $count = (int)$this->session->req('listcount',0);
+    $ret = '';
+    if ($count) {
+      if ($page < 1) { $page = 1; }
+      if ($count < 1) { $count = 10; }
+      $offset = ($page - 1) * $count;
+      $ret = "LIMIT $offset,$count";
+    }
+    return $ret;
   }
 
   protected function _buildOrder($table, $sort = NULL) {
