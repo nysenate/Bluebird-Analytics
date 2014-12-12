@@ -28,16 +28,15 @@ $navmenu->addClassToTree($activemenu->id,'active open');
 
 $product = array(
   'name' => 'Bluebird Analytics',
-  'version' => '1.1.1',
-  'release' => 'alpha',
+  'version' => '1.1',
   'last_update' => fetch_last_update_time($session->db),
 );
 
 $release_notes = '
   <div class="alert alert-success alert-dismissable cookie" data-version="'.$product['version'].'">
     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-    Welcome to the <a class="alert-link" href="https://github.com/nysenate/Bluebird-CRM">'. $product['name'].'</a> '. $product['version']." ".$product['release'].'<br/>
-    Feel free to poke around but remember this is still an '. $product['release'].' release.
+    Welcome to <a class="alert-link" href="https://github.com/nysenate/Bluebird-Analytics">'.$product['name'].'</a> '.$product['version'].'<br/>
+    If you have questions or comments about this service, please contact the <a href="mailto:bluebird.admin@nysenate.gov">Bluebird Administrator</a>.
   </div>';
 
 $scripts = array(
