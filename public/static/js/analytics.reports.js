@@ -258,12 +258,11 @@ var NYSS = NYSS || {};
       }
       thishtml = thisobj._unwrapHTML(thishtml);
       thishtml.find('.list-widget-panel').show();
-
       thisobj.report_obj[v.report_name] = $('<table />').attr('id','ListReport-'+v.report_name)
-                                                      .addClass('ListReportWidget-DataTable')
                                                       .appendTo($(thishtml).find('.list-widget-table-container'))
                                                       .slideDown()
-                                                      .dataTable(dtparams);
+                                                      .dataTable(dtparams)
+                                                      .attr('class','ListReportWidget-DataTable table table-bordered table-hover table-striped tablesorter');
       $(thisobj.target_wrapper).append(thishtml);
     });
   });
