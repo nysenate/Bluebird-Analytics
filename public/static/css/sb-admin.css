@@ -352,7 +352,8 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   height: 250px;
 }
 
-#chart-wrapper .fa-bar-chart-o:before {
+#chart-wrapper .chart-widget-panel-icon:before,
+#list-wrapper .list-widget-panel-icon:before {
   padding-right:.5em;
 }
 
@@ -361,9 +362,7 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 }
 
 #list-wrapper .dataTables_wrapper {
-/*  max-width:50%;*/
   display:inline-block;
-  width:50%;
   padding:1em 3%;
 }
 

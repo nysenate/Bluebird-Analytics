@@ -304,23 +304,4 @@ var NYSS = NYSS || {};
     this.parent_target = this.parent_target ? this.parent_target : 'body';
     this.use_icon = this.use_icon ? true : false;
   });
-
-/*
-  $('.jumbotron').on('click','.fa-icon-caption-close-button',function(){
-    $(this).closest('.fa-icon-caption-container').fadeOut(300,function(){
-      $(this).closest('.fa-icon-caption-container').remove();
-    });
-  });
-*/
-  /*var thiserr = 'fa-icon-error-' + reqtype;
-  var erricon = status_home + ' .' + thiserr;
-  $(erricon).fadeOut(1000,function(){$(erricon).remove()});
-  var ne = $('<span class="fa-icon-caption-container ' + thiserr + '">' +
-           '<i class="fa fa-warning danger"></i></span>');
-  var em = '';
-  for (x in response.errors) { em += '<span class="fa-icon-error-message">' + response.errors[x].msg + '</span>'; }
-  ne.append('<span class="fa-icon-error-caption"><span class="fa-icon-caption-close-button"></span>'+em+'</span>');
-  $(status_home).append(ne);*/
-
-
 })(jQuery);

@@ -201,6 +201,33 @@ var NYSS = NYSS || {};
   NYSS.ListReportWidget.prototype = Object.create(NYSS.ReportWidget);
   NYSS.ListReportWidget.prototype.constructor = NYSS.ListReportWidget;
 
+  defProp(NYSS.ListReportWidget.prototype, 'customInit', function customInit() {
+    this.base_html =
+          '<div class="list-widget-panel-wrapper">' +
+            '<div class="panel table-list panel-primary list-widget-panel">' +
+              '<div class="panel-heading list-widget-panel-header">' +
+                '<h3 class="panel-title list-widget-panel-title-container">' +
+                  '<i class="list-widget-panel-icon"></i>' +
+                  '<span class="list-widget-panel-title"></span>' +
+                '</h3>' +
+              '</div>' +
+              '<div class="panel-body list-widget-panel-body">' +
+                '<div class="table-responsive list-widget-table-container">' +
+                '</div>' +
+                '<div class="text-right list-widget-link"></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>'
+    this.default_list = {
+                          baseTarget:'#list-wrapper',
+                          wrapperSize:'col-lg-6',
+                          titleIcon:'fa fa-building-o',
+                          titleText:'',
+                          linkText:'',
+                          linkIcon:'fa fa-arrow-circle-right',
+                        };
+  });
+
   defProp(NYSS.ListReportWidget.prototype, 'updateData', function updateData() {
     thisobj = this;
     this.report.forEach(function(v,k) {
@@ -209,6 +236,7 @@ var NYSS = NYSS || {};
         thisobj.report_obj[v.report_name].remove();
         thisobj.report_obj[v.report_name] = null;
       }
+      var props = $.extend({}, thisobj.default_list, v.props);
       dtparams = {
                   columns:v.datapoints.map(function(a,b,c){return {title:a.header, data:a.field} }),
                   data:onereport,
@@ -217,12 +245,26 @@ var NYSS = NYSS || {};
                   lengthChange:true,
                   autoWidth:true,
                  }
-      $(thisobj.target_wrapper).find('#ListReport-'+v.report_name+'_wrapper').remove();
+      thishtml = thisobj._wrapHTML($(thisobj.base_html));
+      thishtml.find('.list-widget-panel-wrapper').addClass(props.wrapperSize).attr('id',props.widgetID);
+      thishtml.find('.list-widget-panel-title').html(props.titleText);
+      thishtml.find('.list-widget-panel-icon').addClass(props.titleIcon);
+      thishtml.find('.list-widget-table-container').empty();
+
+      if (props.linkText && props.linkIcon && props.linkURL) {
+        thishtml.find('.list-widget-link').html(
+          $('<a/>').attr('href',props.linkURL).text(props.linkText).addClass(props.linkIcon)
+          );
+      }
+      thishtml = thisobj._unwrapHTML(thishtml);
+      thishtml.find('.list-widget-panel').show();
+
       thisobj.report_obj[v.report_name] = $('<table />').attr('id','ListReport-'+v.report_name)
                                                       .addClass('ListReportWidget-DataTable')
-                                                      .appendTo(thisobj.target_wrapper)
-                                                      .dataTable(dtparams)
-                                                      .parent().prepend('<h3>'+v.props.titleText+'</h3>');
+                                                      .appendTo($(thishtml).find('.list-widget-table-container'))
+                                                      .slideDown()
+                                                      .dataTable(dtparams);
+      $(thisobj.target_wrapper).append(thishtml);
     });
   });
   /* **************************************************************************************
@@ -297,7 +339,7 @@ var NYSS = NYSS || {};
       thishtml.find('.chart-widget-panel-target').attr('id','chart-widget-'+v.report_name);
       thishtml.find('.chart-widget-panel-icon').addClass(v.props.headerIcon);
       thishtml.find('.chart-widget-panel-title').html(v.props.valueCaption);
-      thisobj._unwrapHTML(thishtml);
+      thishtml = thisobj._unwrapHTML(thishtml);
       v.props.graphData = $.extend({}, thisobj.default_graph, v.props.graphData,
                                     {
                                       data:       thisobj.report_data.data[v.report_name],
