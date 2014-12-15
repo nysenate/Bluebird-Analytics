@@ -1,6 +1,5 @@
 /* ****** Global variables ****** */
-// a collection of all AJAX objects used by the app
-var jqxhr = [];
+var widgets = {};
 // HashStorage mechanism, see hashstorage.js
 var HashStorage = NYSS.HashStorageModule;
 // line colors for charts.  Order of appearance is important
@@ -499,13 +498,17 @@ moment.fn.getScale = function(end_moment) {
         thisWidget = report_type.capitalize()+'ReportWidget';
         if (NYSS[thisWidget] && reports.length) {
           var target_elem = '#'+report_type+'-wrapper';
-          var rep = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:page_filters});
-          rep.render();
+          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:page_filters});
+          widgets[report_type].render();
         }
       });
 
     };
 
+    // add responsiveness hooks for Morris charts
+    $(window).resize(function() {
+      $.each(widgets.chart.report_obj, function(i,v){ v.graphObj.redraw(); });
+    });
 
     // TODO: optimize/refactor all below
     ////////////////////////////////

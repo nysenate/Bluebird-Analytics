@@ -352,6 +352,10 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   height: 250px;
 }
 
+#chart-wrapper svg {
+  width:100% !important;
+}
+
 #chart-wrapper .chart-widget-panel-icon:before,
 #list-wrapper .list-widget-panel-icon:before {
   padding-right:.5em;
@@ -363,7 +367,10 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 
 #list-wrapper .dataTables_wrapper {
   display:inline-block;
-  padding:1em 3%;
+}
+
+.list-widget-panel-wrapper, .list-widget-panel {
+  min-width:350px;
 }
 
 .chart-widget-no-data {
