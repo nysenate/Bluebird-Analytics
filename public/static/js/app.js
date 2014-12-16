@@ -92,7 +92,10 @@ var report_config = {
       datapoints: [ { field:'instance_name', header:'Instance', mod:'group'  },
                     { field:'remote_ip',     header:'Users',    mod:'countd', fmt:'intcomma' },
                     { field:'page_views',    header:'Requests', mod:'sum',    fmt:'intcomma' } ],
-      props: { titleText:'Most Active Instances', widgetID:'top_instances' },
+      props: { titleText:'Most Active Instances',
+               widgetID:'top_instances',
+               orderBy:[ '!page_views', '!remote_ip' ]
+             },
     },
     { report_name:  'top_active_users',
       report_type:  'list',
@@ -100,7 +103,10 @@ var report_config = {
       datapoints: [ { field:'location_name', header:'Location', mod:'group'  },
                     { field:'instance_name', header:'Instance', mod:'group'  },
                     { field:'page_views',    header:'Requests', mod:'sum', fmt:'intcomma' } ],
-      props: { titleText:'Most Active Users', widgetID:'top_users' }
+      props: { titleText:'Most Active Users',
+               widgetID:'top_users',
+               orderBy:[ '!page_views','location_name','instance_name' ]
+             }
     },
   ],
   performance: [

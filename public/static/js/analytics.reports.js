@@ -225,44 +225,67 @@ var NYSS = NYSS || {};
                           titleText:'',
                           linkText:'',
                           linkIcon:'fa fa-arrow-circle-right',
+                          linkURL:''
                         };
   });
 
   defProp(NYSS.ListReportWidget.prototype, 'updateData', function updateData() {
     thisobj = this;
     this.report.forEach(function(v,k) {
+      var search_for_index = function(a,b) {
+        var rev = (a.indexOf('!') == 0),
+            len = v.datapoints.length,
+            i   = 0,
+            idx = -1;
+        if (rev) { a=a.substr(1); }
+        for (;i<len;) {
+          if (v.datapoints[i++].field == a) {
+            idx = i-1;
+            break;
+          }
+        }
+        if (idx>=0) {
+          return [idx,(rev?'desc':'asc')];
+        } else {
+          console.log('Invalid orderBy field in '+v.report_name+': '+a);
+        }
+      };
       var onereport = thisobj.report_data.data[v.report_name];
       if (thisobj.report_obj[v.report_name]) {
         thisobj.report_obj[v.report_name].remove();
         thisobj.report_obj[v.report_name] = null;
       }
       var props = $.extend({}, thisobj.default_list, v.props);
-      dtparams = {
-                  columns:v.datapoints.map(function(a,b,c){return {title:a.header, data:a.field} }),
+      var dtorder = (v.props.orderBy || [])
+                    .map(search_for_index)
+                    .filter(function(a,b){return a;});
+
+      var dtparams = {
+                  columns:v.datapoints.map(function(a){return {title:a.header, data:a.field, name:a.field} }),
                   data:onereport,
                   searching:false,
                   paging:true,
                   lengthChange:true,
                   autoWidth:true,
-                 }
+                  order:dtorder,
+                 };
       thishtml = thisobj._wrapHTML($(thisobj.base_html));
       thishtml.find('.list-widget-panel-wrapper').addClass(props.wrapperSize).attr('id',props.widgetID);
       thishtml.find('.list-widget-panel-title').html(props.titleText);
       thishtml.find('.list-widget-panel-icon').addClass(props.titleIcon);
       thishtml.find('.list-widget-table-container').empty();
 
-      if (props.linkText && props.linkIcon && props.linkURL) {
+      if (props.linkText && props.linkURL) {
         thishtml.find('.list-widget-link').html(
           $('<a/>').attr('href',props.linkURL).text(props.linkText).addClass(props.linkIcon)
           );
       }
       thishtml = thisobj._unwrapHTML(thishtml);
-      thishtml.find('.list-widget-panel').show();
-      thisobj.report_obj[v.report_name] = $('<table />').attr('id','ListReport-'+v.report_name)
-                                                      .appendTo($(thishtml).find('.list-widget-table-container'))
-                                                      .slideDown()
-                                                      .dataTable(dtparams)
-                                                      .attr('class','ListReportWidget-DataTable table table-bordered table-hover table-striped tablesorter');
+      thisobj.report_obj[v.report_name] = $('<table />')
+                                            .attr('id','ListReport-'+v.report_name)
+                                            .appendTo($(thishtml).find('.list-widget-table-container'))
+                                            .attr('class','ListReportWidget-DataTable table table-bordered table-hover table-striped tablesorter');
+      thisobj.report_obj[v.report_name].dataTable($.extend({},dtparams));
       $(thisobj.target_wrapper).append(thishtml);
     });
   });

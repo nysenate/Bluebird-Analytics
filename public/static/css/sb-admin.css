@@ -117,10 +117,6 @@ h1 .fa-spin {
   position: relative;
 }
 
-/* Panels */
-.summary,.chart, .table-list {
-  display: none;
-}
 .panel-primary > .panel-heading {
   background: #dadada;
   color: #333;
@@ -356,9 +352,12 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   width:100% !important;
 }
 
-#chart-wrapper .chart-widget-panel-icon:before,
-#list-wrapper .list-widget-panel-icon:before {
+.fa:before {
   padding-right:.5em;
+}
+
+.jumbotron .fa:before {
+  padding-right:0;
 }
 
 #list-wrapper {
