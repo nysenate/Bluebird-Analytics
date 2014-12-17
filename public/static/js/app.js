@@ -32,7 +32,6 @@ var report_config = {
           linkTarget:   '/datatable',
           linkText:     'Browse Content',
           valueCaption: 'Pages Served',
-          wrapperSize:  'col-lg-3',
           wrapperID:    'page_views'
       }
     },
@@ -45,7 +44,6 @@ var report_config = {
           linkTarget:   '/users/list',
           linkText:     'User Overview',
           valueCaption: 'Active Users',
-          wrapperSize:  'col-lg-3',
           wrapperID:    'unique_users'
       }
     },
@@ -58,7 +56,6 @@ var report_config = {
           linkTarget:   '/users/list',
           linkText:     'Office Overview',
           valueCaption: 'Active Offices',
-          wrapperSize:  'col-lg-3',
           wrapperID:    'unique_instances'
       }
     },
@@ -71,7 +68,6 @@ var report_config = {
           linkTarget:   '/performance',
           linkText:     'Performance Overview',
           valueCaption: 'Uptime',
-          wrapperSize:  'col-lg-3',
           wrapperID:    'uptime'
       }
     },
@@ -251,7 +247,7 @@ var report_config = {
       datapoints: [ { field:'path',          header:'Path',     mod:'group'  },
                     { field:'resp_code',     header:'Views',    mod:'count'  },
                     { field:'avg_resp_time', header:'Avg Time', mod:'calc', fmt:'microsec' } ],
-      props: { titleText:'Top Queries', widgetID:'top_queries' }
+      props: { titleText:'Top Queries', widgetID:'top_queries',wrapperSize:'' }
     },
   ]
 };
