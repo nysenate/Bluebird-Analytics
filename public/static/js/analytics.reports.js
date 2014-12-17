@@ -74,6 +74,20 @@ var NYSS = NYSS || {};
     this.working_icon.render();
   });
 
+  defProp(NYSS.ReportWidget, 'generateLink', function generateLink(dest) {
+    d = String(dest);
+    var ret='#';
+    if (d) {
+      var sep='';
+      if (d[0]=='/') {
+        d=d.substr(1);
+        sep='/';
+      }
+      ret = [$('body').data('contextPath'),sep,d].join('');
+    }
+    return ret;
+  });
+
   defProp(NYSS.ReportWidget, 'initialize', function initialize(d) {
     /* "private" variables */
     // the AJAX request
@@ -277,7 +291,9 @@ var NYSS = NYSS || {};
 
       if (props.linkText && props.linkURL) {
         thishtml.find('.list-widget-link').html(
-          $('<a/>').attr('href',props.linkURL).text(props.linkText).addClass(props.linkIcon)
+          $('<a/>').attr('href',thisobj.generateLink(props.linkURL))
+                   .text(props.linkText)
+                   .addClass(props.linkIcon)
           );
       }
       thishtml = thisobj._unwrapHTML(thishtml);
@@ -435,7 +451,7 @@ var NYSS = NYSS || {};
       thishtml.find('.summary-widget-datapoint-value').html(thisobj.report_data.data[v.datapoints[0].field]);
       if (props.linkIcon && props.linkTarget && props.linkText) {
         thishtml.find('.summary-widget-link-icon').addClass(props.linkIcon);
-        thishtml.find('.summary-widget-link').attr('href',props.linkTarget);
+        thishtml.find('.summary-widget-link').attr('href',thisobj.generateLink(props.linkTarget));
         thishtml.find('.summary-widget-link-text').html(props.linkText);
       } else {
         thishtml.find('.summary-widget-panel-footer-wrapper').remove();
