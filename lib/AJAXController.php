@@ -110,7 +110,9 @@ abstract class AJAXController {
       case 'intcomma':   $ret = "FORMAT(IFNULL($ret,0),0)"; break;
       case 'floatcomma': $ret = "FORMAT(IFNULL($ret,0),".($has_p ? $p : 4).")"; break;
       case 'percent':    $ret = "CONCAT(FORMAT(IFNULL($ret,0),".($has_p ? $p : 2)."),'%')"; break;
-      case 'microsec':   $ret = "CONCAT(FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2)."),'s')"; break;
+      // old microsec, but 's' suffix screws up datatables sorting on front end
+      //case 'microsec':   $ret = "CONCAT(FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2)."),'s')"; break;
+      case 'microsec':   $ret = "FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2).")"; break;
       default:
         $this->session->log("Invalid format '$fmt'",LOG_LEVEL_WARN);
         $this->session->addError("Invalid format '$fmt' ignored",LOG_LEVEL_WARN);
