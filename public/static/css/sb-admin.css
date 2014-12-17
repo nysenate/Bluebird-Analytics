@@ -472,3 +472,7 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   line-height: 1em;
   height: 1.5em;
 }
+
+.center-block {
+  float:none;
+}

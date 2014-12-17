@@ -169,7 +169,11 @@ var report_config = {
       datapoints: [ { field:'path',          header:'Path',     mod:'group'  },
                     { field:'resp_code',     header:'Views',    mod:'count'  },
                     { field:'avg_resp_time', header:'Avg Time', mod:'calc', fmt:'microsec' } ],
-      props: { titleText:'Top Queries', widgetID:'top_queries' }
+      props: { titleText:'Worst Performing Requests',
+               widgetID:'top_queries',
+               orderBy:['!avg_resp_time'],
+               wrapperSize:'col-lg-9 center-block'
+             }
     },
   ],
   users: [
@@ -181,7 +185,7 @@ var report_config = {
                     { field:'server_name', mod:'group', header:'Server'},
                     { field:'remote_ip', mod:'group', header:'Remote IP'},
                     { field:'page_views',    mod:'sum',  fmt:'int', header:'Total Views' }  ],
-      props: { titleText:'Most Active Instances', widgetID:'active_instances' },
+      props: { titleText:'Most Active Instances', widgetID:'active_instances', wrapperSize:'col-lg-9 center-block' },
       sortorder: { page_views:'DESC' }
     },
   ],
@@ -208,7 +212,8 @@ var report_config = {
           wrapperID:    'unique_pages'
       }
     },
-    {
+    /* removed pending review of reports */
+    /*{
       report_name:  'avg_response',
       report_type:  'summary',
       target_table: 'summary',
@@ -218,7 +223,7 @@ var report_config = {
           valueCaption: 'Avg Resp Time',
           wrapperID:    'avg_resp_time'
       }
-    },
+    },*/
     {
       report_name:  'num_instances',
       report_type:  'summary',
@@ -241,14 +246,15 @@ var report_config = {
           wrapperID:    'uptime'
       }
     },
-    { report_name:  'user_details',
+    /* removed pending review of reports */
+    /*{ report_name:  'user_details',
       report_type:  'list',
       target_table: 'request',
       datapoints: [ { field:'path',          header:'Path',     mod:'group'  },
                     { field:'resp_code',     header:'Views',    mod:'count'  },
                     { field:'avg_resp_time', header:'Avg Time', mod:'calc', fmt:'microsec' } ],
       props: { titleText:'Top Queries', widgetID:'top_queries',wrapperSize:'' }
-    },
+    },*/
   ]
 };
 
