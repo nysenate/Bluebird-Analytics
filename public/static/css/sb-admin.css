@@ -369,12 +369,13 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   text-align:left;
 }
 
-#list-wrapper .dataTables_wrapper {
-  display:inline-block;
-}
-
 #list-wrapper .ListReportWidget-DataTable {
   border-collapse:collapse;
+}
+
+#list-wrapper .ListReportWidget-DataTable.table-hover > tbody > tr:hover > td,
+#list-wrapper .ListReportWidget-DataTable.table-hover > tbody > tr:hover > th {
+  background-color: #D5DED9;
 }
 
 .list-widget-panel-wrapper, .list-widget-panel {
