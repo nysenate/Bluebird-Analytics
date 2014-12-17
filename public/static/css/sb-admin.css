@@ -70,6 +70,11 @@ h1 .fa-spin {
 .table-bordered {
     border: 1px solid #333;
 }
+
+table.dataTable tbody tr {
+  background-color: initial;
+}
+
 /* Nav Messages */
 
 .messages-dropdown .dropdown-menu .message-preview .avatar,
@@ -366,6 +371,10 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 
 #list-wrapper .dataTables_wrapper {
   display:inline-block;
+}
+
+#list-wrapper .ListReportWidget-DataTable {
+  border-collapse:collapse;
 }
 
 .list-widget-panel-wrapper, .list-widget-panel {
