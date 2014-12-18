@@ -70,6 +70,11 @@ h1 .fa-spin {
 .table-bordered {
     border: 1px solid #333;
 }
+
+table.dataTable tbody tr {
+  background-color: initial;
+}
+
 /* Nav Messages */
 
 .messages-dropdown .dropdown-menu .message-preview .avatar,
@@ -117,10 +122,6 @@ h1 .fa-spin {
   position: relative;
 }
 
-/* Panels */
-.summary,.chart, .table-list {
-  display: none;
-}
 .panel-primary > .panel-heading {
   background: #dadada;
   color: #333;
@@ -352,8 +353,33 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   height: 250px;
 }
 
-#chart-wrapper .fa-bar-chart-o:before {
+#chart-wrapper svg {
+  width:100% !important;
+}
+
+.fa:before {
   padding-right:.5em;
+}
+
+.jumbotron .fa:before {
+  padding-right:0;
+}
+
+#list-wrapper {
+  text-align:left;
+}
+
+#list-wrapper .ListReportWidget-DataTable {
+  border-collapse:collapse;
+}
+
+#list-wrapper .ListReportWidget-DataTable.table-hover > tbody > tr:hover > td,
+#list-wrapper .ListReportWidget-DataTable.table-hover > tbody > tr:hover > th {
+  background-color: #D5DED9;
+}
+
+.list-widget-panel-wrapper, .list-widget-panel {
+  min-width:350px;
 }
 
 .chart-widget-no-data {
@@ -371,14 +397,21 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   color:#aaaaaa;
 }
 
-.jumbotron .fa-icon-caption-container {
+.jumbotron-status-icons {
   position:relative;
+  margin-left:1em;
 }
 
-.jumbotron .fa-icon-caption {
+.jumbotron .NYSS-MessageBox {
+  position:relative;
+  display:inline-block;
+}
+
+.jumbotron .NYSS-MessageBox-caption {
   font-size: .35em;
   vertical-align: middle;
   left: 0;
+  top:0;
   position: absolute;
   line-height: 40px;
   width: 72px;
@@ -386,14 +419,21 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   font-weight: normal;
   color: #3C565E; /*#4444ff;*/
   background-color:transparent;
+  text-shadow: none;
 }
 
-.jumbotron-status-icons {
-  position:relative;
-  margin-left:1em;
+.jumbotron .NYSS-MessageBox.error-msg {
+  width: 60px;
 }
 
-.jumbotron .fa-icon-error-caption {
+.jumbotron .NYSS-MessageBox.error-msg .NYSS-MessageBox-caption {
+  color: #ffaaaa; /*#3C565E;*/ /*#4444ff;*/
+  text-shadow: -1px -1px 0 #7f0000,1px -1px 0 #7f0000,-1px 1px 0 #7f0000,1px 1px 0 #7f0000;
+  letter-spacing:.05em;
+  left:-16px;
+}
+
+.jumbotron .NYSS-MessageBox-messages {
   display: none;
   position: absolute;
   font-size: 14px;
@@ -407,16 +447,16 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   background-color: #ffffff;
 }
 
-.jumbotron .fa-icon-caption-container:hover .fa-icon-error-caption {
+.jumbotron .NYSS-MessageBox:hover .NYSS-MessageBox-messages {
   display:block;
 }
 
-.fa-icon-error-caption .fa-icon-error-message {
+.NYSS-MessageBox .NYSS-MessageBox-message {
   display:block;
   margin-bottom:1.5em;
 }
 
-.fa-icon-caption-close-button:before {
+.NYSS-MessageBox-messages-close:before {
   content: 'X';
   font-size: 10px;
   background-color: #ff0000;
@@ -431,4 +471,8 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
   vertical-align: middle;
   line-height: 1em;
   height: 1.5em;
+}
+
+.center-block {
+  float:none;
 }

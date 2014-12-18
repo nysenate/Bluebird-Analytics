@@ -28,7 +28,7 @@ $navmenu->addClassToTree($activemenu->id,'active open');
 
 $product = array(
   'name' => 'Bluebird Analytics',
-  'version' => '1.0',
+  'version' => '1.1',
   'last_update' => fetch_last_update_time($session->db),
 );
 
@@ -66,7 +66,8 @@ $scripts = array(
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.js'),
     array('src'=>'/static/js/utility.js'),
     array('src'=>'/static/js/hashstorage.js'),
-    array('src'=>'/static/js/analytics.widgets.js'),
+    array('src'=>'/static/js/analytics.reports.js'),
+    array('src'=>'/static/js/NYSS.MessageBox.js'),
     array('src'=>'/static/js/app.js'),
   )
 );

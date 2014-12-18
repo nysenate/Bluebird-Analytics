@@ -39,7 +39,7 @@ abstract class AJAXController {
           'timerange'     => 'dt.ts',
           'instance_id'   => 'dt.instance_id',
           'remote_ip'     => 'INET_NTOA(dt.trans_ip)',
-          'path'          => 'dt.path',
+          'path'          => 'dt.value',
           ),
       /* data points in the request table */
       'request' => array(
@@ -110,7 +110,9 @@ abstract class AJAXController {
       case 'intcomma':   $ret = "FORMAT(IFNULL($ret,0),0)"; break;
       case 'floatcomma': $ret = "FORMAT(IFNULL($ret,0),".($has_p ? $p : 4).")"; break;
       case 'percent':    $ret = "CONCAT(FORMAT(IFNULL($ret,0),".($has_p ? $p : 2)."),'%')"; break;
-      case 'microsec':   $ret = "CONCAT(FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2)."),'s')"; break;
+      // old microsec, but 's' suffix screws up datatables sorting on front end
+      //case 'microsec':   $ret = "CONCAT(FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2)."),'s')"; break;
+      case 'microsec':   $ret = "FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2).")"; break;
       default:
         $this->session->log("Invalid format '$fmt'",LOG_LEVEL_WARN);
         $this->session->addError("Invalid format '$fmt' ignored",LOG_LEVEL_WARN);
@@ -300,7 +302,10 @@ abstract class AJAXController {
         continue;
       }
       $this->session->log("Adding new list of fields for $repname=\n".var_export($fields,1),LOG_LEVEL_DEBUG);
-      $tables[$repname] = array('target_table'=>$reptable, 'fields'=>$fields);
+      $tables[$repname] = array('target_table'=>$reptable,
+                                'fields'=>$fields,
+                                'sortorder'=>array_value('sortorder',$val,array())
+                               );
     }
     $this->session->log("Final parsed reports=\n".var_export($tables,1),LOG_LEVEL_DEBUG);
     return $tables;
@@ -329,7 +334,8 @@ abstract class AJAXController {
   public function validate() {
     $ret = true;
     // verify the granularity
-    $this->suffix = $this->getTableSuffix($this->session->req('granularity'));
+    $granularity = $this->session->req('filters')['granularity'];
+    $this->suffix = $this->getTableSuffix($granularity);
     if (!$this->suffix) {
       $this->addError(AJAX_ERR_FATAL,"Invalid granularity '$granularity' received",400);
       $ret = false;
@@ -365,11 +371,12 @@ abstract class AJAXController {
   }
 
   protected function getCommonClauses() {
+    $filters = $this->session->req('filters');
     // initialize the starting values
     $vals = array(
-                'starttime' => $this->session->req('starttime'),
-                'endtime'   => $this->session->req('endtime'),
-                'instance'  => $this->session->req('instance'),
+                'starttime' => array_value('starttime',$filters,NULL),
+                'endtime'   => array_value('endtime',$filters,NULL),
+                'instance'  => array_value('instance',$filters,'ALL'),
                 );
 
     // analyze the need for indexes
@@ -422,6 +429,9 @@ abstract class AJAXController {
     $join = "dt " . $this->getIndexClause();
     if ($this->force_instance_index || $this->join_instance_table) {
       $join .= " INNER JOIN instance ON dt.instance_id=instance.id";
+    }
+    if ($this->join_location_table) {
+      $join .= " INNER JOIN location ON dt.location_id=location.id";
     }
     return $join;
   }

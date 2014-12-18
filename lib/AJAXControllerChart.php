@@ -10,7 +10,7 @@ class AJAXControllerChart extends AJAXController {
   public function get() {
     // iterate through the tables to build each query and get results
     $result = array();
-      $this->session->log("get=>reports: ".var_export($this->reports,1),LOG_LEVEL_DEBUG);
+    $this->session->log("get=>reports: ".var_export($this->reports,1),LOG_LEVEL_DEBUG);
     foreach ($this->reports as $reportname => $onereport) {
       $this->session->log("get=>onereport: ".var_export($onereport,1),LOG_LEVEL_DEBUG);
       $this->session->log("static::extra: ".var_export(static::$extrapoints,1),LOG_LEVEL_DEBUG);
@@ -28,7 +28,8 @@ class AJAXControllerChart extends AJAXController {
       $ttable = $this->getTableName($onereport['target_table']);
       $query = "SELECT $fields FROM {$ttable} $join $where $group";
       $this->session->log("Final query: $query",LOG_LEVEL_DEBUG);
-      $result += $this->getAllRows($query, $this->bind_params);
+      $result[$reportname] = $this->getAllRows($query, $this->bind_params);
+      $this->session->log("result cumulative: ".var_export($result,1),LOG_LEVEL_DEBUG);
     }
     return $result;
   }

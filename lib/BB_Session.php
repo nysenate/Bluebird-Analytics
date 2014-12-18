@@ -89,8 +89,8 @@ class BB_Session {
     $this->logger->log($msg, $lvl);
   }
 
-  public function req($key) {
-    return array_value($key, $this->request);
+  public function req($key, $default=NULL) {
+    return array_value($key, $this->request, $default);
   }
 
   public function startLogger() {
