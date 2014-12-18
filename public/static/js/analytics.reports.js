@@ -297,6 +297,7 @@ var NYSS = NYSS || {};
           );
       }
       thishtml = thisobj._unwrapHTML(thishtml);
+      $(thisobj.target_wrapper).find('#'+props.widgetID).remove();
       thisobj.report_obj[v.report_name] = $('<table />')
                                             .attr('id','ListReport-'+v.report_name)
                                             .appendTo($(thishtml).find('.list-widget-table-container'))
