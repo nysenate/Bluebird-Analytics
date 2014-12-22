@@ -244,7 +244,7 @@ var NYSS = NYSS || {};
   });
 
   defProp(NYSS.ListReportWidget.prototype, 'updateData', function updateData() {
-    thisobj = this;
+    var thisobj = this;
     this.report.forEach(function(v,k) {
       var search_for_index = function(a,b) {
         var rev = (a.indexOf('!') == 0),
@@ -283,7 +283,7 @@ var NYSS = NYSS || {};
                   autoWidth:true,
                   order:dtorder,
                  };
-      thishtml = thisobj._wrapHTML($(thisobj.base_html));
+      var thishtml = thisobj._wrapHTML($(thisobj.base_html));
       thishtml.find('.list-widget-panel-wrapper').addClass(props.wrapperSize).attr('id',props.widgetID);
       thishtml.find('.list-widget-panel-title').html(props.titleText);
       thishtml.find('.list-widget-panel-icon').addClass(props.titleIcon);
@@ -322,7 +322,7 @@ var NYSS = NYSS || {};
 
   /* need a chart callback for hover */
   defProp(NYSS.ChartReportWidget.prototype,'ChartHoverCallback', function (index, options, content) {
-    switch (this.data.granularity) {
+    switch (widgets.chart.filter.granularity) {
       case 'hour':     fmt='ddd l, h A'; break;
       case 'day':      fmt='ddd l'; break;
       case 'month':    fmt='MMMM YYYY'; break;
@@ -330,7 +330,7 @@ var NYSS = NYSS || {};
       case '15minute':
       default:         fmt='ddd l, hh:mm A'; break;
     }
-    time = moment(options.data[index]["ts"]).format(fmt);
+    time = moment(options.data[index]["timerange"]).format(fmt);
     var h = '<div class="morris-hover-row-label">'+time+'</div>';
     $.each(options.data[index], function( key, values ) {
       if($.inArray(key, options.ykeys)!==-1){
@@ -371,9 +371,9 @@ var NYSS = NYSS || {};
   });
 
   defProp(NYSS.ChartReportWidget.prototype, 'updateData', function updateData() {
-    thisobj = this;
+    var thisobj = this;
     this.report.forEach(function(v,k) {
-      thishtml = thisobj._wrapHTML($(thisobj.base_html));
+      var thishtml = thisobj._wrapHTML($(thisobj.base_html));
       thishtml.find('.chart-widget-panel-wrapper').addClass(v.props.wrapperSize);
       thishtml.find('.chart-widget-panel-target').attr('id','chart-widget-'+v.report_name);
       thishtml.find('.chart-widget-panel-icon').addClass(v.props.headerIcon);
@@ -442,9 +442,9 @@ var NYSS = NYSS || {};
   });
 
   defProp(NYSS.SummaryReportWidget.prototype, 'updateData', function updateData() {
-    thisobj = this;
+    var thisobj = this;
     this.report.forEach(function(v,k) {
-      thishtml = thisobj._wrapHTML($(thisobj.base_html));
+      var thishtml = thisobj._wrapHTML($(thisobj.base_html));
       var props = $.extend({}, thisobj.default_summary, v.props);
       thishtml.find('.summary-widget-panel-wrapper').addClass(props.wrapperSize).attr('id',props.wrapperID);
       thishtml.find('.summary-widget-datapoint-icon').addClass(props.headerIcon);
