@@ -322,24 +322,26 @@ var NYSS = NYSS || {};
 
   /* need a chart callback for hover */
   defProp(NYSS.ChartReportWidget.prototype,'ChartHoverCallback', function (index, options, content) {
-    switch (widgets.chart.filter.granularity) {
-      case 'hour':     fmt='ddd l, h A'; break;
-      case 'day':      fmt='ddd l'; break;
-      case 'month':    fmt='MMMM YYYY'; break;
-      case 'minute':
-      case '15minute':
-      default:         fmt='ddd l, hh:mm A'; break;
-    }
-    time = moment(options.data[index]["timerange"]).format(fmt);
-    var h = '<div class="morris-hover-row-label">'+time+'</div>';
-    $.each(options.data[index], function( key, values ) {
-      if($.inArray(key, options.ykeys)!==-1){
-        var id = $.inArray(key, options.ykeys);
-        h += '<div class="morris-hover-point" style="color:'+options.lineColors[id]+
-             '">'+options.labels[id]+': '+values+'</div>';
+    if (arguments.length) {
+      switch (widgets.chart.filter.granularity) {
+        case 'hour':     fmt='ddd l, h A'; break;
+        case 'day':      fmt='ddd l'; break;
+        case 'month':    fmt='MMMM YYYY'; break;
+        case 'minute':
+        case '15minute':
+        default:         fmt='ddd l, hh:mm A'; break;
       }
-    });
-    return h;
+      time = moment(options.data[index]["timerange"]).format(fmt);
+      var h = '<div class="morris-hover-row-label">'+time+'</div>';
+      $.each(options.data[index], function( key, values ) {
+        if($.inArray(key, options.ykeys)!==-1){
+          var id = $.inArray(key, options.ykeys);
+          h += '<div class="morris-hover-point" style="color:'+options.lineColors[id]+
+               '">'+options.labels[id]+': '+values+'</div>';
+        }
+      });
+      return h;
+    }
   });
 
   defProp(NYSS.ChartReportWidget.prototype, 'customInit', function customInit() {
@@ -374,22 +376,23 @@ var NYSS = NYSS || {};
     var thisobj = this;
     this.report.forEach(function(v,k) {
       var thishtml = thisobj._wrapHTML($(thisobj.base_html));
-      thishtml.find('.chart-widget-panel-wrapper').addClass(v.props.wrapperSize);
-      thishtml.find('.chart-widget-panel-target').attr('id','chart-widget-'+v.report_name);
+      thishtml.find('.chart-widget-panel-wrapper')
+              .addClass(v.props.wrapperSize)
+              .attr('id','chart-widget-'+v.report_name);
+      thishtml.find('.chart-widget-panel-target').attr('id','chart-widget-target-'+v.report_name);
       thishtml.find('.chart-widget-panel-icon').addClass(v.props.headerIcon);
       thishtml.find('.chart-widget-panel-title').html(v.props.valueCaption);
       thishtml = thisobj._unwrapHTML(thishtml);
-      v.props.graphData = $.extend({}, thisobj.default_graph, v.props.graphData,
+      v.props.graphData = v.props.graphData || {};
+      if (!v.props.graphData.lineColors) { v.props.graphData.lineColors = chart_colors.getColors(); }
+      v.props.graphData = $.extend( { lineColors:chart_colors.getColors() },
+                                    thisobj.default_graph, v.props.graphData,
                                     {
                                       data:       thisobj.report_data.data[v.report_name],
-                                      element:    thishtml.find('.chart-widget-panel-target').attr('id'),
-                                      lineColors: chart_colors.getColors(v.props.graphData.lineColors),
+                                      element:    thishtml.find('.chart-widget-panel-target').attr('id')
                                     }
                                   );
-      if (thisobj.report_obj[v.report_name]) {
-        thisobj.report_obj[v.report_name].remove();
-        thisobj.report_obj[v.report_name] = null;
-      }
+      $(thisobj.target_wrapper).find('#chart-widget-'+v.report_name).remove();
       if (v.props.graphData.data.length<1) { thishtml.find('.chart-widget-panel-body').prepend('<h3>No data available</h2>'); }
       thishtml.appendTo(thisobj.target_wrapper).find('.chart').slideDown();
       if (v.props.graphData.data.length>=1) { thishtml.graphObj = new Morris.Line(v.props.graphData); }

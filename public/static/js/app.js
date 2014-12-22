@@ -331,14 +331,14 @@ moment.fn.getScale = function(end_moment) {
         if (chosenLabel !== "Custom Range") {
           new_end_moment = moment();
           switch (chosenLabel) {
-            case "Last Hour": new_start_moment = moment().subtract('hours', 1); break;
+            case "Last Hour": new_start_moment = moment().subtract(1, 'hours'); break;
             case "Today":     new_start_moment = moment().startOf('day'); break;
-            case "Last 7 Days": new_start_moment = moment().subtract('days', 6).startOf('day'); break;
-            case "Last 30 Days": new_start_moment = moment().subtract('days', 29).startOf('day');break;
+            case "Last 7 Days": new_start_moment = moment().subtract(6, 'days').startOf('day'); break;
+            case "Last 30 Days": new_start_moment = moment().subtract(29, 'days').startOf('day');break;
             /* default to "Yesterday" */
             default:
-              new_start_moment = moment().subtract('days', 1).startOf('day');
-              new_end_moment = moment().subtract('days', 1).endOf('day');
+              new_start_moment = moment().subtract(1, 'days').startOf('day');
+              new_end_moment = moment().subtract(1, 'days').endOf('day');
               chosenLabel = "Yesterday";
               break;
           }
@@ -371,16 +371,16 @@ moment.fn.getScale = function(end_moment) {
         update($.cookie('data-type'), moment($.cookie('data-start')), moment($.cookie('data-end')));
       }
       else {
-        update("Last Hour", moment().subtract('hours', 1), moment(), 'Relative');
+        update("Last Hour", moment().subtract(1, 'hours'), moment(), 'Relative');
       }
 
       $('#reportrange').daterangepicker({
           ranges: {
-            'Last Hour': [ moment().subtract('hours', 1), moment()],
+            'Last Hour': [ moment().subtract(1, 'hours'), moment()],
             'Today': [moment().startOf('day'), moment()],
-            'Yesterday': [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-            'Last 7 Days': [moment().subtract('days', 6).startOf('day'), moment()],
-            'Last 30 Days': [moment().subtract('days', 29).startOf('day'), moment()],
+            'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
+            'Last 7 Days': [moment().subtract(6, 'days').startOf('day'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days').startOf('day'), moment()],
           },
           timePicker: true,
           timePicker12Hour: false,
