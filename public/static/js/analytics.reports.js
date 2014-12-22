@@ -435,7 +435,7 @@ var NYSS = NYSS || {};
                       '</div>' +
                     '</div>';
     this.default_summary = {
-                            wrapperSize:'col-lg-3',
+                            wrapperSize:'col-sm-3 col-xs-6',
                             headerIcon:'',
                             linkIcon:'fa fa-arrow-circle-right',
                             linkTarget:'',

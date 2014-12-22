@@ -476,3 +476,16 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 .center-block {
   float:none;
 }
+
+.summary-widget-datapoint-icon {
+  opacity: .1;
+}
+
+.summary-widget-datapoint {
+  float:none;
+  margin-left:auto;
+}
+
+.summary-widget-panel-wrapper {
+  min-width:195px;
+}

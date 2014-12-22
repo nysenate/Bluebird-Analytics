@@ -41,7 +41,7 @@ $release_notes = '
 
 $scripts = array(
   'css' => array(
-    array('src'=>'/static/vendor/bootstrap-3.1.1/css/bootstrap.min.css'),
+    array('src'=>'/static/vendor/bootstrap-3.3.1/css/bootstrap.min.css'),
     array('src'=>'/static/vendor/font-awesome-4.1.0/css/font-awesome.min.css'),
     array('src'=>'/static/vendor/opensans-v6/css/opensans.css'),
     array('src'=>'/static/vendor/ubuntu-v4/css/ubuntu.css'),
@@ -55,7 +55,7 @@ $scripts = array(
   'js' => array(
     array('src'=>'/static/vendor/jquery-2.1.1.min.js'),
     array('src'=>'//code.jquery.com/ui/1.11.2/jquery-ui.js'),
-    array('src'=>'/static/vendor/bootstrap-3.1.1/js/bootstrap.min.js'),
+    array('src'=>'/static/vendor/bootstrap-3.3.1/js/bootstrap.min.js'),
     array('src'=>'/static/vendor/raphael-2.1.2.js'),
     array('src'=>'/static/vendor/morris-0.4.3/morris.js'),
     array('src'=>'/static/vendor/jquery.datatables-1.10.3/js/jquery.dataTables.min.js'),
