@@ -234,7 +234,7 @@ var NYSS = NYSS || {};
           '</div>'
     this.default_list = {
                           baseTarget:'#list-wrapper',
-                          wrapperSize:'col-lg-6',
+                          wrapperSize:'col-sm-6',
                           titleIcon:'fa fa-building-o',
                           titleText:'',
                           linkText:'',
