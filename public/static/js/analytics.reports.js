@@ -368,6 +368,7 @@ var NYSS = NYSS || {};
       ymax: 'auto 100',
       hideHover: true,
       smooth: true,
+      resize:true,
       hoverCallback: this.ChartHoverCallback
     };
   });

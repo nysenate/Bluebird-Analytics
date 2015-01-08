@@ -310,6 +310,17 @@ moment.fn.getScale = function(end_moment) {
   return ret;
 };
 
+/* Function to retrieve page-level filters */
+function get_page_filters() {
+  return {
+          starttime:   $('#reportrange').bbdaterangepicker().start_moment.format(moment.NYSS_df.data),
+          endtime:     $('#reportrange').bbdaterangepicker().end_moment.format(moment.NYSS_df.data),
+          granularity: $('#reportrange').bbdaterangepicker().granularity,
+          instance:    $('#instance-picker').instancepicker().instance_name,
+          custom:      [],
+         };
+}
+
 
 /* ****** Application logic ****** */
 (function($,undefined) {
@@ -477,51 +488,50 @@ moment.fn.getScale = function(end_moment) {
 
     var DateRange = $('#reportrange').bbdaterangepicker();
     var Instance = $('#instance-picker').instancepicker();
-    var Performance = $('#performance-picker').chartpicker();
 
     // for each of the configuration parameters execute an AJAX call
     // on callback place data in correct container
     $.fn.Render = function() {
 
-      // compile the filters being used for current reports
-      page_filters = {
-                      starttime:   DateRange.start_moment.format(moment.NYSS_df.data),
-                      endtime:     DateRange.end_moment.format(moment.NYSS_df.data),
-                      granularity: DateRange.granularity,
-                      instance:    Instance.instance_name,
-                      /*listcount:   10,
-                      listpage:    1,*/
-                      custom:      [],
-                     };
-
       // set up an AJAX request for each report configured in the current view
       var current_requests = {summary:[],list:[],chart:[]};
       // sort the reports by type and add filters to each definition
-      $.each(report_config[view], function( report_key, report_def ) {
-        current_requests[report_def.report_type].push(report_def);
-      });
+      if (report_config[view]) {
+        $.each(report_config[view], function( report_key, report_def ) {
+          current_requests[report_def.report_type].push(report_def);
+        });
+      }
       // call each report
       // one request per type
       $.each(current_requests, function(report_type, reports) {
         thisWidget = report_type.capitalize()+'ReportWidget';
         if (NYSS[thisWidget] && reports.length) {
           var target_elem = '#'+report_type+'-wrapper';
-          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:page_filters});
+          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:get_page_filters()});
           widgets[report_type].render();
         }
       });
 
     };
 
-    // add responsiveness hooks for Morris charts
-    $(window).resize(function() {
-      $.each(widgets.chart.report_obj, function(i,v){ v.graphObj.redraw(); });
+
+    /* UI/UX for pseudo-persistent version notes element */
+    if ($.cookie('application_version') == $('.app-version').text() ) {
+      $('.cookie').hide();
+    };
+    /* Enable closing/dismissing the version notes element */
+    $('.cookie .close').click(function() {
+      $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
     });
+
+    // render the current page
+    $('#page-wrapper').Render();
 
     // TODO: optimize/refactor all below
     ////////////////////////////////
     // Data tables code starts here
     ////////////////////////////////
+    /*
     var dimensions = [], observations = [];
     $('#select-observation').multiSelect({
       keepOrder: true,
@@ -648,18 +658,7 @@ moment.fn.getScale = function(end_moment) {
       loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
 
-    /* UI/UX for pseudo-persistent version notes element */
-    if ($.cookie('application_version') == $('.app-version').text() ) {
-      $('.cookie').hide();
-    };
-    /* Enable closing/dismissing the version notes element */
-    $('.cookie .close').click(function() {
-      $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
-    });
-
-    // render the current page
-    $('#page-wrapper').Render();
+    */
 
   });
-
 })(jQuery);

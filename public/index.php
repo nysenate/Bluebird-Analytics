@@ -28,7 +28,7 @@ $navmenu->addClassToTree($activemenu->id,'active open');
 
 $product = array(
   'name' => 'Bluebird Analytics',
-  'version' => '1.1',
+  'version' => '1.1.3',
   'last_update' => fetch_last_update_time($session->db),
 );
 
@@ -72,6 +72,11 @@ $scripts = array(
     array('src'=>'/static/js/app.js'),
   )
 );
+
+// add custom JS if it exists
+if (file_exists("static/js/$request.js")) {
+  array_push($scripts['js'], array('src'=>"/static/js/$request.js"));
+}
 
 /* default to prod install class - analytics is currently using only prod logs */
 $sql = "SELECT DISTINCT name FROM instance WHERE install_class='prod' ORDER BY name";
