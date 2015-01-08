@@ -132,7 +132,7 @@ class AJAXResponse {
     $resp->errorcount = 0;
     foreach($resp->errors as $k=>&$v) {
       if ($v['type']<AJAX_ERR_INFO) { $resp->errorcount++; }
-      $v['typelabel']=static::$error_labels[$v['type']];
+      $v['typelabel']=static::$error_labels[$v['type']+1];
     }
     return $resp;
   }

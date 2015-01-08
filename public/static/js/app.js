@@ -150,10 +150,26 @@ var report_config = {
     { report_name: 'view_history',
       report_type: 'chart',
       target_table: 'summary',
-      datapoints: [ { field:'http_500',      mod:'sum',  fmt:'intcomma'},
-                    { field:'http_503',      mod:'sum',  fmt:'intcomma'},
+      datapoints: [ /*{ field:'http_500',      mod:'sum',  fmt:'intcomma'},
+                    { field:'http_503',      mod:'sum',  fmt:'intcomma'},*/
                     { field:'page_views',    mod:'sum',  fmt:'intperk'},
-                    { field:'avg_resp_time', mod:'calc', fmt:'microsec'} ],
+                    { field:'avg_resp_time', mod:'calc', fmt:'intperk'} ],
+      props:{
+              wrapperSize: 'col-lg-12',
+              headerIcon: 'fa fa-bar-chart-o',
+              valueCaption: 'Performance Stats',
+              graphData: { ykeys:['http_500','http_503','avg_resp_time','page_views'],
+                           labels:['App Errors','Database Errors','Response Time','Page Views (x1000)'],
+                           xkey:'timerange' }
+            }
+    },
+    { report_name: 'view_history2',
+      report_type: 'chart',
+      target_table: 'summary',
+      datapoints: [ /*{ field:'http_500',      mod:'sum',  fmt:'intcomma'},
+                    { field:'http_503',      mod:'sum',  fmt:'intcomma'},*/
+                    /*{ field:'page_views',    mod:'sum',  fmt:'intperk'},*/
+                    { field:'avg_resp_time', mod:'calc', fmt:'intperk'} ],
       props:{
               wrapperSize: 'col-lg-12',
               headerIcon: 'fa fa-bar-chart-o',
@@ -309,6 +325,17 @@ moment.fn.getScale = function(end_moment) {
   if (!(ret)) { ret = scaleBreaks[scaleBreaks.length - 1]; }
   return ret;
 };
+
+/* Function to retrieve page-level filters */
+function get_page_filters() {
+  return {
+          starttime:   $('#reportrange').bbdaterangepicker().start_moment.format(moment.NYSS_df.data),
+          endtime:     $('#reportrange').bbdaterangepicker().end_moment.format(moment.NYSS_df.data),
+          granularity: $('#reportrange').bbdaterangepicker().granularity,
+          instance:    $('#instance-picker').instancepicker().instance_name,
+          custom:      [],
+         };
+}
 
 
 /* ****** Application logic ****** */
@@ -477,36 +504,35 @@ moment.fn.getScale = function(end_moment) {
 
     var DateRange = $('#reportrange').bbdaterangepicker();
     var Instance = $('#instance-picker').instancepicker();
-    var Performance = $('#performance-picker').chartpicker();
 
     // for each of the configuration parameters execute an AJAX call
     // on callback place data in correct container
     $.fn.Render = function() {
 
       // compile the filters being used for current reports
-      page_filters = {
+      /*page_filters = {
                       starttime:   DateRange.start_moment.format(moment.NYSS_df.data),
                       endtime:     DateRange.end_moment.format(moment.NYSS_df.data),
                       granularity: DateRange.granularity,
                       instance:    Instance.instance_name,
-                      /*listcount:   10,
-                      listpage:    1,*/
                       custom:      [],
-                     };
+                     };*/
 
       // set up an AJAX request for each report configured in the current view
       var current_requests = {summary:[],list:[],chart:[]};
       // sort the reports by type and add filters to each definition
-      $.each(report_config[view], function( report_key, report_def ) {
-        current_requests[report_def.report_type].push(report_def);
-      });
+      if (report_config[view]) {
+        $.each(report_config[view], function( report_key, report_def ) {
+          current_requests[report_def.report_type].push(report_def);
+        });
+      }
       // call each report
       // one request per type
       $.each(current_requests, function(report_type, reports) {
         thisWidget = report_type.capitalize()+'ReportWidget';
         if (NYSS[thisWidget] && reports.length) {
           var target_elem = '#'+report_type+'-wrapper';
-          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:page_filters});
+          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:get_page_filters()});
           widgets[report_type].render();
         }
       });
@@ -514,14 +540,29 @@ moment.fn.getScale = function(end_moment) {
     };
 
     // add responsiveness hooks for Morris charts
-    $(window).resize(function() {
-      $.each(widgets.chart.report_obj, function(i,v){ v.graphObj.redraw(); });
+/*    $(window).resize(function() {
+      if (widgets.chart.report_obj) {
+        $.each(widgets.chart.report_obj, function(i,v){ v.graphObj.redraw(); });
+      }
+    });*/
+
+    /* UI/UX for pseudo-persistent version notes element */
+    if ($.cookie('application_version') == $('.app-version').text() ) {
+      $('.cookie').hide();
+    };
+    /* Enable closing/dismissing the version notes element */
+    $('.cookie .close').click(function() {
+      $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
     });
+
+    // render the current page
+    $('#page-wrapper').Render();
 
     // TODO: optimize/refactor all below
     ////////////////////////////////
     // Data tables code starts here
     ////////////////////////////////
+    /*
     var dimensions = [], observations = [];
     $('#select-observation').multiSelect({
       keepOrder: true,
@@ -648,18 +689,7 @@ moment.fn.getScale = function(end_moment) {
       loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
     }).change();
 
-    /* UI/UX for pseudo-persistent version notes element */
-    if ($.cookie('application_version') == $('.app-version').text() ) {
-      $('.cookie').hide();
-    };
-    /* Enable closing/dismissing the version notes element */
-    $('.cookie .close').click(function() {
-      $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
-    });
-
-    // render the current page
-    $('#page-wrapper').Render();
+    */
 
   });
-
 })(jQuery);

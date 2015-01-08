@@ -489,3 +489,8 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 .summary-widget-panel-wrapper {
   min-width:195px;
 }
+
+#custom-query-controls button {
+  margin-top:-.3em;
+  margin-bottom:.5em;
+}

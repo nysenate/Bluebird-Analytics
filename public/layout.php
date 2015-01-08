@@ -96,7 +96,7 @@ foreach ($scripts['css'] as $key => $value) {
     <!-- dynamically load in JavaScript -->
 <?php
   foreach ($scripts['js'] as $key => $value) {
-    echo '    <script src="'.url_for($value['src']).'"></script>'."\n";
+    echo '    <script src="'.url_for($value['src']).'" type="text/javascript"></script>'."\n";
   }
 ?>
   </body>
