@@ -8,8 +8,6 @@ BEFORE INSERT ON request FOR EACH ROW BEGIN
   /* Initialize */
   SET @t_loc_id = NULL;
   SET @t_url_id = NULL;
-  /* Translate IP to integer */
-  SET NEW.trans_ip = INET_ATON(NEW.remote_ip);
   /* Populate location_id based on IP */
   SELECT id INTO @t_loc_id FROM location WHERE NEW.trans_ip BETWEEN ipv4_start AND ipv4_end;
   SET NEW.location_id = IFNULL(@t_loc_id,1);
