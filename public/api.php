@@ -134,7 +134,7 @@ function get_list($args, $dbcon)
       $result = $dbcon->query("
         SELECT
           instance.name,
-          count(distinct remote_ip) as users,
+          count(distinct trans_ip) as users,
           sum(page_views) as requests
         FROM summary_$table_suffix, instance
         $WHERE
@@ -147,12 +147,12 @@ function get_list($args, $dbcon)
 
       $result = $dbcon->query("
         SELECT
-          remote_ip,
+          trans_ip,
           instance.name,
           sum(page_views) as requests
         FROM summary_$table_suffix, instance
         $WHERE
-        GROUP BY remote_ip
+        GROUP BY trans_ip
         ORDER BY requests DESC
         LIMIT $list_size OFFSET $list_offset
       ");
@@ -202,28 +202,28 @@ function get_list($args, $dbcon)
           sum(sum.page_views) as requests,
           loc.name 'connection',
           ins.name 'server-name',
-          sum.remote_ip,
+          sum.trans_ip,
           sum.location_id,
           sum.instance_id
         FROM summary_$table_suffix sum
         JOIN location loc on loc.id = sum.location_id
         JOIN instance ins on ins.id = sum.instance_id
         $WHERE
-        GROUP BY loc.name, ins.name, sum.remote_ip ;
+        GROUP BY loc.name, ins.name, sum.trans_ip ;
       ");
       // echo"
       // SELECT
       //     sum(sum.page_views) as requests,
       //     loc.name 'connection',
       //     ins.name 'server-name',
-      //     sum.remote_ip,
+      //     sum.trans_ip,
       //     sum.location_id,
       //     sum.instance_id
       //   FROM summary_$table_suffix sum
       //   JOIN location loc on loc.id = sum.location_id
       //   JOIN instance ins on ins.id = sum.instance_id
       //   $WHERE
-      //   GROUP BY loc.name, ins.name, sum.remote_ip ;
+      //   GROUP BY loc.name, ins.name, sum.trans_ip ;
 
       // ";
       // exit();
@@ -236,7 +236,7 @@ function get_list($args, $dbcon)
       $filter = preg_replace("/\[|\]/", "", explode(",", $_GET['filter']));
       $WHERE = "
         WHERE r.time BETWEEN '$start_datetime' AND '$end_datetime'
-        AND r.remote_ip = '$filter[0]'
+        AND r.trans_ip = '$filter[0]'
         AND r.location_id = '$filter[1]'
         AND r.instance_id = '$filter[2]'
 
@@ -331,7 +331,7 @@ function get_summary($args, $dbcon)
       $result = $dbcon->query("
         SELECT
           count(distinct instance_id) as active_instances,
-          count(distinct remote_ip) as active_users
+          count(distinct trans_ip) as active_users
         FROM uniques_$table_suffix, instance
         $WHERE"
       );
@@ -364,7 +364,7 @@ function get_summary($args, $dbcon)
       $filter = preg_replace("/\[|\]/", "", explode(",", $_GET['filter']));
       $WHERE = "
         WHERE sum.time BETWEEN '$start_datetime' AND '$end_datetime'
-        AND sum.remote_ip = '$filter[0]'
+        AND sum.trans_ip = '$filter[0]'
         AND sum.location_id = '$filter[1]'
         AND sum.instance_id = '$filter[2]'
 
@@ -400,7 +400,7 @@ function get_summary($args, $dbcon)
       // $result = $dbcon->query("
       //   SELECT
       //     count(distinct instance_id) as active_instances,
-      //     count(distinct remote_ip) as active_users
+      //     count(distinct trans_ip) as active_users
       //   FROM uniques_$table_suffix, instance
       //   $WHERE"
       // );
@@ -443,12 +443,12 @@ function get_summary($args, $dbcon)
           count(sum.id) as requests,
           loc.name,
           ins.name,
-          sum.remote_ip
+          sum.trans_ip
         FROM summary_$table_suffix sum
         JOIN location loc on loc.id = sum.location_id
         JOIN instance ins on ins.id = sum.instance_id
         $WHERE
-        GROUP BY loc.name, sum.remote_ip;
+        GROUP BY loc.name, sum.trans_ip;
         ORDER BY requests DESC
         LIMIT $list_size OFFSET $list_offset
       ");
@@ -457,12 +457,12 @@ function get_summary($args, $dbcon)
           count(sum.id) as requests,
           loc.name,
           ins.name,
-          sum.remote_ip
+          sum.trans_ip
         FROM summary_$table_suffix sum
         JOIN location loc on loc.id = sum.location_id
         JOIN instance ins on ins.id = sum.instance_id
         $WHERE
-        GROUP BY loc.name, sum.remote_ip;
+        GROUP BY loc.name, sum.trans_ip;
         ORDER BY requests DESC
         LIMIT $list_size OFFSET $list_offset
       ";
@@ -550,7 +550,7 @@ function get_datatable($args, $dbcon)
     // Dimensions
     'path' => 'path',
     'query' => 'query',
-    'remote_ip' => 'remote_ip',
+    'remote_ip' => 'trans_ip',
     'action' => 'url.name as `action`',
     'office' => 'location.name as `office`',
     'instance.name' => 'instance.name as `instance.name`',

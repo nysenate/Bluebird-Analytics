@@ -42,6 +42,11 @@ class AJAXControllerList extends AJAXController {
     $result = array();
     $this->session->log("get=>reports: ".var_export($this->reports,1),LOG_LEVEL_DEBUG);
     foreach ($this->reports as $reportname => $onereport) {
+      $this->force_time_index = false;
+      $this->force_instance_index = false;
+      $this->join_instance_table = false;
+      $this->join_location_table = false;
+      $this->join_url_table = false;
       $this->session->log("get=>onereport: ".var_export($onereport,1),LOG_LEVEL_DEBUG);
       $this->session->log("static::extra: ".var_export(static::$extrapoints,1),LOG_LEVEL_DEBUG);
       // build the select and group clauses

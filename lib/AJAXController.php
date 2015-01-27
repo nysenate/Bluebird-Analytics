@@ -65,6 +65,9 @@ abstract class AJAXController {
       'location' => array(
           'location_name' => 'name',
           ),
+      'url'      => array(
+          'url_name' => 'name',
+          ),
       );
 
   // follows the convention array('fieldname'=>'sqlmodifier')
@@ -87,6 +90,7 @@ abstract class AJAXController {
   /* determines if a join to other tables is necessary */
   public $join_instance_table = false;
   public $join_location_table = false;
+  public $join_url_table = false;
 
   public function __construct() {
     $this->session = AJAXSession::getInstance();
@@ -109,6 +113,7 @@ abstract class AJAXController {
       case 'intperk':    $ret = "ROUND(IFNULL($ret,0)/1000,0)"; break;
       case 'intcomma':   $ret = "FORMAT(IFNULL($ret,0),0)"; break;
       case 'floatcomma': $ret = "FORMAT(IFNULL($ret,0),".($has_p ? $p : 4).")"; break;
+      case 'floatperk':  $ret = "FORMAT(IFNULL($ret,0)/1000,".($has_p ? $p : 4).")"; break;
       case 'percent':    $ret = "CONCAT(FORMAT(IFNULL($ret,0),".($has_p ? $p : 2)."),'%')"; break;
       // old microsec, but 's' suffix screws up datatables sorting on front end
       //case 'microsec':   $ret = "CONCAT(FORMAT(IFNULL($ret,0)/1000000,".($has_p ? $p : 2)."),'s')"; break;
@@ -169,6 +174,10 @@ abstract class AJAXController {
           $this->session->log("Found $fld in location",LOG_LEVEL_DEBUG);
           $found_table = 'location.';
           $this->join_location_table = true;
+        } elseif ($sqlfld = array_value($fld, static::$optionpoints['url'])) {
+          $this->session->log("Found $fld in url", LOG_LEVEL_DEBUG);
+          $found_table = 'url.';
+          $this->join_url_table = true;
         }
       }
     }
@@ -256,6 +265,10 @@ abstract class AJAXController {
                 $this->session->log("Found $fld in location",LOG_LEVEL_DEBUG);
                 $found_table = 'location.';
                 $this->join_location_table = true;
+              } elseif ($sqlfld = array_value($fld, static::$optionpoints['url'])) {
+                $this->session->log("Found $fld in url", LOG_LEVEL_DEBUG);
+                $found_table = 'url.';
+                $this->join_url_table = true;
               }
             }
             if ($sqlfld) { $this->group_fields[$report_name][$fld] = "{$found_table}{$sqlfld}"; }
@@ -432,6 +445,9 @@ abstract class AJAXController {
     }
     if ($this->join_location_table) {
       $join .= " INNER JOIN location ON dt.location_id=location.id";
+    }
+    if ($this->join_url_table) {
+      $join .= " INNER JOIN url on dt.path=url.path";
     }
     return $join;
   }

@@ -218,7 +218,7 @@ function process_entry($entry_parts, PDO $dbcon)
   $ret = array(
     'id' => NULL,
     'instance_id' => $instance_id,
-    'remote_ip' => $entry_parts[3],
+    'trans_ip' => "INET_ATON('{$entry_parts[3]}')",
     'response_code' => $entry_parts[5],
     'response_time' => $entry_parts[4],
     'transfer_rx' => $entry_parts[6],

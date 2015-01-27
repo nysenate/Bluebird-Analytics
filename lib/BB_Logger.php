@@ -174,7 +174,7 @@ class BB_Logger {
                             LOG_LEVEL_INFO  => 'INFO',
                             LOG_LEVEL_DEBUG => 'DEBUG',
                           );
-
+error_log('in');
     $lvl = (int)$lvl;
     if ($lvl < 0) { $lvl = 0; }
     if ($lvl <= $this->log_level) {

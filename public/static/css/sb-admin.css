@@ -489,3 +489,7 @@ div#wrapper nav.navbar div.collapse ul.nav li a i.fa{
 .summary-widget-panel-wrapper {
   min-width:195px;
 }
+
+.chart-instance {
+  margin-bottom:30px;
+}

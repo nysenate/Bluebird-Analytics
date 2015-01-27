@@ -4,10 +4,10 @@ var NYSS = NYSS || {};
 
 /* Widget class definitions */
 (function ($,undefined) {
+  var defProp_defaults = { writable:true, enumerable:false };
   // set up a shortcut to add non-enumerable properties
   var defProp = function(obj, name, value, props) {
-    var defaults = { writable:true, enumerable:false, value:value }
-    var tp = $.extend({}, defaults, props);
+    var tp = $.extend({}, defProp_defaults, props, {value:value});
     Object.defineProperty( obj, name, tp );
   };
 
@@ -75,10 +75,10 @@ var NYSS = NYSS || {};
   });
 
   defProp(NYSS.ReportWidget, 'generateLink', function generateLink(dest) {
-    d = String(dest);
-    var ret='#';
+    var d = String(dest),
+        ret='#',
+        sep='';
     if (d) {
-      var sep='';
       if (d[0]=='/') {
         d=d.substr(1);
         sep='/';
@@ -126,10 +126,10 @@ var NYSS = NYSS || {};
     return {reports:this.report, filters:this.filter};
   });
 
-  defProp(NYSS.ReportWidget, 'receiveData', function receiveData(response,status,jqobj) {
+  /*defProp(NYSS.ReportWidget, 'receiveData', function receiveData(response,status,jqobj) {
     this.has_data = (this.onDataReturn(response, status, jqobj) && status=='success');
     if (this.pending_render) { this.render(); }
-  });
+  });*/
 
   defProp(NYSS.ReportWidget, 'remove', function remove(n) {
     if (this.report_obj[n]) {
@@ -151,7 +151,7 @@ var NYSS = NYSS || {};
       this.retrieveData(r);
       return false;
     }
-    this.displayData();
+    this.trigger('onDataUpdate');
     this.pending_render = false;
   });
 
@@ -185,7 +185,7 @@ var NYSS = NYSS || {};
     if (this.report_data.errorcount) {
       this.displayError(this.report_data);
     }
-    $(this).trigger('onDataUpdate',this.report_data);
+    $(this).trigger('onDataUpdate');
     return true;
   });
 
@@ -345,60 +345,54 @@ var NYSS = NYSS || {};
   });
 
   defProp(NYSS.ChartReportWidget.prototype, 'customInit', function customInit() {
-    this.base_html =
-        '<div class="chart-widget-panel-wrapper">' +
-          '<div class="panel chart panel-primary chart-widget-panel">' +
-            '<div class="panel-heading chart-widget-panel-header">' +
-              '<h3 class="panel-title chart-widget-panel-title-container">' +
-                '<i class="chart-widget-panel-icon"></i>' +
-                '<span class="chart-widget-panel-title"></span>' +
-              '</h3>' +
-            '</div>' +
-            '<div class="panel-body chart-widget-panel-body">' +
-              '<div class="chart-widget-panel-target"></div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
+    this.base_html = '<div class="chart-widget-panel-target"></div>';
     this.default_graph = {
-      pointSize: 3,
-      lineColors: [],
-      parseTime: true,
-      continuousLine: false,
-      grid: true,
-      ymax: 'auto 100',
-      hideHover: true,
-      smooth: true,
-      resize:true,
-      hoverCallback: this.ChartHoverCallback
-    };
+                           colors: chart_colors.getColors(),
+                           tooltip: {crosshairs:true, shared:true},
+                           plotOptions: {series:{connectNulls:true}},
+                         };
   });
 
   defProp(NYSS.ChartReportWidget.prototype, 'updateData', function updateData() {
     var thisobj = this;
-    this.report.forEach(function(v,k) {
-      var thishtml = thisobj._wrapHTML($(thisobj.base_html));
-      thishtml.find('.chart-widget-panel-wrapper')
-              .addClass(v.props.wrapperSize)
-              .attr('id','chart-widget-'+v.report_name);
-      thishtml.find('.chart-widget-panel-target').attr('id','chart-widget-target-'+v.report_name);
-      thishtml.find('.chart-widget-panel-icon').addClass(v.props.headerIcon);
-      thishtml.find('.chart-widget-panel-title').html(v.props.valueCaption);
-      thishtml = thisobj._unwrapHTML(thishtml);
-      v.props.graphData = v.props.graphData || {};
-      if (!v.props.graphData.lineColors) { v.props.graphData.lineColors = chart_colors.getColors(); }
-      v.props.graphData = $.extend( { lineColors:chart_colors.getColors() },
-                                    thisobj.default_graph, v.props.graphData,
-                                    {
-                                      data:       thisobj.report_data.data[v.report_name],
-                                      element:    thishtml.find('.chart-widget-panel-target').attr('id')
-                                    }
-                                  );
-      $(thisobj.target_wrapper).find('#chart-widget-'+v.report_name).remove();
-      if (v.props.graphData.data.length<1) { thishtml.find('.chart-widget-panel-body').prepend('<h3>No data available</h2>'); }
-      thishtml.appendTo(thisobj.target_wrapper).find('.chart').slideDown();
-      if (v.props.graphData.data.length>=1) { thishtml.graphObj = new Morris.Line(v.props.graphData); }
-      thisobj.report_obj[v.report_name] = thishtml;
+
+    thisobj.report.forEach(function(onereport){
+      var seriesnames = onereport.datapoints.map(function(v){return v.field;});
+      var categories = thisobj.report_data.data[onereport.report_name].map(function(v){return v.timerange;});
+      var series = [];
+      seriesnames.forEach(function(v) {
+          oneseries = { name: v };
+          oneseries.data = thisobj.report_data.data[onereport.report_name].map(
+              function(vv) { return Number(vv[v]) || 0; }
+              );
+          series.push(oneseries);
+      });
+
+      var chart_options = {
+          title: { text: onereport.props.valueCaption },
+          xAxis: {
+              categories: categories,
+              tickInterval: 3,
+              minorTickInterval: 1,
+              minorTickLength: 70,
+              minorTickWidth:10
+          },
+          legend: {
+              margin: 0
+          },
+      }
+      chart_options = $.extend(true, {}, thisobj.default_graph, chart_options, onereport.props.graphData, { series:series } );
+      var thisid = 'onechart-'+onereport.report_name;
+      var onediv = $('<div/>').attr('id',thisid).addClass('chart-instance');
+      $('#chart-wrapper').append(onediv);
+
+      //console.log('Final cfg ',chart_options);
+      //console.log(JSON.stringify(chart_options));
+
+      $('#'+thisid).highcharts(chart_options);
+      $('#chart-wrapper').find('text').last().remove()
     });
+
   });
   /* **************************************************************************************
    * END NYSS.ChartReportWidget definitions

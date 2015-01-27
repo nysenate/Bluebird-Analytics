@@ -79,7 +79,10 @@ var report_config = {
               wrapperSize:  'col-lg-12',
               headerIcon:   'fa fa-bar-chart-o',
               valueCaption: 'Page Views',
-              graphData:    { ykeys:['page_views'], labels:['Page Views'], xkey:'timerange', }
+              graphData:    {
+                              chart: { type:'spline' },
+                              title: { text:'Page Views' },
+                            }
             }
     },
     { report_name:  'top_active_instances',
@@ -152,15 +155,16 @@ var report_config = {
       target_table: 'summary',
       datapoints: [ { field:'http_500',      mod:'sum',  fmt:'intcomma'},
                     { field:'http_503',      mod:'sum',  fmt:'intcomma'},
-                    { field:'page_views',    mod:'sum',  fmt:'intperk'},
+                    { field:'page_views',    mod:'sum',  fmt:'floatperk'},
                     { field:'avg_resp_time', mod:'calc', fmt:'microsec'} ],
       props:{
-              wrapperSize: 'col-lg-12',
-              headerIcon: 'fa fa-bar-chart-o',
-              valueCaption: 'Performance Stats',
-              graphData: { ykeys:['http_500','http_503','avg_resp_time','page_views'],
-                           labels:['App Errors','Database Errors','Response Time','Page Views (x1000)'],
-                           xkey:'timerange' }
+              wrapperSize:  'col-lg-12',
+              headerIcon:   'fa fa-bar-chart-o',
+              valueCaption: 'Page Views',
+              graphData:    {
+                              chart: { type:'spline' },
+                              title: { text:'Performance Stats' },
+                            }
             }
     },
     { report_name:  'top_queries',
@@ -176,86 +180,29 @@ var report_config = {
              }
     },
   ],
-  users: [
+  usage: [
     {
-      report_name:  'user_list',
+      report_name:  'avg_use',
       report_type:  'list',
       target_table: 'summary',
-      datapoints: [ { field:'location_name', mod:'group', header:'Office Location' },
-                    { field:'server_name', mod:'group', header:'Server'},
-                    { field:'remote_ip', mod:'group', header:'Remote IP'},
-                    { field:'page_views',    mod:'sum',  fmt:'int', header:'Total Views' }  ],
-      props: { titleText:'Most Active Instances', widgetID:'active_instances', wrapperSize:'col-lg-9 center-block' },
+      datapoints: [ { field:'instance_name', mod:'group', header:'Instance Name' },
+                    { field:'page_views',    mod:'sum',   header:'Total Views', fmt:'int' },
+                    { field:'avg_resp_time', mod:'calc',  header:'Avg Time',    fmt:'microsec' } ],
+      props: { titleText:'Usage', widgetID:'usage', wrapperSize:'col-lg-9 center-block' },
       sortorder: { page_views:'DESC' }
     },
-  ],
-  userdetails: [
     {
-      report_name:  'page_views',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Pages Served',
-          wrapperID:    'page_views'
-      }
-    },
-    {
-      report_name:  'unique_pages',
-      report_type:  'summary',
-      target_table: 'uniques',
-      datapoints:   [ { field:'path', mod:'countd', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Unique URLs',
-          wrapperID:    'unique_pages'
-      }
-    },
-    /* removed pending review of reports */
-    /*{
-      report_name:  'avg_response',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'avg_resp_time', mod:'calc', fmt:'microsec' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Avg Resp Time',
-          wrapperID:    'avg_resp_time'
-      }
-    },*/
-    {
-      report_name:  'num_instances',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'instance_id', mod:'countd', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Active Instances',
-          wrapperID:    'num_instances'
-      }
-    },
-    {
-      report_name:  'uptime',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Successful Requests',
-          wrapperID:    'uptime'
-      }
-    },
-    /* removed pending review of reports */
-    /*{ report_name:  'user_details',
+      report_name:  'common_task',
       report_type:  'list',
       target_table: 'request',
-      datapoints: [ { field:'path',          header:'Path',     mod:'group'  },
-                    { field:'resp_code',     header:'Views',    mod:'count'  },
-                    { field:'avg_resp_time', header:'Avg Time', mod:'calc', fmt:'microsec' } ],
-      props: { titleText:'Top Queries', widgetID:'top_queries',wrapperSize:'' }
-    },*/
-  ]
+      datapoints: [ { field:'instance_name', mod:'group', header:'Instance Name' },
+                    { field:'url_name',      mod:'group', header:'Action' },
+                    { field:'timerange',     mod:'count', header:'Total Views', fmt:'int' },
+                    { field:'avg_resp_time', mod:'calc',  header:'Avg Time',    fmt:'microsec' } ],
+      props: { titleText:'Request Usage', widgetID:'requsage', wrapperSize:'col-lg-9 center-block' },
+      sortorder: { timerange:'DESC' }
+    },
+  ],
 };
 
 
@@ -503,17 +450,21 @@ function get_page_filters() {
       }
       // call each report
       // one request per type
+      var tfilters = get_page_filters();
       $.each(current_requests, function(report_type, reports) {
-        thisWidget = report_type.capitalize()+'ReportWidget';
+        if (widgets[report_type]) {
+          widgets[report_type].remove();
+          widgets[report_type] = null;
+        }
+        var thisWidget = report_type.capitalize()+'ReportWidget';
         if (NYSS[thisWidget] && reports.length) {
           var target_elem = '#'+report_type+'-wrapper';
-          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:get_page_filters()});
+          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:tfilters});
           widgets[report_type].render();
         }
       });
 
     };
-
 
     /* UI/UX for pseudo-persistent version notes element */
     if ($.cookie('application_version') == $('.app-version').text() ) {
@@ -526,139 +477,6 @@ function get_page_filters() {
 
     // render the current page
     $('#page-wrapper').Render();
-
-    // TODO: optimize/refactor all below
-    ////////////////////////////////
-    // Data tables code starts here
-    ////////////////////////////////
-    /*
-    var dimensions = [], observations = [];
-    $('#select-observation').multiSelect({
-      keepOrder: true,
-      selectableHeader: "<div class='custom-header'>Available Observations</div>",
-      selectionHeader: "<div class='custom-header'>Selected Observations</div>",
-      afterSelect: function(values) {
-        Array.prototype.push.apply(observations, values)
-      },
-      afterDeselect: function(values) {
-        observations = observations.filter(function(observation) {
-          return values.indexOf(observation) == -1
-        });
-      }
-    });
-
-    $('#select-dimension').multiSelect({
-      keepOrder: true,
-      selectableHeader: "<div class='custom-header'>Available Dimensions</div>",
-      selectionHeader: "<div class='custom-header'>Selected Dimensions</div>",
-      afterSelect: function(values) {
-        Array.prototype.push.apply(dimensions, values)
-      },
-      afterDeselect: function(values) {
-        dimensions = dimensions.filter(function(dimension) {
-          return values.indexOf(dimension) == -1
-        });
-      }
-    });
-
-    $('#build-table').click(function() {
-      var headers = [];
-      var aoColumns = [];
-      $.each(dimensions, function() {
-        headers.push("<th data-searchable='1'>"+$('#select-dimension option[value="'+this+'"]').html()+"</th>");
-        aoColumns.push({ bSearchable: true});
-      });
-      $.each(observations, function() {
-        headers.push("<th>"+$('#select-observation option[value='+this+']').html()+"</th>");
-        aoColumns.push({ bSearchable: false});
-      });
-      var html = "<table><thead><tr>"+headers.join(" ")+"</tr></thead><tbody></tbody></table>";
-      $('#datatable-container').html(html).find('table').dataTable({
-        bProcessing: true,
-        bServerSide: true,
-        sAjaxSource: $("body").data("context-path")+"/api/get_datatable",
-        fnServerParams: function ( aoData ) {
-          aoData.push(
-            { name: "view", value: "datatable"},
-            { name: "start_datetime", value: DateRange.start_moment.format(moment.NYSS_df.data)},
-            { name: "end_datetime", value: DateRange.end_moment.format(moment.NYSS_df.data)},
-            { name: "granularity", value: DateRange.granularity},
-            { name: "install_class", value: "prod"},
-            { name: "instance_name", value: Instance.instance_name},
-            { name: "dimensions", value: dimensions.join(',')},
-            { name: "observations", value: observations.join(',')}
-          );
-        },
-        "aoColumns": aoColumns,
-      }); //.fnSetFilteringDelay(500);
-    })
-
-    function loadQuery(name, new_dimensions, new_observations) {
-      $('#select-dimension').multiSelect('deselect_all').multiSelect('select', new_dimensions);
-      $('#select-observation').multiSelect('deselect_all').multiSelect('select', new_observations);
-      if (name != "Create New Query") {
-        $('#query-name').val(name);
-        $("#save-query").html("Update Query");
-        $("#delete-query").show();
-      }
-      else {
-        $('#query-name').val('');
-        $("#save-query").html("Save Query");
-        $("#delete-query").hide();
-      }
-    }
-
-    $("#delete-query").click(function() {
-      $.ajax({
-        url: $("body").data("context-path")+"/api/delete_query",
-        dataType: 'json',
-        data: {
-          id: $("#saved-queries").val(),
-        },
-        success: function(data) {
-          $('#saved-queries option[value='+data.id+']').remove();
-          $('#saved-queries').change();
-        },
-        error: function(data) {
-          alert("Delete failure!");
-        }
-      });
-    });
-
-    $("#save-query").click(function() {
-      $.ajax({
-        url: $("body").data("context-path")+"/api/save_query",
-        dataType: 'json',
-        data: {
-          id: $("#saved-queries").val(),
-          name: $('#query-name').val(),
-          dimensions: dimensions.join(','),
-          observations: observations.join(','),
-        },
-        success: function(data) {
-          option = $('#saved-queries option[value='+data.id+']');
-          if (option.length) {
-            option.data('dimensions', data.dimensions);
-            option.data('observations', data.observations);
-            option.html(data.name);
-          }
-          else {
-            var option = "<option value='"+data.id+"' data-dimensions='"+data.dimensions+"' data-observations='"+data.observations+"'>"+data.name+"</option>";
-            $('#saved-queries').append(option).val(data.id).change();
-          }
-        },
-        error: function(data) {
-          alert("Save failure!");
-        }
-      });
-    });
-
-    $('#saved-queries').change(function() {
-      var option = $(this).find('option:selected');
-      loadQuery(option.html(), option.data('dimensions').split(','), option.data('observations').split(','));
-    }).change();
-
-    */
 
   });
 })(jQuery);
