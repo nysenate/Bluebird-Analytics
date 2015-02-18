@@ -4,77 +4,175 @@ var NYSS = NYSS || {};
 
 /* Widget class definitions */
 (function ($,undefined) {
-  var defProp_defaults = { writable:true, enumerable:false };
-  // set up a shortcut to add non-enumerable properties
-  var defProp = function(obj, name, value, props) {
-    var tp = $.extend({}, defProp_defaults, props, {value:value});
-    Object.defineProperty( obj, name, tp );
-  };
 
   /* **************************************************************************************
-   * NYSS.ReportWidget
-   * A base class for Chart, Summary, and List report widgets for NYSS BB Analytics.
+   * NYSS.ReportsCollection
+   * A class for managing a series of reports
    ************************************************************************************** */
-  NYSS.ReportWidget = function(d){
-    this.initialize(d);
-  } /* end of NYSS.ReportWidget */
+  var NRC = function(d) {
+  	this.initialize(d);
+  	return this;
+  }
+
+	NRC.prototype.icons = {
+    parent_element: '.jumbotron .jumbotron-status-icons',
+    error_class: 'fa fa-warning danger',
+    error_parent_class: 'error-msg',
+    error_parent_id: 'fa-icon-report-error',
+    error_caption: 'Error',
+    working_class: 'fa fa-cog fa-spin',
+    working_parent_class: '',
+    working_parent_id: 'fa-icon-report-working',
+    working_caption: 'Loading',
+  }
+
+	NRC.prototype.customInit = function() {
+  }
+
+	NRC.prototype.displayError = function(msgs) {
+    var $this = this;
+    if ($this._error_icon) {
+      $this._error_icon.fadeOut(1000, function(){ $this._error_icon.remove(); });
+    }
+    if (Array.isArray(msgs) && msgs.length) {
+      $this._error_icon = new NYSS.MessageBox({
+                                caption: this.icons.error_caption,
+                                container_class: this.icons.error_parent_class,
+                                icon_class: this.icons.error_class,
+                                parent_target: this.icons.parent_element,
+                                container_id: this.icons.error_parent_id,
+                                messages:msgs
+                              });
+    }
+    $this._error_icon.render();
+  };
+
+	NRC.prototype.displayWorking = function() {
+    if (this._working_icon) { this._removeWorking(); }
+  	this._working_icon = new NYSS.MessageBox({
+                              caption:this.icons.working_caption,
+                              icon_class:this.icons.working_class,
+                              parent_target:this.icons.parent_element,
+                              container_id:this.icons.working_parent_id,
+                            });
+  	this._working_icon.render();
+  };
+
+	NRC.prototype.removeWorking = function() {
+    if (this._working_icon) {
+    	this._working_icon.removeBox();
+    }
+  	this._working_icon = null;
+  };
+
+	NRC.prototype.initialize = function(d) {
+    /* "private" variables */
+  	this.reports = [];
+  	this.messages = [];
+  	this.target_wrapper = 'body';
+  	this.ajax = null;
+  	this.response = null;
+  	this.pending = false;
+
+  	this.setConfig(d);
+  	this.customInit();
+  };
+
+	NRC.prototype.render = function(p, force) {
+    if (force || !this.response) {
+    	this.pending = true;
+    	this.retrieveData(p);
+      return false;
+    }
+  	this.pending = false;
+  	this.report_obj = {};
+    var $this = this,
+        all_reports = (Array.isArray(this.response.data)) ? this.response.data : [];
+    all_reports.forEach(function(v,k) {
+      var this_type = v.properties.report_type.value.capitalize(true),
+          this_id = v.properties.wrapper_id.value || 'no_id'
+          ;
+      if (['Summary','Chart','List'].indexOf(this_type) > -1) {
+        if ($this[this_id] && $this[this_id].remove) {
+          $this[this_id].remove();
+        }
+        $this[this_id] = new NYSS[this_type+'ReportWidget'](v);
+        $this[this_id].render();
+      }
+    });
+  };
+
+	NRC.prototype.retrieveData = function(param) {
+    if (this.ajax) { this.ajax.abort(); }
+    var postdata = $.extend( {}, (param instanceof Object ? param : {}) ),
+        ajaxparams = {
+                       url:        $('body').data('context-path')+'/api/Reports',
+                       timeout:    60000,
+                       type:       'POST',
+                       beforeSend: function(){this.displayWorking();},
+                       context:  	this,
+                       data:       postdata,
+                     }
+        ;
+  	this.ajax = $.ajax(ajaxparams).always(this.retrieveDataReturn);
+  };
+
+	NRC.prototype.retrieveDataReturn = function(response, status, jqobj) {
+  	this.removeWorking();
+  	this.response = JSON.parse(status=='error' ? response.responseText : response);
+  	this.messages = this.response.errors.map(function(v){ return v.msg; });
+    if (this.response.errorcount) {
+    	this.displayError( this.messages );
+    }
+    $(this).trigger('onDataUpdate');
+    return true;
+  };
+
+	NRC.prototype.setConfig = function(d,undefined) {
+    if (d===undefined) { d={}; }
+
+    // create event onDataUpdate
+  	this.on_data_update = d.on_data_update || this.updateData;
+    if (typeof this.on_data_update == 'function') {
+      $(this).on('onDataUpdate',this.on_data_update);
+    }
+  };
+
+	NRC.prototype.updateData = function() {
+    if (this.pending) { this.render(); }
+  };
+
+  NYSS.ReportsCollection = new NRC();
+  /* **************************************************************************************
+   * END NYSS.ReportsCollection definitions
+   ************************************************************************************** */
+
+  /* **************************************************************************************
+   * BEGIN NYSS.ReportWidget definition
+   ************************************************************************************** */
+  /* Some default values for properties */
+  var RW = function(d) {
+    this.report_obj = null;
+    this.init(d);
+  }
+
+  RW.init = function(d) {
+    this._init_data = d;
+    this.customInit();
+  }
 
   /* Utility function to wrap a DOM object in a temporary element
-     This allows jQuery.find() to work on the former top-level element */
-  defProp(NYSS.ReportWidget, '_wrapHTML', function _wrapHTML(h) {
+   	this allows jQuery.find() to work on the former top-level element */
+	RW._wrapHTML = function(h) {
     return $('<div id="_WIDGETWRAPPER"></div>').append($(h));
-  });
+  }
 
   /* Utility function to remove a previously installed DOM wrapper */
-  defProp(NYSS.ReportWidget, '_unwrapHTML', function _unwrapHTML(h) {
+	RW._unwrapHTML = function(h) {
     return $(h).attr('id')=="_WIDGETWRAPPER" ? $(h).contents() : $(h);
-  });
+  };
 
-  /* NYSS.ReportWidget.abort()
-     Aborts the current AJAX request, if active.
-     Parameters: none
-     Return: none
-     */
-  defProp(NYSS.ReportWidget, 'abort', function abort(msg) {
-    if (this.jqxhr && this.jqxhr.hasOwnProperty('abort')) {
-      this.jqxhr.abort();
-    }
-    this.jqxhr = null;
-    if (msg) { NYSS.ReportWidget.messages.push(String(msg)); }
-  });
-
-  defProp(NYSS.ReportWidget, 'customInit', function customInit() {
-  });
-
-  defProp(NYSS.ReportWidget, 'displayError', function displayError(response) {
-    var target_elem = '.jumbotron .jumbotron-status-icons';
-    var icon_type = 'fa fa-warning danger';
-    if (this.error_icon) { this.error_icon.fadeOut(1000,function(){$(erricon).remove()}); }
-    this.error_icon = new NYSS.MessageBox({
-                          caption:this.report_type,
-                          container_class:'error-msg',
-                          icon_class:icon_type,
-                          parent_target:target_elem,
-                          container_id:'fa-icon-error-' + response.req,
-                          messages:response.errors.map(function(v){return v.msg}),
-                        });
-    this.error_icon.render();
-  });
-
-  defProp(NYSS.ReportWidget, 'displayWorking', function displayWorking(icon_type, target_elem) {
-    if (!target_elem) { target_elem = '.jumbotron .jumbotron-status-icons'; }
-    if (!icon_type) { icon_type = 'fa-cog fa-spin'; }
-    if (this.working_icon) { this.removeWorking(); }
-    this.working_icon = new NYSS.MessageBox({
-                          caption:this.report_type,
-                          icon_class:icon_type,
-                          parent_target:target_elem,
-                          container_id:'loading_note_'+this.report_type,
-                        });
-    this.working_icon.render();
-  });
-
-  defProp(NYSS.ReportWidget, 'generateLink', function generateLink(dest) {
+	RW.generateLink = function(dest) {
     var d = String(dest),
         ret='#',
         sep='';
@@ -86,317 +184,20 @@ var NYSS = NYSS || {};
       ret = [$('body').data('contextPath'),sep,d].join('');
     }
     return ret;
-  });
+  };
 
-  defProp(NYSS.ReportWidget, 'initialize', function initialize(d) {
-    /* "private" variables */
-    // the AJAX request
-    this.jqxhr = null;
-    // report configuration
-    this.report = {};
-    this.filter = {};
-    // internal flag to track if data is available
-    this.has_data = false;
-    // internal flag to track rendering after AJAX
-    this.pending_render = false;
-
-    /* public properties */
-    // error/status messages
-    this.report_obj = {};
-    this.messages    = [];
-    this.report_data = {};
-    this.target_wrapper = 'body';
-    this.working_icon = null;
-    this.on_data_update = null;
-
-    this.report_type = this.constructor.name.replace(/ReportWidget$/,'').capitalize();
-    if (!this.report_type) { this.report_type = 'Base'; }
-
-    this.setConfig(d);
-    this.customInit();
-  });
-
-  /* NYSS.ReportWidget.parseSettings()
-     Takes in a report configuration object and parses it.
-     Parameters:
-       param (object): a config structure
-     Return: none
-     */
-  defProp(NYSS.ReportWidget, 'parseSettings', function parseSettings(param) {
-    return {reports:this.report, filters:this.filter};
-  });
-
-  /*defProp(NYSS.ReportWidget, 'receiveData', function receiveData(response,status,jqobj) {
-    this.has_data = (this.onDataReturn(response, status, jqobj) && status=='success');
-    if (this.pending_render) { this.render(); }
-  });*/
-
-  defProp(NYSS.ReportWidget, 'remove', function remove(n) {
-    if (this.report_obj[n]) {
-      this.report_obj[n].remove();
-      this.report_obj[n] = null;
+  RW.remove = function() {
+    if (this.report_obj && this.report_obj.remove) {
+      this.report_obj.remove();
     }
-  });
-
-  defProp(NYSS.ReportWidget, 'removeWorking', function removeWorking() {
-    if (this.working_icon) {
-      this.working_icon.removeBox();
-    }
-    this.working_icon = null;
-  });
-
-  defProp(NYSS.ReportWidget, 'render', function render(r) {
-    if (!this.has_data) {
-      this.pending_render = true;
-      this.retrieveData(r);
-      return false;
-    }
-    this.trigger('onDataUpdate');
-    this.pending_render = false;
-  });
-
-  /* NYSS.ReportWidget.retrieveData()
-     Execute an AJAX call using current report settings, and pass the response
-     to data parsing
-     Parameters: none
-     Return: none
-     */
-  defProp(NYSS.ReportWidget, 'retrieveData', function retrieveData(param) {
-    if (this.report_type) {
-      // abort any existing call
-      this.has_data = false;
-      this.abort();
-      var postdata = $.extend( {}, this.parseSettings(), (param instanceof Object ? param : {}) );
-      var ajaxparams = {
-                         url:        $('body').data('context-path')+'/api/'+this.report_type.toLowerCase(),
-                         timeout:    60000,
-                         type:       'POST',
-                         beforeSend: function(){this.displayWorking();},
-                         context:    this,
-                         data:       postdata,
-                       }
-      this.jqxhr = $.ajax(ajaxparams).always(this.retrieveDataReturn);
-    }
-  });
-
-  defProp(NYSS.ReportWidget, 'retrieveDataReturn', function retrieveDataReturn(response, status, jqobj) {
-    this.removeWorking();
-    this.report_data = JSON.parse(status=='error' ? response.responseText : response);
-    if (this.report_data.errorcount) {
-      this.displayError(this.report_data);
-    }
-    $(this).trigger('onDataUpdate');
-    return true;
-  });
-
-  defProp(NYSS.ReportWidget, 'setConfig', function setConfig(d,undefined) {
-    if (d===undefined) { d={}; }
-    this.report = d.reports || {};
-    this.filter = d.filters || {};
-    this.target_wrapper = d.target_wrapper || 'body';
-    this.on_data_update = d.on_data_update || this.updateData;
-
-    if (typeof this.on_data_update == 'function') { $(this).on('onDataUpdate',this.on_data_update); }
-  });
-
-  defProp(NYSS.ReportWidget, 'updateData', function updateData() {
-    console.log("No handler defined for AJAX data updates!");
-  });
-  /* **************************************************************************************
-   * END NYSS.ReportWidget definitions
-   ************************************************************************************** */
-
-  /* **************************************************************************************
-   * BEGIN NYSS.ListReportWidget definitions
-   ************************************************************************************** */
-  NYSS.ListReportWidget = function ListReportWidget(d) {
-    NYSS.ReportWidget.call(this,d);
+    this.report_obj = null;
   }
-  NYSS.ListReportWidget.prototype = Object.create(NYSS.ReportWidget);
-  NYSS.ListReportWidget.prototype.constructor = NYSS.ListReportWidget;
 
-  defProp(NYSS.ListReportWidget.prototype, 'customInit', function customInit() {
-    this.base_html =
-          '<div class="list-widget-panel-wrapper">' +
-            '<div class="panel table-list panel-primary list-widget-panel">' +
-              '<div class="panel-heading list-widget-panel-header">' +
-                '<h3 class="panel-title list-widget-panel-title-container">' +
-                  '<i class="list-widget-panel-icon"></i>' +
-                  '<span class="list-widget-panel-title"></span>' +
-                '</h3>' +
-              '</div>' +
-              '<div class="panel-body list-widget-panel-body">' +
-                '<div class="table-responsive list-widget-table-container">' +
-                '</div>' +
-                '<div class="text-right list-widget-link"></div>' +
-              '</div>' +
-            '</div>' +
-          '</div>'
-    this.default_list = {
-                          baseTarget:'#list-wrapper',
-                          wrapperSize:'col-sm-6',
-                          titleIcon:'fa fa-building-o',
-                          titleText:'',
-                          linkText:'',
-                          linkIcon:'fa fa-arrow-circle-right',
-                          linkURL:''
-                        };
-  });
-
-  defProp(NYSS.ListReportWidget.prototype, 'updateData', function updateData() {
-    var thisobj = this;
-    this.report.forEach(function(v,k) {
-      var search_for_index = function(a,b) {
-        var rev = (a.indexOf('!') == 0),
-            len = v.datapoints.length,
-            i   = 0,
-            idx = -1;
-        if (rev) { a=a.substr(1); }
-        for (;i<len;) {
-          if (v.datapoints[i++].field == a) {
-            idx = i-1;
-            break;
-          }
-        }
-        if (idx>=0) {
-          return [idx,(rev?'desc':'asc')];
-        } else {
-          console.log('Invalid orderBy field in '+v.report_name+': '+a);
-        }
-      };
-      var onereport = thisobj.report_data.data[v.report_name];
-      if (thisobj.report_obj[v.report_name]) {
-        thisobj.report_obj[v.report_name].remove();
-        thisobj.report_obj[v.report_name] = null;
-      }
-      var props = $.extend({}, thisobj.default_list, v.props);
-      var dtorder = (v.props.orderBy || [])
-                    .map(search_for_index)
-                    .filter(function(a,b){return a;});
-
-      var dtparams = {
-                  columns:v.datapoints.map(function(a){return {title:a.header, data:a.field, name:a.field} }),
-                  data:onereport,
-                  searching:false,
-                  paging:true,
-                  lengthChange:true,
-                  autoWidth:true,
-                  order:dtorder,
-                 };
-      var thishtml = thisobj._wrapHTML($(thisobj.base_html));
-      thishtml.find('.list-widget-panel-wrapper').addClass(props.wrapperSize).attr('id',props.widgetID);
-      thishtml.find('.list-widget-panel-title').html(props.titleText);
-      thishtml.find('.list-widget-panel-icon').addClass(props.titleIcon);
-      thishtml.find('.list-widget-table-container').empty();
-
-      if (props.linkText && props.linkURL) {
-        thishtml.find('.list-widget-link').html(
-          $('<a/>').attr('href',thisobj.generateLink(props.linkURL))
-                   .text(props.linkText)
-                   .addClass(props.linkIcon)
-          );
-      }
-      thishtml = thisobj._unwrapHTML(thishtml);
-      $(thisobj.target_wrapper).find('#'+props.widgetID).remove();
-      thisobj.report_obj[v.report_name] = $('<table />')
-                                            .attr('id','ListReport-'+v.report_name)
-                                            .appendTo($(thishtml).find('.list-widget-table-container'))
-                                            .attr('class','ListReportWidget-DataTable table table-bordered table-hover table-striped tablesorter');
-      thisobj.report_obj[v.report_name].dataTable($.extend({},dtparams));
-      $(thisobj.target_wrapper).append(thishtml);
-    });
-  });
+  NYSS.ReportWidget = RW;
   /* **************************************************************************************
-   * END NYSS.ListReportWidget definitions
+   * END NYSS.ReportsCollection definitions
    ************************************************************************************** */
 
-
-  /* **************************************************************************************
-   * BEGIN NYSS.ChartReportWidget definitions
-   ************************************************************************************** */
-  NYSS.ChartReportWidget = function ChartReportWidget(d) {
-    NYSS.ReportWidget.call(this,d);
-  }
-  NYSS.ChartReportWidget.prototype = Object.create(NYSS.ReportWidget);
-  NYSS.ChartReportWidget.prototype.constructor = NYSS.ChartReportWidget;
-
-  /* need a chart callback for hover */
-  defProp(NYSS.ChartReportWidget.prototype,'ChartHoverCallback', function (index, options, content) {
-    if (arguments.length) {
-      switch (widgets.chart.filter.granularity) {
-        case 'hour':     fmt='ddd l, h A'; break;
-        case 'day':      fmt='ddd l'; break;
-        case 'month':    fmt='MMMM YYYY'; break;
-        case 'minute':
-        case '15minute':
-        default:         fmt='ddd l, hh:mm A'; break;
-      }
-      time = moment(options.data[index]["timerange"]).format(fmt);
-      var h = '<div class="morris-hover-row-label">'+time+'</div>';
-      $.each(options.data[index], function( key, values ) {
-        if($.inArray(key, options.ykeys)!==-1){
-          var id = $.inArray(key, options.ykeys);
-          h += '<div class="morris-hover-point" style="color:'+options.lineColors[id]+
-               '">'+options.labels[id]+': '+values+'</div>';
-        }
-      });
-      return h;
-    }
-  });
-
-  defProp(NYSS.ChartReportWidget.prototype, 'customInit', function customInit() {
-    this.base_html = '<div class="chart-widget-panel-target"></div>';
-    this.default_graph = {
-                           colors: chart_colors.getColors(),
-                           tooltip: {crosshairs:true, shared:true},
-                           plotOptions: {series:{connectNulls:true}},
-                         };
-  });
-
-  defProp(NYSS.ChartReportWidget.prototype, 'updateData', function updateData() {
-    var thisobj = this;
-
-    thisobj.report.forEach(function(onereport){
-      var seriesnames = onereport.datapoints.map(function(v){return v.field;});
-      var categories = thisobj.report_data.data[onereport.report_name].map(function(v){return v.timerange;});
-      var series = [];
-      seriesnames.forEach(function(v) {
-          oneseries = { name: v };
-          oneseries.data = thisobj.report_data.data[onereport.report_name].map(
-              function(vv) { return Number(vv[v]) || 0; }
-              );
-          series.push(oneseries);
-      });
-
-      var chart_options = {
-          title: { text: onereport.props.valueCaption },
-          xAxis: {
-              categories: categories,
-              tickInterval: 3,
-              minorTickInterval: 1,
-              minorTickLength: 70,
-              minorTickWidth:10
-          },
-          legend: {
-              margin: 0
-          },
-      }
-      chart_options = $.extend(true, {}, thisobj.default_graph, chart_options, onereport.props.graphData, { series:series } );
-      var thisid = 'onechart-'+onereport.report_name;
-      var onediv = $('<div/>').attr('id',thisid).addClass('chart-instance');
-      $('#chart-wrapper').append(onediv);
-
-      //console.log('Final cfg ',chart_options);
-      //console.log(JSON.stringify(chart_options));
-
-      $('#'+thisid).highcharts(chart_options);
-      $('#chart-wrapper').find('text').last().remove()
-    });
-
-  });
-  /* **************************************************************************************
-   * END NYSS.ChartReportWidget definitions
-   ************************************************************************************** */
 
   /* **************************************************************************************
    * BEGIN NYSS.SummaryReportWidget definitions
@@ -407,8 +208,24 @@ var NYSS = NYSS || {};
   NYSS.SummaryReportWidget.prototype = Object.create(NYSS.ReportWidget);
   NYSS.SummaryReportWidget.prototype.constructor = NYSS.SummaryReportWidget;
 
-  defProp(NYSS.SummaryReportWidget.prototype, 'customInit', function customInit() {
-    this.base_html ='<div class="summary-widget-panel-wrapper">' +
+  NYSS.SummaryReportWidget.prototype.customInit = function() {
+    var $this = this;
+    $this.data = $this._init_data.rows;
+    $this.props = { target_wrapper:'body' };
+    $.each($this._init_data.properties, function(k,v) {
+      $this.props[k] = v.value;
+    });
+    $.extend( $this.props,
+              {  fields:$this._init_data.fields,
+                 report_name:$this._init_data.report_name,
+                 report_descript:$this._init_data.report_descript
+              }
+    );
+    if (!$($this.props.target_wrapper).length) {
+      $this.props.target_wrapper = 'body';
+    }
+
+  	this.base_html ='<div class="summary-widget-panel-wrapper">' +
                       '<div class="summary-widget-panel panel panel-info">' +
                         '<div class="summary-widget-panel-header panel-heading">' +
                           '<div class="summary-widget-datapoint-wrapper row">' +
@@ -429,41 +246,205 @@ var NYSS = NYSS || {};
                         '</div>' +
                       '</div>' +
                     '</div>';
-    this.default_summary = {
-                            wrapperSize:'col-sm-3 col-xs-6',
-                            headerIcon:'',
-                            linkIcon:'fa fa-arrow-circle-right',
-                            linkTarget:'',
-                            linkText:'',
-                            valueCaption:'',
-                           };
-  });
+  };
 
-  defProp(NYSS.SummaryReportWidget.prototype, 'updateData', function updateData() {
-    var thisobj = this;
-    this.report.forEach(function(v,k) {
-      var thishtml = thisobj._wrapHTML($(thisobj.base_html));
-      var props = $.extend({}, thisobj.default_summary, v.props);
-      thishtml.find('.summary-widget-panel-wrapper').addClass(props.wrapperSize).attr('id',props.wrapperID);
-      thishtml.find('.summary-widget-datapoint-icon').addClass(props.headerIcon);
-      thishtml.find('.summary-widget-datapoint-text').html(props.valueCaption);
-      thishtml.find('.summary-widget-datapoint-value').html(thisobj.report_data.data[v.datapoints[0].field]);
-      if (props.linkIcon && props.linkTarget && props.linkText) {
-        thishtml.find('.summary-widget-link-icon').addClass(props.linkIcon);
-        thishtml.find('.summary-widget-link').attr('href',thisobj.generateLink(props.linkTarget));
-        thishtml.find('.summary-widget-link-text').html(props.linkText);
-      } else {
-        thishtml.find('.summary-widget-panel-footer-wrapper').remove();
-      }
-      thishtml = thisobj._unwrapHTML(thishtml);
-      $(thisobj.target_wrapper).find('#'+props.wrapperID).remove();
-      thishtml.appendTo(thisobj.target_wrapper);
-      thisobj.report_obj[v.report_name] = thishtml;
-    });
-
-  });
+  NYSS.SummaryReportWidget.prototype.render = function() {
+    var thishtml = this._wrapHTML($(this.base_html)),
+        sumfield = this.props.fields[0];
+  	thishtml.find('.summary-widget-panel-wrapper')
+  	        .addClass(this.props.wrapper_class)
+  	        .attr('id',this.props.wrapper_id);
+  	thishtml.find('.summary-widget-datapoint-icon').addClass(this.props.icon_class);
+  	thishtml.find('.summary-widget-datapoint-text').html(this.props.value_caption);
+  	thishtml.find('.summary-widget-datapoint-value').html(this.data[0][sumfield.name]);
+    if (this.props.link_icon && this.props.link_target && this.props.link_text) {
+    	thishtml.find('.summary-widget-link-icon').addClass(this.props.link_icon);
+    	thishtml.find('.summary-widget-link').attr('href',this.generateLink(this.props.link_target));
+    	thishtml.find('.summary-widget-link-text').html(this.props.link_text);
+    } else {
+    	thishtml.find('.summary-widget-panel-footer-wrapper').remove();
+    }
+  	thishtml = this._unwrapHTML(thishtml);
+    $(this.props.target_wrapper).find('#'+this.props.wrapper_id).remove();
+  	thishtml.appendTo($(this.props.target_wrapper));
+  	this.report_obj = thishtml;
+  };
   /* **************************************************************************************
    * END NYSS.SummaryReportWidget definitions
+   ************************************************************************************** */
+
+  /* **************************************************************************************
+   * BEGIN NYSS.ListReportWidget definitions
+   ************************************************************************************** */
+  NYSS.ListReportWidget = function ListReportWidget(d) {
+    NYSS.ReportWidget.call(this,d);
+  }
+  NYSS.ListReportWidget.prototype = Object.create(NYSS.ReportWidget);
+  NYSS.ListReportWidget.prototype.constructor = NYSS.ListReportWidget;
+
+  NYSS.ListReportWidget.prototype.customInit = function() {
+  	this.base_html =
+          '<div class="list-widget-panel-wrapper">' +
+            '<div class="panel table-list panel-primary list-widget-panel">' +
+              '<div class="panel-heading list-widget-panel-header">' +
+                '<h3 class="panel-title list-widget-panel-title-container">' +
+                  '<i class="list-widget-panel-icon"></i>' +
+                  '<span class="list-widget-panel-title"></span>' +
+                '</h3>' +
+              '</div>' +
+              '<div class="panel-body list-widget-panel-body">' +
+                '<div class="table-responsive list-widget-table-container">' +
+                '</div>' +
+                '<div class="text-right list-widget-link"></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+  };
+
+  NYSS.ListReportWidget.prototype.render = function() {
+    var $this = this,
+        props = {},
+        search_for_index = function(a,b) {
+          var ret = null;
+          if (a.sort_order != 0) {
+            return [b, (a.sort_order > 0 ? 'asc' : 'desc')];
+          }
+        }
+        ;
+
+    if ($this.report_obj) {
+      $this.report_obj.remove();
+      $this.report_obj = null;
+    }
+    for (xx in $this._init_data.properties) {
+      props[xx] = $this._init_data.properties[xx].value;
+    }
+
+    var dtorder = $this._init_data.fields.map(search_for_index)
+                                         .filter(function(a,b){return a;});
+
+    var dtparams = {
+                columns:$this._init_data.fields.map(
+                          function(a){return {title:a.name, data:a.name, name:a.name} }),
+                data:$this._init_data.rows,
+                searching:false,
+                paging:true,
+                lengthChange:true,
+                autoWidth:true,
+                order:dtorder,
+               };
+    var thishtml = $this._wrapHTML($($this.base_html));
+  	thishtml.find('.list-widget-panel-wrapper').addClass(props.wrapper_class).attr('id',props.wrapper_id);
+  	thishtml.find('.list-widget-panel-title').html(props.report_title);
+  	thishtml.find('.list-widget-panel-icon').addClass(props.icon_class);
+  	thishtml.find('.list-widget-table-container').empty();
+
+    if (props.link_text && props.link_target) {
+    	thishtml.find('.list-widget-link').html(
+        $('<a/>').attr('href',thisobj.generateLink(props.link_target))
+                 .text(props.link_text)
+                 .addClass(props.link_icon)
+        );
+    }
+  	thishtml = $this._unwrapHTML(thishtml);
+    $(props.target_wrapper).find('#'+props.wrapper_id).remove();
+  	$this.report_obj = $('<table />')
+                          .attr('id','ListReport-'+props.wrapper_id)
+                          .appendTo($(thishtml).find('.list-widget-table-container'))
+                          .attr('class','ListReportWidget-DataTable table table-bordered table-hover table-striped tablesorter');
+  	$this.report_obj.dataTable($.extend({},dtparams));
+    $(props.target_wrapper).append(thishtml);
+  };
+  /* **************************************************************************************
+   * END NYSS.ListReportWidget definitions
+   ************************************************************************************** */
+
+
+  /* **************************************************************************************
+   * BEGIN NYSS.ChartReportWidget definitions
+   ************************************************************************************** */
+  NYSS.ChartReportWidget = function ChartReportWidget(d) {
+    NYSS.ReportWidget.call(this,d);
+  }
+  NYSS.ChartReportWidget.prototype = Object.create(NYSS.ReportWidget);
+  NYSS.ChartReportWidget.prototype.constructor = NYSS.ChartReportWidget;
+
+  /* need a chart callback for hover */
+  NYSS.ChartReportWidget.prototype.ChartHoverCallback = function (index, options, content) {
+    if (arguments.length) {
+      switch (widgets.chart.filter.granularity) {
+        case 'hour':     fmt='ddd l, h A'; break;
+        case 'day':      fmt='ddd l'; break;
+        case 'month':    fmt='MMMM YYYY'; break;
+        case 'minute':
+        case '15minute':
+        default:         fmt='ddd l, hh:mm A'; break;
+      }
+      time = moment(options.data[index]["timerange"]).format(fmt);
+      var h = '<div class="morris-hover-row-label">'+time+'</div>';
+      $.each(options.data[index], function( key, values ) {
+        if($.inArray(key, options.ykeys)!==-1){
+          var id = $.inArray(key, options.ykeys);
+          h += '<div class="morris-hover-point" style="color:'+options.lineColors[id]+
+               '">'+options.labels[id]+': '+values+'</div>';
+        }
+      });
+      return h;
+    }
+  };
+
+  NYSS.ChartReportWidget.prototype.customInit = function customInit() {
+  	this.base_html = '<div class="chart-widget-panel-target"></div>';
+  	this.default_graph = {
+                           colors: chart_colors.getColors(),
+                           tooltip: {crosshairs:true, shared:true},
+                           plotOptions: {series:{connectNulls:true}},
+                         };
+  };
+
+  NYSS.ChartReportWidget.prototype.render = function updateData() {
+    var thisobj = this,
+        seriesnames = thisobj._init_data.fields.map(function(v){return v.name;}),
+        categories = thisobj._init_data.rows.map(function(v){return v.timerange;}),
+        series = [],
+        chart_options = {
+          title: { text: thisobj._init_data.report_name },
+          xAxis: {
+              categories: categories,
+              tickInterval: 3,
+              minorTickInterval: 1,
+              minorTickLength: 70,
+              minorTickWidth:10
+          },
+          legend: {
+              margin: 0
+          },
+        }
+    seriesnames.forEach(function(v) {
+      if (v!='timerange') {
+        oneseries = { name: v };
+        oneseries.data = thisobj._init_data.rows.map(
+            function(vv) { return Number(vv[v]) || 0; }
+            );
+        series.push(oneseries);
+      }
+    });
+
+    chart_options = $.extend(true,
+                            {},
+                            thisobj.default_graph,
+                            chart_options,
+                            JSON.parse(thisobj._init_data.properties.widget_properties.value),
+                            { series:series }
+                            );
+    var thisid = 'onechart-'+thisobj._init_data.properties.wrapper_id.value;
+    var onediv = $('<div/>').attr('id',thisid).addClass('chart-instance');
+    $('#chart-wrapper').append(onediv);
+    $('#'+thisid).highcharts(chart_options);
+    $('#chart-wrapper').find('text').last().remove()
+  };
+  /* **************************************************************************************
+   * END NYSS.ChartReportWidget definitions
    ************************************************************************************** */
 
 })(jQuery);

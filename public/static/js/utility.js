@@ -1,5 +1,10 @@
 /* Utility functions */
 
+var NYSS = NYSS || {};
+
+/* global debug flag */
+NYSS.debug_logging = true;
+
 /* Add Array.intersect() function to javascript arrays
    Parameters:
       test_array: an array to intersect with the current array
@@ -58,4 +63,8 @@ if (!String.prototype.capitalize) {
           return this.replace(r,function(m){return m.toUpperCase()});
         }
       });
+}
+
+NYSS.log = function log(msg) {
+  if (NYSS.debug_logging) { console.log(msg); }
 }

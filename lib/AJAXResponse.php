@@ -132,15 +132,14 @@ class AJAXResponse {
     $resp->errorcount = 0;
     foreach($resp->errors as $k=>&$v) {
       if ($v['type']<AJAX_ERR_INFO) { $resp->errorcount++; }
-      $v['typelabel']=static::$error_labels[$v['type']+1];
+      $v['typelabel']=static::$error_labels[$v['type']];
     }
     return $resp;
   }
 
   public function send($status=NULL, $with_die=true) {
     $this->setStatus($status);
-    $resp = $this->prepResponse();
-    echo json_encode($resp);
+    echo json_encode($this->prepResponse());
     if ($with_die) { die(); }
   }
 

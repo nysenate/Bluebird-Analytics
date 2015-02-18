@@ -1,7 +1,12 @@
+/* TODO:
+    use of the HashStorage module is inline..  migrate to hashstorage.js
+    do we even need HashStorage at this point?
+*/
+
 /* ****** Global variables ****** */
-var widgets = {};
 // HashStorage mechanism, see hashstorage.js
 var HashStorage = NYSS.HashStorageModule;
+
 // line colors for charts.  Order of appearance is important
 var chart_colors = {
                      solidblue:   '#2222AA', solidred:    '#AA2222', solidgreen:  '#22AA22',
@@ -21,198 +26,16 @@ Object.defineProperty(chart_colors, 'getColors', {
   }
 });
 
-var report_config = {
-  dashboard: [
-    { report_name:  'page_views',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'page_views', mod:'sum', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          linkTarget:   '/datatable',
-          linkText:     'Browse Content',
-          valueCaption: 'Pages Served',
-          wrapperID:    'page_views'
-      }
-    },
-    { report_name:  'active_users',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'remote_ip', mod:'countd', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          linkTarget:   '/users/list',
-          linkText:     'User Overview',
-          valueCaption: 'Active Users',
-          wrapperID:    'unique_users'
-      }
-    },
-    { report_name:  'active_instances',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'instance_id', mod:'countd', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-users fa-3x',
-          linkTarget:   '/users/list',
-          linkText:     'Office Overview',
-          valueCaption: 'Active Offices',
-          wrapperID:    'unique_instances'
-      }
-    },
-    { report_name:  'uptime',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent|2' } ],
-      props:{
-          headerIcon:   'fa fa-users fa-3x',
-          linkTarget:   '/performance',
-          linkText:     'Performance Overview',
-          valueCaption: 'Uptime',
-          wrapperID:    'uptime'
-      }
-    },
-    { report_name: 'view_history',
-      report_type: 'chart',
-      target_table: 'summary',
-      datapoints: [ { field:'page_views', mod:'sum' } ],
-      props:{
-              wrapperSize:  'col-lg-12',
-              headerIcon:   'fa fa-bar-chart-o',
-              valueCaption: 'Page Views',
-              graphData:    {
-                              chart: { type:'spline' },
-                              title: { text:'Page Views' },
-                            }
-            }
-    },
-    { report_name:  'top_active_instances',
-      report_type:  'list',
-      target_table: 'summary',
-      datapoints: [ { field:'instance_name', header:'Instance', mod:'group'  },
-                    { field:'remote_ip',     header:'Users',    mod:'countd', fmt:'intcomma' },
-                    { field:'page_views',    header:'Requests', mod:'sum',    fmt:'intcomma' } ],
-      props: { titleText:'Most Active Instances',
-               widgetID:'top_instances',
-               orderBy:[ '!page_views', '!remote_ip' ]
-             },
-    },
-    { report_name:  'top_active_users',
-      report_type:  'list',
-      target_table: 'summary',
-      datapoints: [ { field:'location_name', header:'Location', mod:'group'  },
-                    { field:'instance_name', header:'Instance', mod:'group'  },
-                    { field:'page_views',    header:'Requests', mod:'sum', fmt:'intcomma' } ],
-      props: { titleText:'Most Active Users',
-               widgetID:'top_users',
-               orderBy:[ '!page_views','location_name','instance_name' ]
-             }
-    },
-  ],
-  performance: [
-    {
-      report_name:  'uptime',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'uptime', mod:'calc', fmt:'percent' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Uptime',
-          wrapperID:    'uptime'
-      }
-    },
-    { report_name:  'http_500',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'http_500', mod:'sum', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Application (500) Errors',
-          wrapperID:    'http_500'
-      }
-    },
-    { report_name:  'http_503',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'http_503', mod:'sum', fmt:'intcomma' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Database (503) Errors',
-          wrapperID:    'http_503'
-      }
-    },
-    { report_name:  'response_time',
-      report_type:  'summary',
-      target_table: 'summary',
-      datapoints:   [ { field:'avg_resp_time', mod:'calc', fmt:'microsec|2' } ],
-      props:{
-          headerIcon:   'fa fa-files-o fa-3x',
-          valueCaption: 'Average Response Time',
-          wrapperID:    'avg_response_time'
-      }
-    },
-    { report_name: 'view_history',
-      report_type: 'chart',
-      target_table: 'summary',
-      datapoints: [ { field:'http_500',      mod:'sum',  fmt:'intcomma'},
-                    { field:'http_503',      mod:'sum',  fmt:'intcomma'},
-                    { field:'page_views',    mod:'sum',  fmt:'floatperk'},
-                    { field:'avg_resp_time', mod:'calc', fmt:'microsec'} ],
-      props:{
-              wrapperSize:  'col-lg-12',
-              headerIcon:   'fa fa-bar-chart-o',
-              valueCaption: 'Page Views',
-              graphData:    {
-                              chart: { type:'spline' },
-                              title: { text:'Performance Stats' },
-                            }
-            }
-    },
-    { report_name:  'top_queries',
-      report_type:  'list',
-      target_table: 'request',
-      datapoints: [ { field:'path',          header:'Path',     mod:'group'  },
-                    { field:'resp_code',     header:'Views',    mod:'count'  },
-                    { field:'avg_resp_time', header:'Avg Time', mod:'calc', fmt:'microsec' } ],
-      props: { titleText:'Worst Performing Requests',
-               widgetID:'top_queries',
-               orderBy:['!avg_resp_time'],
-               wrapperSize:'col-lg-9 center-block'
-             }
-    },
-  ],
-  usage: [
-    {
-      report_name:  'avg_use',
-      report_type:  'list',
-      target_table: 'summary',
-      datapoints: [ { field:'instance_name', mod:'group', header:'Instance Name' },
-                    { field:'page_views',    mod:'sum',   header:'Total Views', fmt:'int' },
-                    { field:'avg_resp_time', mod:'calc',  header:'Avg Time',    fmt:'microsec' } ],
-      props: { titleText:'Usage', widgetID:'usage', wrapperSize:'col-lg-9 center-block' },
-      sortorder: { page_views:'DESC' }
-    },
-    {
-      report_name:  'common_task',
-      report_type:  'list',
-      target_table: 'request',
-      datapoints: [ { field:'instance_name', mod:'group', header:'Instance Name' },
-                    { field:'url_name',      mod:'group', header:'Action' },
-                    { field:'timerange',     mod:'count', header:'Total Views', fmt:'int' },
-                    { field:'avg_resp_time', mod:'calc',  header:'Avg Time',    fmt:'microsec' } ],
-      props: { titleText:'Request Usage', widgetID:'requsage', wrapperSize:'col-lg-9 center-block' },
-      sortorder: { timerange:'DESC' }
-    },
-  ],
-};
-
-
 /* ****** Extensions for Array.prototype ****** */
 // Array method to count the number of AJAX requests still pending
 Object.defineProperty(Array.prototype,'countActiveAJAX',{
   get: function() {
-    var size = 0, key;
-    for (key in this) {
-      if (this.hasOwnProperty(key) && this[key].hasOwnProperty('readyState') && this[key].readyState!=4) size++;
+    var size = 0, xx;
+    for (xx in this) {
+      if (this.hasOwnProperty(xx)
+          && this[xx].hasOwnProperty('readyState')
+          && this[xx].readyState!=4
+         ) { size++; }
     }
     return size;
   }
@@ -263,7 +86,7 @@ function get_page_filters() {
           starttime:   $('#reportrange').bbdaterangepicker().start_moment.format(moment.NYSS_df.data),
           endtime:     $('#reportrange').bbdaterangepicker().end_moment.format(moment.NYSS_df.data),
           granularity: $('#reportrange').bbdaterangepicker().granularity,
-          instance:    $('#instance-picker').instancepicker().instance_name,
+          instance:    $('#instance-picker').val(),
           custom:      [],
          };
 }
@@ -277,9 +100,10 @@ function get_page_filters() {
     var view = $('body').data('view');
 
 
-    ///////////////////////////////////////////////
+    //////////////////////////////////////////////////////
     // BBDateRangePicker Plugin
-    ////////////////////////////////
+    // need to factor the HashStorage code
+    //////////////////////////////////////////////////////
     $.fn.bbdaterangepicker = function(user_options) {
       var options = $.extend({}, user_options);
 
@@ -361,17 +185,14 @@ function get_page_filters() {
 
     //////////////////////////////////////////////////////
     // InstancePicker Plugin
-    ///////////////////////////////
+    // need to factor the HashStorage code
+    //////////////////////////////////////////////////////
     $.fn.instancepicker = function(user_options) {
       var options = $.extend({}, user_options);
 
-      // We automatically bind update to 'this' to avoid context errors
+      /* use .bind() to avoid context errors */
       var update = function(new_instance) {
-        console.log("Updating instance name to: "+new_instance);
-        if (this.instance_name != new_instance) {
-          this.val(new_instance);
-        }
-        this.instance_name = new_instance;
+        NYSS.log("Updating instance name to: "+new_instance);
         $.cookie('data-instance', new_instance);
         HashStorage.update({'data-instance': new_instance});
       }.bind(this);
@@ -381,7 +202,7 @@ function get_page_filters() {
         update(HashStorage.data['data-instance']);
       }
       else if ($.cookie('data-instance') != undefined) {
-        console.log('Cookie val: '+$.cookie('data-instance'));
+        NYSS.log('Cookie val: '+$.cookie('data-instance'));
         update($.cookie('data-instance'));
       }
       else {
@@ -390,43 +211,7 @@ function get_page_filters() {
 
       this.selectpicker();
       this.change(function (event) {
-        update($(this).val());
-        $('#page-wrapper').Render();
-      });
-      return this;
-    };
-
-    //////////////////////////////////////////////////////
-    // ChartPicker Plugin
-    ///////////////////////////////
-    $.fn.chartpicker = function(user_options) {
-      var options = $.extend({}, user_options);
-
-      // We automatically bind update to 'this' to avoid context errors
-      var update = function(new_instance) {
-        console.log("Updating instance name to: "+new_instance);
-        if (this.instance_name != new_instance) {
-          this.val(new_instance);
-        }
-        this.instance_name = new_instance;
-        $.cookie('data-instance', new_instance);
-        HashStorage.update({'data-instance': new_instance});
-      }.bind(this);
-
-
-      if(HashStorage.has(['data-instance'])) {
-        update(HashStorage.data['data-instance']);
-      }
-      // else if ($.cookie('data-instance') != undefined) {
-      //   console.log('Cookie val: '+$.cookie('data-instance'));
-      //   update($.cookie('data-instance'));
-      // }
-      else {
-        update(this.val());
-      }
-
-      this.selectpicker();
-      this.change(function (event) {
+        NYSS.log(event);
         update($(this).val());
         $('#page-wrapper').Render();
       });
@@ -436,34 +221,10 @@ function get_page_filters() {
     var DateRange = $('#reportrange').bbdaterangepicker();
     var Instance = $('#instance-picker').instancepicker();
 
-    // for each of the configuration parameters execute an AJAX call
-    // on callback place data in correct container
+    /* the ReportsCollection object will handle generating the necessary AJAX
+       calls, and rendering the report data returned */
     $.fn.Render = function() {
-
-      // set up an AJAX request for each report configured in the current view
-      var current_requests = {summary:[],list:[],chart:[]};
-      // sort the reports by type and add filters to each definition
-      if (report_config[view]) {
-        $.each(report_config[view], function( report_key, report_def ) {
-          current_requests[report_def.report_type].push(report_def);
-        });
-      }
-      // call each report
-      // one request per type
-      var tfilters = get_page_filters();
-      $.each(current_requests, function(report_type, reports) {
-        if (widgets[report_type]) {
-          widgets[report_type].remove();
-          widgets[report_type] = null;
-        }
-        var thisWidget = report_type.capitalize()+'ReportWidget';
-        if (NYSS[thisWidget] && reports.length) {
-          var target_elem = '#'+report_type+'-wrapper';
-          widgets[report_type] = new NYSS[thisWidget]({target_wrapper:target_elem, reports:reports, filters:tfilters});
-          widgets[report_type].render();
-        }
-      });
-
+      NYSS.ReportsCollection.render({ view:view, filters:get_page_filters() }, true);
     };
 
     /* UI/UX for pseudo-persistent version notes element */
@@ -475,7 +236,7 @@ function get_page_filters() {
       $.cookie('application_version', $('.app-version').text(), { expires: 365, path: '/' });
     });
 
-    // render the current page
+    /* render the current page's reports */
     $('#page-wrapper').Render();
 
   });
