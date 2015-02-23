@@ -21,11 +21,6 @@ class BB_Session {
     $this->initDB();
   }
 
-  public function fetchReq($key) {
-    deprecate_to('BB_Session->req');
-    return array_value($key, $this->request);
-  }
-
   public static function getInstance() {
     if (!(static::$instance)) {
       static::$instance = new static;

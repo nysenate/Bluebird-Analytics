@@ -35,4 +35,8 @@ class AJAXSession extends BB_Session {
     if (!is_array($this->reports)) { $this->reports = array(); }
   }
 
+  public function dualLog($msg, $lvl) {
+    $this->log($msg, $lvl++);
+    $this->response->addError($lvl, $msg);
+  }
 }

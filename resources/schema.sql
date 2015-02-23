@@ -27,7 +27,6 @@ DROP TABLE IF EXISTS request;
 CREATE TABLE request (
   id int(10) unsigned PRIMARY KEY AUTO_INCREMENT,
   instance_id int(10) unsigned DEFAULT NULL,
-  remote_ip varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   url_id int(10) unsigned DEFAULT NULL,
@@ -50,7 +49,6 @@ CREATE TABLE request (
 DROP TABLE IF EXISTS summary_1d;
 CREATE TABLE summary_1d (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
@@ -58,7 +56,7 @@ CREATE TABLE summary_1d (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, trans_ip),
   KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_1d__trans_ip (trans_ip),
@@ -69,7 +67,6 @@ CREATE TABLE summary_1d (
 DROP TABLE IF EXISTS summary_1h;
 CREATE TABLE summary_1h (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
@@ -77,7 +74,7 @@ CREATE TABLE summary_1h (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, trans_ip),
   KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_1h__trans_ip (trans_ip),
@@ -88,7 +85,6 @@ CREATE TABLE summary_1h (
 DROP TABLE IF EXISTS summary_1m;
 CREATE TABLE summary_1m (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
@@ -96,7 +92,7 @@ CREATE TABLE summary_1m (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, trans_ip),
   KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_1m__trans_ip (trans_ip),
@@ -107,7 +103,6 @@ CREATE TABLE summary_1m (
 DROP TABLE IF EXISTS summary_15m;
 CREATE TABLE summary_15m (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
@@ -115,7 +110,7 @@ CREATE TABLE summary_15m (
   500_errors int(10) unsigned DEFAULT NULL,
   page_views int(10) unsigned DEFAULT NULL,
   response_time int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip),
+  UNIQUE KEY time (ts, instance_id, trans_ip),
   KEY timerange (ts),
   KEY instance_id (instance_id),
   KEY summary_15m__trans_ip (trans_ip),
@@ -127,13 +122,12 @@ CREATE TABLE summary_15m (
 DROP TABLE IF EXISTS uniques_1d;
 CREATE TABLE uniques_1d (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, trans_ip, type, value),
   KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),
@@ -145,13 +139,12 @@ CREATE TABLE uniques_1d (
 DROP TABLE IF EXISTS uniques_1h;
 CREATE TABLE uniques_1h (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, trans_ip, type, value),
   KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),
@@ -163,13 +156,12 @@ CREATE TABLE uniques_1h (
 DROP TABLE IF EXISTS uniques_1m;
 CREATE TABLE uniques_1m (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, trans_ip, type, value),
   KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),
@@ -181,13 +173,12 @@ CREATE TABLE uniques_1m (
 DROP TABLE IF EXISTS uniques_15m;
 CREATE TABLE uniques_15m (
   ts datetime DEFAULT NULL,
-  remote_ip varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   trans_ip int(10) unsigned DEFAULT NULL,
   location_id int(10) unsigned DEFAULT NULL,
   instance_id int(10) unsigned DEFAULT NULL,
   type varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  UNIQUE KEY time (ts, instance_id, remote_ip, type, value),
+  UNIQUE KEY time (ts, instance_id, trans_ip, type, value),
   KEY timerange (ts),
   KEY type (type),
   KEY instance_id (instance_id),

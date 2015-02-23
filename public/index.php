@@ -28,7 +28,7 @@ $navmenu->addClassToTree($activemenu->id,'active open');
 
 $product = array(
   'name' => 'Bluebird Analytics',
-  'version' => '1.1',
+  'version' => '1.1.3',
   'last_update' => fetch_last_update_time($session->db),
 );
 
@@ -41,26 +41,28 @@ $release_notes = '
 
 $scripts = array(
   'css' => array(
-    array('src'=>'/static/vendor/bootstrap-3.1.0/bootstrap.css'),
+    array('src'=>'/static/vendor/bootstrap-3.3.1/css/bootstrap.min.css'),
     array('src'=>'/static/vendor/font-awesome-4.1.0/css/font-awesome.min.css'),
     array('src'=>'/static/vendor/opensans-v6/css/opensans.css'),
     array('src'=>'/static/vendor/ubuntu-v4/css/ubuntu.css'),
-    array('src'=>'/static/vendor/morris-0.4.3/morris.min.css'),
+    /*array('src'=>'/static/vendor/morris-0.4.3/morris.min.css'),*/
     array('src'=>'/static/vendor/jquery.datatables-1.10.3/css/jquery.dataTables.css'),
-    array('src'=>'/static/vendor/lou-multi-select-0.9.11/css/multi-select.css'),
+    /*array('src'=>'/static/vendor/lou-multi-select-0.9.11/css/multi-select.css'),*/
     array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker-bs3.css'),
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.css'),
     array('src'=>'/static/css/sb-admin.css'),
   ),
   'js' => array(
-    array('src'=>'/static/vendor/jquery-2.1.1.min.js'),
-    array('src'=>'/static/vendor/bootstrap-3.1.0/bootstrap.min.js'),
-    array('src'=>'/static/vendor/raphael-2.1.2.min.js'),
-    array('src'=>'/static/vendor/morris-0.4.3/morris.js'),
+    array('src'=>'/static/vendor/jquery-2.1.1.js'),
+    array('src'=>'//code.jquery.com/ui/1.11.2/jquery-ui.js'),
+    array('src'=>'/static/vendor/bootstrap-3.3.1/js/bootstrap.min.js'),
+    array('src'=>'http://code.highcharts.com/highcharts.src.js'),
+    /*array('src'=>'/static/vendor/raphael-2.1.2.js'),
+    array('src'=>'/static/vendor/morris-0.4.3/morris.js'),*/
     array('src'=>'/static/vendor/jquery.datatables-1.10.3/js/jquery.dataTables.min.js'),
-    array('src'=>'/static/vendor/lou-multi-select-0.9.11/js/jquery.multi-select.js'),
+    /*array('src'=>'/static/vendor/lou-multi-select-0.9.11/js/jquery.multi-select.js'),*/
     array('src'=>'/static/vendor/jquery.cookie-1.4.1.js'),
-    array('src'=>'/static/vendor/moment-2.5.1.min.js'),
+    array('src'=>'/static/vendor/moment-2.8.1.min.js'),
     array('src'=>'/static/vendor/jquery.tablesorter.min.js'),
     array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker.js'),
     array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.js'),
@@ -71,6 +73,11 @@ $scripts = array(
     array('src'=>'/static/js/app.js'),
   )
 );
+
+// add custom JS if it exists
+if (file_exists("static/js/$request.js")) {
+  array_push($scripts['js'], array('src'=>"/static/js/$request.js"));
+}
 
 /* default to prod install class - analytics is currently using only prod logs */
 $sql = "SELECT DISTINCT name FROM instance WHERE install_class='prod' ORDER BY name";

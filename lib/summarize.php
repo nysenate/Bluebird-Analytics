@@ -48,7 +48,6 @@ function create_summary_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
   $result = $dbcon->query("
       SELECT
         instance_id,
-        remote_ip,
         trans_ip,
         location_id,
         count(*) as page_views,
@@ -57,7 +56,7 @@ function create_summary_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
         IFNULL(sum(response_time), 0) as response_time
       FROM request
       WHERE ts BETWEEN FROM_UNIXTIME($start_range) AND FROM_UNIXTIME($end_range)
-      GROUP BY instance_id, remote_ip
+      GROUP BY instance_id, trans_ip
   ");
   $rows = array();
   while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
@@ -76,10 +75,10 @@ function create_uniques_entries(PDO $dbcon, $mysql_date, $table_suffix, $start_r
   $rows = array();
   foreach(array('path') as $stat) {
     $result = $dbcon->query("
-      SELECT instance_id, remote_ip,trans_ip,location_id, $stat as value
+      SELECT instance_id, trans_ip, location_id, $stat as value
       FROM request
       WHERE ts BETWEEN FROM_UNIXTIME($start_range) AND FROM_UNIXTIME($end_range)
-      GROUP BY instance_id, remote_ip, $stat
+      GROUP BY instance_id, trans_ip, $stat
     ");
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {

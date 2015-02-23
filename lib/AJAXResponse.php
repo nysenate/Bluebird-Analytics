@@ -139,8 +139,7 @@ class AJAXResponse {
 
   public function send($status=NULL, $with_die=true) {
     $this->setStatus($status);
-    $resp = $this->prepResponse();
-    echo json_encode($resp);
+    echo json_encode($this->prepResponse());
     if ($with_die) { die(); }
   }
 
