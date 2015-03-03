@@ -1,6 +1,7 @@
 <?php
 function url_for($path) {
-  return $_SERVER['CONTEXT_PREFIX'].$path;
+  $needs_prefix = !(substr($path,0,2)=='//' || substr($path,0,4)=='http');
+  return ($needs_prefix ? $_SERVER['CONTEXT_PREFIX'] : '') . $path;
 }
 ?><!DOCTYPE html>
 <html lang="en">
