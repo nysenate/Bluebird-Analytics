@@ -39,44 +39,38 @@ $release_notes = '
     If you have questions or comments about this service, please contact the <a href="mailto:bluebird.admin@nysenate.gov">Bluebird Administrator</a>.
   </div>';
 
-$scripts = array(
-  'css' => array(
-    array('src'=>'/static/vendor/bootstrap-3.3.1/css/bootstrap.min.css'),
-    array('src'=>'/static/vendor/font-awesome-4.1.0/css/font-awesome.min.css'),
-    array('src'=>'/static/vendor/opensans-v6/css/opensans.css'),
-    array('src'=>'/static/vendor/ubuntu-v4/css/ubuntu.css'),
-    /*array('src'=>'/static/vendor/morris-0.4.3/morris.min.css'),*/
-    array('src'=>'/static/vendor/jquery.datatables-1.10.3/css/jquery.dataTables.css'),
-    /*array('src'=>'/static/vendor/lou-multi-select-0.9.11/css/multi-select.css'),*/
-    array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker-bs3.css'),
-    array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.css'),
-    array('src'=>'/static/css/sb-admin.css'),
-  ),
-  'js' => array(
-    array('src'=>'/static/vendor/jquery-2.1.1.js'),
-    array('src'=>'//code.jquery.com/ui/1.11.2/jquery-ui.js'),
-    array('src'=>'/static/vendor/bootstrap-3.3.1/js/bootstrap.min.js'),
-    array('src'=>'http://code.highcharts.com/highcharts.src.js'),
-    /*array('src'=>'/static/vendor/raphael-2.1.2.js'),
-    array('src'=>'/static/vendor/morris-0.4.3/morris.js'),*/
-    array('src'=>'/static/vendor/jquery.datatables-1.10.3/js/jquery.dataTables.min.js'),
-    /*array('src'=>'/static/vendor/lou-multi-select-0.9.11/js/jquery.multi-select.js'),*/
-    array('src'=>'/static/vendor/jquery.cookie-1.4.1.js'),
-    array('src'=>'/static/vendor/moment-2.8.1.min.js'),
-    array('src'=>'/static/vendor/jquery.tablesorter.min.js'),
-    array('src'=>'/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker.js'),
-    array('src'=>'/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.js'),
-    array('src'=>'/static/js/utility.js'),
-    array('src'=>'/static/js/hashstorage.js'),
-    array('src'=>'/static/js/analytics.reports.js'),
-    array('src'=>'/static/js/NYSS.MessageBox.js'),
-    array('src'=>'/static/js/app.js'),
-  )
+$css_scripts = array(
+    '/static/vendor/bootstrap-3.3.1/css/bootstrap.min.css',
+    '/static/vendor/font-awesome-4.1.0/css/font-awesome.min.css',
+    '/static/vendor/opensans-v6/css/opensans.css',
+    '/static/vendor/ubuntu-v4/css/ubuntu.css',
+    '/static/vendor/jquery.datatables-1.10.3/css/jquery.dataTables.css',
+    '/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker-bs3.css',
+    '/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.css',
+    '/static/css/sb-admin.css'
+);
+
+$js_scripts = array(
+    '/static/vendor/jquery-2.1.1.js',
+    'http://code.jquery.com/ui/1.11.2/jquery-ui.js',
+    '/static/vendor/bootstrap-3.3.1/js/bootstrap.min.js',
+    'http://code.highcharts.com/highcharts.src.js',
+    '/static/vendor/jquery.datatables-1.10.3/js/jquery.dataTables.min.js',
+    '/static/vendor/jquery.cookie-1.4.1.js',
+    '/static/vendor/moment-2.8.1.min.js',
+    '/static/vendor/jquery.tablesorter.min.js',
+    '/static/vendor/bootstrap-daterangepicker-1.3.12/daterangepicker.js',
+    '/static/vendor/silviomoreto-bootstrap-select-1.5.4/bootstrap-select.min.js',
+    '/static/js/utility.js',
+    '/static/js/hashstorage.js',
+    '/static/js/analytics.reports.js',
+    '/static/js/NYSS.MessageBox.js',
+    '/static/js/app.js'
 );
 
 // add custom JS if it exists
 if (file_exists("static/js/$request.js")) {
-  array_push($scripts['js'], array('src'=>"/static/js/$request.js"));
+  $js_scripts[] = "/static/js/$request.js";
 }
 
 /* default to prod install class - analytics is currently using only prod logs */

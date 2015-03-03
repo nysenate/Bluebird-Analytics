@@ -1,6 +1,12 @@
 <?php
-function url_for($path) {
-  return $_SERVER['CONTEXT_PREFIX'].$path;
+function url_for($path)
+{
+  if ($path[0] == '/') {
+    return $_SERVER['CONTEXT_PREFIX'].$path;
+  }
+  else {
+    return $path;
+  }
 }
 ?><!DOCTYPE html>
 <html lang="en">
@@ -12,8 +18,8 @@ function url_for($path) {
     <title><?php echo $activemenu->menu_title; ?> - <?php echo $product['name'];?></title>
     <!-- dynamically load in style sheets -->
 <?php
-foreach ($scripts['css'] as $key => $value) {
-  echo '    <link href="'.url_for($value['src']).'" rel="stylesheet" />'."\n";
+foreach ($css_scripts as $css_script) {
+  echo '    <link href="'.url_for($css_script).'" rel="stylesheet" />'."\n";
 }
 ?>
   </head>
@@ -95,8 +101,8 @@ foreach ($scripts['css'] as $key => $value) {
 
     <!-- dynamically load in JavaScript -->
 <?php
-  foreach ($scripts['js'] as $key => $value) {
-    echo '    <script src="'.url_for($value['src']).'" type="text/javascript"></script>'."\n";
+  foreach ($js_scripts as $js_script) {
+    echo '    <script src="'.url_for($js_script).'" type="text/javascript"></script>'."\n";
   }
 ?>
   </body>
