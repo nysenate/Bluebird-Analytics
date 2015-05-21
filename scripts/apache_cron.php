@@ -85,6 +85,11 @@ foreach ($source_paths as $source_path) {
   if (filemtime($source_path) >= $start_ctime) {
     $start = microtime(true);
     log_(INFO, "Running: $source_path");
+    if (filesize($source_path) < $start_offset) {
+      log_(WARN, "Reseting start offset due to under-sized file ($source_path)");
+      log_(WARN, "(looking for $start_offset, filesize is ".filesize($source_path).")");
+      $start_offset = 0;
+    }
     list($final_offset, $final_ctime) = process_apache_log($source_path, $start_offset, $dbcon);
     log_(INFO, "Inserting Requests took: ".round(microtime(true)-$start,3)."s");
     $start_offset = 0;
@@ -218,7 +223,7 @@ function process_entry($entry_parts, PDO $dbcon)
   $ret = array(
     'id' => NULL,
     'instance_id' => $instance_id,
-    'trans_ip' => "INET_ATON('{$entry_parts[3]}')",
+    'trans_ip' => sprintf("%u", ip2long($entry_parts[3])),
     'response_code' => $entry_parts[5],
     'response_time' => $entry_parts[4],
     'transfer_rx' => $entry_parts[6],
