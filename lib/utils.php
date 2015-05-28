@@ -8,6 +8,8 @@ const WARN      = 2;
 const INFO      = 3;
 const DEBUG     = 4;
 
+const USE_FASTER_SINGLE_INSERT_STMT = true;
+
 
 /**
  * Implements Python's dict.get() and CiviCRM's CRM_Utils_Array::value()
@@ -49,21 +51,40 @@ function convert($size)
 /**
  *  Inserts a batch of rows of arbitrary size.
  */
-function insert_batch($dbcon, $table, $rows)
+function insert_batch($dbcon, $table, &$rows)
 {
   if (!empty($rows)) {
-    $columns = implode(', ', array_keys($rows[0]));
-    $place_holder = '('.implode(', ', array_fill(0, count($rows[0]), "?")).')';
-    $place_holders = implode(', ', array_fill(0, count($rows), $place_holder));
-    $stmt = $dbcon->prepare("INSERT INTO $table ($columns) VALUES $place_holders");
+    $row_count = count($rows);
+    log_(DEBUG, "Inserting $row_count log records starting at ".$rows[0]['ts']);
+    $dbcon->beginTransaction();
+    $dbcon->exec("SET foreign_key_checks=0;");
+    $colnames = array_keys($rows[0]);
+    $coltext = implode(',', $colnames);
+    $markertext = implode(',', array_fill(0, count($rows[0]), '?'));
 
-    // Extract value only arrays from each row and merge them into one big array for execution
-    $values = array();
-    foreach($rows as $row) {
-      $values[] = array_values($row);
+    if (USE_FASTER_SINGLE_INSERT_STMT) {
+      $markertext = implode(',', array_fill(0, $row_count, "($markertext)"));
+      $stmt = $dbcon->prepare("INSERT INTO $table ($coltext)
+                               VALUES $markertext");
+      $vals = array();
+      // Flatten out the multi-dimensional array into a single dimension
+      foreach ($rows as &$row) {
+        foreach ($row as $col) {
+          $vals[] = $col;
+        }
+      }
+      $stmt->execute($vals);
     }
-    $final_values = call_user_func_array('array_merge', $values);
-    $stmt->execute($final_values);
+    else {
+      $stmt = $dbcon->prepare("INSERT INTO $table ($coltext)
+                               VALUES ($markertext)");
+      foreach ($rows as &$row) {
+        $stmt->execute(array_values($row));
+      }
+    }
+
+    $dbcon->exec("SET foreign_key_checks=1;");
+    $dbcon->commit();
   }
 } // insert_batch()
 
@@ -77,11 +98,11 @@ function load_config()
 
   $config = parse_ini_file($config_file, true);
   if (!$config) {
-    log_(ERROR, "Configuration file not found at '$config_file'.");
+    log_(ERROR, "Configuration file not found at '$config_file'");
     return false;
   }
 
-  foreach(array('database','input') as $section) {
+  foreach (array('database', 'input') as $section) {
     if (!array_key_exists($section, $config)) {
       log_(500,"Invalid config file. '$section' section required");
       return false;
@@ -125,8 +146,8 @@ function get_db_connection($dbconfig)
 {
   //Validate the database configuration settings
   $required_keys = array('type','host','name','user','pass','port');
-  if($missing_keys = array_diff_key(array_flip($required_keys), $dbconfig)) {
-    $missing_key_msg = implode(', ',array_keys($missing_keys));
+  if ($missing_keys = array_diff_key(array_flip($required_keys), $dbconfig)) {
+    $missing_key_msg = implode(', ', array_keys($missing_keys));
     log_(ERROR, "Section [database] missing keys: $missing_key_msg");
     return false;
   }
@@ -138,9 +159,8 @@ function get_db_connection($dbconfig)
     $user = $dbconfig['user'];
     $pass = $dbconfig['pass'];
     $name = $dbconfig['name'];
-    return new PDO("$type:host=$host;port=$port;dbname=$name", $user, $pass, array(
-      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ));
+    return new PDO("$type:host=$host;port=$port;dbname=$name", $user, $pass,
+                   array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
   }
   catch (PDOException $e) {
     log_(FATAL, "PDOException:".$e->getMessage());
