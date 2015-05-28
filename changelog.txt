@@ -1,11 +1,12 @@
+
 1.1 Offices & Users
-* Support for offices specified by IP address rage
+* Support for offices specified by IP address range
 * Traffic is broken down into user studies
 
 1.0 "Public" Release
 
-0.3
+0.3 Release Candidate 1 (RC1)
 
-0.2
+0.2 Beta Release
 
-0.1
+0.1 Alpha Release

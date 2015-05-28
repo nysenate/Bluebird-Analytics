@@ -1,15 +1,15 @@
 <?php
 
-date_default_timezone_set('America/New_York');
-
 require(realpath(dirname(__FILE__).'/../lib/utils.php'));
 require(realpath(dirname(__FILE__).'/../lib/summarize.php'));
+
+const BATCH_SIZE = 5000;
+$g_log_level = WARN;
+$g_log_file = null;
 
 ///////////////////////////////
 // Bootstrap the environment
 ///////////////////////////////
-$g_log_level = WARN;
-$g_log_file = null;
 
 $config = load_config();
 if ($config === false) {
@@ -40,7 +40,7 @@ if (!$g_instance_cache) {
 }
 // match to the IDs in the instance table
 try {
-  $result = $dbcon->query("SELECT id,name FROM instance");
+  $result = $dbcon->query("SELECT id, name FROM instance");
 }
 catch (Exception $e) {
   log_(FATAL, 'Could not load instance records! '.$e->getMessage());
@@ -65,45 +65,65 @@ if (empty($source_paths)) {
 // automatically inserts a default 0/0 entry in this table so it will always
 // have at least one result row.
 try {
-  $result = $dbcon->query("SELECT * FROM apache_cron_runs ORDER BY final_ctime DESC LIMIT 1");
+  $result = $dbcon->query(
+    "SELECT * FROM apache_cron_runs ORDER BY final_ctime DESC LIMIT 1");
 }
 catch (Exception $e) {
-  log_(FATAL,'Could not load cron run history! '.$e->getMessage());
+  log_(FATAL, 'Could not load cron run history! '.$e->getMessage());
   exit(1);
 }
 
 $row = $result->fetch(PDO::FETCH_ASSOC);
-$final_offset = $start_offset = $row['final_offset'];
-$final_ctime = $start_ctime = strtotime($row['final_ctime']);
-log_(INFO, "Last run ended at ".date('Y-m-d H:i:s', $start_ctime)."; offset=$start_offset");
-
+$start_offset = $row['final_offset'];
+$start_ctime = $row['final_ctime'];
+$start_utime = strtotime($start_ctime);
+log_(INFO, "Last run ended at $start_ctime; offset=$start_offset");
 
 // Process log files that have been updated since the last run. Use >= here
 // so that we catch files that were rotated immediately after our last run.
 // Otherwise we might apply the byte offset to a new, unrelated file.
-foreach ($source_paths as $source_path) {
-  if (filemtime($source_path) >= $start_ctime) {
-    $start = microtime(true);
-    log_(INFO, "Running: $source_path");
-    if (filesize($source_path) < $start_offset) {
-      log_(WARN, "Reseting start offset due to under-sized file ($source_path)");
-      log_(WARN, "(looking for $start_offset, filesize is ".filesize($source_path).")");
-      $start_offset = 0;
-    }
-    list($final_offset, $final_ctime) = process_apache_log($source_path, $start_offset, $dbcon);
-    log_(INFO, "Inserting Requests took: ".round(microtime(true)-$start,3)."s");
-    $start_offset = 0;
 
-    // Save the run state so we can easily resume. But only if we actually processed a log!
-    if ($final_ctime != null) {
-      try {
-        $dbcon->exec("INSERT INTO apache_cron_runs VALUES ($final_offset, FROM_UNIXTIME($final_ctime))");
-      }
-      catch (Exception $e) {
-        log_(ERROR,'Could not insert latest cron run: '.$e->getMessage());
-      }
+$first_ts = null;
+$last_ts = null;
+
+foreach ($source_paths as $source_path) {
+  if (filemtime($source_path) >= $start_utime) {
+    $start_time = microtime(true);
+    log_(INFO, "Processing log file: $source_path [offset=$start_offset]");
+    $res = process_apache_log($source_path, $start_offset, $dbcon);
+    $final_offset = $res['offset'];
+
+    if ($first_ts == null || strtotime($res['first_ts']) < strtotime($first_ts)) {
+      $first_ts = $res['first_ts'];
     }
+
+    if ($last_ts == null || strtotime($res['last_ts']) > strtotime($last_ts)) {
+      $last_ts = $res['last_ts'];
+    }
+
+    $elapsed_time = round(microtime(true) - $start_time, 3);
+    log_(INFO, "Processed log file '$source_path' in ${elapsed_time}s; first_ts={$res['first_ts']}; last_ts={$res['last_ts']}; new offset=$final_offset");
+    $start_offset = 0;
   }
+}
+
+if ($first_ts && $last_ts) {
+  // Update all the summaries affected by this time range.
+  log_(INFO, "Generating summaries for requests from $first_ts to $last_ts");
+  summarize($dbcon, $first_ts, $last_ts);
+
+  // Save run state so we can easily resume, if we actually processed a log.
+  log_(INFO, "Recording final offset=$final_offset, ctime=$last_ts");
+  try {
+    $dbcon->exec("INSERT INTO apache_cron_runs
+                  VALUES ($final_offset, '$last_ts')");
+  }
+  catch (Exception $e) {
+    log_(ERROR, 'Could not insert latest cron run: '.$e->getMessage());
+  }
+}
+else {
+  log_(INFO, "No new logging records found; summaries not created; apache_cron_runs not updated");
 }
 
 
@@ -116,83 +136,71 @@ function process_apache_log($source_path, $offset, PDO $dbcon)
 {
   $handle = fopen($source_path, "r");
   if ($handle === false) {
-    log_(ERROR, "Source file '$source_path' cannot be opened for reading.");
+    log_(ERROR, "Source file '$source_path' cannot be opened for reading");
     return false;
   }
 
-  // Starting from where we left off and process new entries.
-  log_(INFO, "Reading '$source_path' [size:".filesize($source_path)."] from offset '$offset'");
-  fseek($handle, min($offset, filesize($source_path)));
+  $file_size = filesize($source_path);
+  // Reset the offset if it exceeds the size of the file.
+  if ($offset > $file_size) {
+    $offset = 0;
+  }
+
+  // Start from where we left off and process new entries.
+  log_(INFO, "Reading '$source_path' [size=$file_size] from offset '$offset'");
+  fseek($handle, $offset);
 
   // Increase the insert time by deferring indexing and foreign key checks.
-  $dbcon->beginTransaction();
-  $dbcon->exec("SET foreign_key_checks=0;");
 
   // For every valid line in the rest of the file:
   //  * Get the insert values for that line
   //  * Do a periodic bulk insert
   //  * Track timestamp of the last entry
-  $c = 1;
   $values = array();
-  $start_ctime = null;
-  $final_ctime = null;
-  while (true) {
-    $log_entry = stream_get_line($handle, 100000, "\n");
-    $entry_parts = explode(' ', $log_entry);
-    if (count($entry_parts) == 12) {
-      $new_entry = process_entry($entry_parts, $dbcon);
-      if ($new_entry == null) {
-        // There was invalid log line content
-      }
-      elseif (!$new_entry['is_page']) {
-        // Not a page load we are concerned with.
-      }
-      else {
-        if ($start_ctime == null) {
-          $start_ctime = strtotime($new_entry['ts']);
-        }
-        unset($new_entry['is_page']);
-        $final_ctime = strtotime($new_entry['ts']);
-        $values[] = $new_entry;
-      }
-    }
-    else {
-      // The log line format was invalid
-    }
+  $first_ts = null;
+  $last_ts = null;
+  $batch_count = 0;
 
-    // 100 seems to maximize insert speed for some reason.
-    // Higher numbers like 1000 actually perform worse.
-    // TOOD: Why would that be? MySQL Configuration issue?
-    $is_eof = feof($handle);
-    if (($c++ % 100) == 0 || $is_eof) {
-      insert_batch($dbcon, 'request', $values);
-      $values = array();
-      $start = microtime(true);
-      if ($is_eof) {
-        break;
+  while (!feof($handle)) {
+    $log_line = stream_get_line($handle, 100000, "\n");
+    $log_entry = parse_log_line($log_line);
+    if ($log_entry) {
+      if ($first_ts == null) {
+        $first_ts = $log_entry['ts'];
+      }
+      $last_ts = $log_entry['ts'];
+      $values[] = $log_entry;
+      $val_count = count($values);
+
+      if ($val_count == BATCH_SIZE) {
+        log_(INFO, "About to insert batch #$batch_count [$val_count records]");
+        insert_batch($dbcon, 'request', $values);
+        $values = array();
+        $batch_count++;
       }
     }
   }
 
-  // Update all the summaries affected by this time range.
-  log_(INFO, "Generating summaries for requests from ".date("Y-m-d H:i:s", $start_ctime)." to ".date("Y-m-d H:i:s", $final_ctime));
-  summarize($dbcon, $start_ctime, $final_ctime);
-
-  // Re-enable the foreign_key_checks and commit our work.
-  $dbcon->exec("SET foreign_key_checks=1;");
-  $dbcon->commit();
+  // Insert any remaining rows after reaching EOF.
+  if ($values) {
+    $val_count = count($values);
+    log_(INFO, "About to insert final batch #$batch_count [$val_count records]");
+    insert_batch($dbcon, 'request', $values);
+  }
 
   // Clean up file resources
   $final_offset = ftell($handle);
   fclose($handle);
-  return array($final_offset, $final_ctime);
+  return array('offset'   => $final_offset,
+               'first_ts' => $first_ts,
+               'last_ts'  => $last_ts);
 } // process_apache_log()
 
 
 /**
- * Transforms a single line in the log file into an array of request parameters.
+ * Transforms a single line in the log file into an array of log parameters
  */
-function process_entry($entry_parts, PDO $dbcon)
+function parse_log_line($text)
 {
   static $instance_types = array(
     'crm'     => 'prod',
@@ -200,13 +208,23 @@ function process_entry($entry_parts, PDO $dbcon)
     'crmdev'  => 'dev'
   );
 
-  // Format the datetime by removing the [ ] and replacing the first :
-  $datetime = DateTime::createFromFormat('d/M/Y:H:i:s O', substr($entry_parts[0],1).' '.substr($entry_parts[1], 0, 5));
+  if (empty($text)) {
+    return null;
+  }
+
+  // A valid log line for Bluebird will have 12 space-delimited parts.
+  $entry_parts = explode(' ', $text);
+  if (count($entry_parts) != 12) {
+    log_(ERROR, "Invalid log line: [$text]");
+    return null;
+  }
 
   $servername = $entry_parts[2];
   $server_parts = explode('.', $servername);
   $instance_name = $server_parts[0];
   if (!isset($instance_types[$server_parts[1]])) {
+    // Three recognized Bluebird environments are: crm, crmtest, crmdev
+    log_(WARN, "Unrecognized Bluebird environment [{$server_parts[1]}]");
     return null;
   }
   $instance_type = $instance_types[$server_parts[1]];
@@ -215,28 +233,30 @@ function process_entry($entry_parts, PDO $dbcon)
   $request_path = $request_parts['path'];
 
   // We don't care about public files, accidental copy/paste, or static files
-  $is_page = !preg_match('/(^\\/sites\\/|https?:|\\.(css|js|jpg|jpeg|gif|img|txt|ico|png|bmp|pdf|tif|tiff|oft|ttf|eot|woff|svg|svgz|doc|mp4|mp3)$)/i', $request_path);
+  if (preg_match('/(^\\/sites\\/|https?:|\\.(css|js|jpg|jpeg|gif|img|txt|ico|png|bmp|pdf|tif|tiff|oft|ttf|eot|woff|svg|svgz|doc|mp4|mp3)$)/i', $request_path)) {
+    return null;
+  }
+
+  // Format the datetime by removing the [ ] and replacing the first :
+  $datetime = DateTime::createFromFormat('d/M/Y:H:i:s O', substr($entry_parts[0], 1).' '.substr($entry_parts[1], 0, 5));
 
   // Note that location_id and url_id will be set by the trigger on
   // the REQUEST table.
 
-  $ret = array(
-    'id' => NULL,
+  $res = array(
     'instance_id' => $instance_id,
-    'trans_ip' => sprintf("%u", ip2long($entry_parts[3])),
-    'response_code' => $entry_parts[5],
+    'trans_ip' => sprintf('%u', ip2long($entry_parts[3])),
     'response_time' => $entry_parts[4],
+    'response_code' => $entry_parts[5],
     'transfer_rx' => $entry_parts[6],
     'transfer_tx' => $entry_parts[7],
-    'method' => trim($entry_parts[9], '"'),
+    'method' => ltrim($entry_parts[9], '"'),
     'path' => $request_path,
     'query' => isset($request_parts['query']) ? $request_parts['query'] : '',
-    'ts' => $datetime->format(DateTime::ISO8601),
-    'is_page' => $is_page
+    'ts' => $datetime->format(DateTime::ISO8601)
   );
-  log_(DEBUG, "Processing entry: ".var_export($ret,1));
-  return $ret;
-} // process_entry()
+  return $res;
+} // parse_log_line()
 
 
 /**
@@ -248,57 +268,64 @@ function process_entry($entry_parts, PDO $dbcon)
  *    /var/log/apache2/access.log.2
  *    /var/log/apache2/access.log.3
  *
- *  Files are returned in ordered from newest to oldest by the numeric suffix.
+ *  Files that do not end with a numerical suffix (for example, *.gz) are
+ *  ignored.
+ *
+ *  Files are returned in order from newest to oldest by the numeric suffix.
  */
 function get_source_files($config)
 {
-  $base_path = array_value('base_path',$config,'');
+  $base_path = array_value('base_path', $config, '');
   if (!$base_path) {
-    log_(ERROR, "Section [input] missing keys: base_path");
+    log_(ERROR, "Section [input] missing key: base_path");
     return false;
   }
 
-  $base_path = $config['base_path'];
-  $files = glob($base_path."*");
-  usort($files, function($a, $b) use ($base_path) {
-    $anum = (int) substr($a, strlen($base_path)+1);
-    $bnum = (int) substr($b, strlen($base_path)+1);
-    return $anum - $bnum;
+  $files = glob($base_path.'*');
+  $files = array_filter($files, function ($v) {
+    return preg_match('/log(\.[0-9]+)?$/', $v);
+  });
+  $suffix_pos = strlen($base_path) + 1;
+  usort($files, function($a, $b) use ($suffix_pos) {
+    $anum = (int) substr($a, $suffix_pos);
+    $bnum = (int) substr($b, $suffix_pos);
+    return $bnum - $anum;
   });
   log_(DEBUG, "Found source files:\n".var_export($files,1));
-  return array_reverse($files);
+  return $files;
 } // get_source_files()
 
 
 /**
  *  Uses the given parameters to fetch an existing instance. If one cannot be
  *  found, it creates a new one and returns that instead.
+ *  The default 0 value points to the "Invalid CRM" entry.
+ *  Otherwise, returns instanceID that was found or inserted.
  */
 function get_instance_id($name)
 {
   global $g_instance_cache, $dbcon;
 
-  log_(DEBUG, "Searching for instance_id for $name");
+  //log_(DEBUG, "Searching for instance_id for $name");
   $name = (string)$name;
-  // the default 0 value points to the "Invalid CRM" entry.
-  // otherwise, $ret= (integer id from database) | (-1 valid instance not in database)
-  $ret = (int)array_value($name, $g_instance_cache, 0);
-  if ($ret < 0) {
-    log_(DEBUG, "Found no cache for $name (ret=$ret)");
+  $instanceID = (int)array_value($name, $g_instance_cache, 0);
+  if ($instanceID < 0) {
+    log_(DEBUG, "Found no cached instanceID for $name; adding now");
     try {
-      $sth = $dbcon->prepare("INSERT INTO instance (install_class, servername, name) VALUES " .
-                            "('prod', :servername, :instname);");
-      $sth->execute(array(':servername'=>"{$name}.crm.nysenate.gov", ':instname'=>$name));
-      $ret = $dbcon->lastInsertId();
+      $sth = $dbcon->prepare(
+        "INSERT INTO instance (install_class, servername, name) ".
+        "VALUES ('prod', :servername, :instname);");
+      $sth->execute(array(':servername'=>"$name.crm.nysenate.gov", ':instname'=>$name));
+      $instanceID = $dbcon->lastInsertId();
     }
     catch (Exception $e) {
-      log_(ERROR,"Could not store instance record for $name: ".$e->getMessage());
-      $ret = false;
+      log_(ERROR, "Could not store instance record for $name: ".$e->getMessage());
+      $instanceID = false;
     }
   }
-  log_(DEBUG, "Final instance_id for $name=$ret");
-  $g_instance_cache[$name] = (int)$ret;
-  return $ret;
+  //log_(DEBUG, "Final instance_id for $name=$ret");
+  $g_instance_cache[$name] = (int)$instanceID;
+  return $instanceID;
 } // get_instance_id()
 
 ?>

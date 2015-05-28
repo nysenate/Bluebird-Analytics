@@ -5,8 +5,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 [debug]
-; level = ERROR | WARN | NOTICE | DEBUG
-;   The WARN level will include errors; NOTICE will include errors and warns.
+; level = ERROR | WARN | INFO | DEBUG
+;   The WARN level will include errors; INFO will include errors and warns.
 ;   Leave blank to turn logging off.
 ; file = /path/to/desired/log/file
 ;   If this file can't be created, an error is logged to the Apache log.
